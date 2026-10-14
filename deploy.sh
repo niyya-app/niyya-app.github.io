@@ -21,6 +21,9 @@ if [ -x "$CHROME" ]; then
   AT="$("$CHROME" --headless=new --disable-gpu --no-first-run --user-data-dir="$(mktemp -d)" --virtual-time-budget=8000 --dump-dom "file://$F#autotest" 2>/dev/null | grep -o 'data-autotest="[^"]*"' | head -1)"
   if [ "$AT" != 'data-autotest="ok"' ]; then echo "❌ Autotest des écrans en échec — publication annulée : ${AT:-aucun résultat}"; exit 1; fi
   echo "✔︎ Autotest de tous les écrans réussi"
+  AT2="$(TZ=America/Los_Angeles "$CHROME" --headless=new --disable-gpu --no-first-run --user-data-dir="$(mktemp -d)" --virtual-time-budget=8000 --dump-dom "file://$F#autotest" 2>/dev/null | grep -o 'data-autotest="[^"]*"' | head -1)"
+  if [ "$AT2" != 'data-autotest="ok"' ]; then echo "❌ Autotest avec un téléphone réglé sur un autre fuseau horaire en échec — publication annulée : ${AT2:-aucun résultat}"; exit 1; fi
+  echo "✔︎ Autotest fuseau horaire étranger réussi"
 fi
 git add -A
 if git diff --cached --quiet; then echo "ℹ️ Aucun changement — déjà à jour."; exit 0; fi

@@ -353,7 +353,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261014-183402'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261014-192845'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1215,16 +1215,36 @@ function hijri(k){
 }
 function dayOfYear(k){ const d=dateOf(k); return Math.floor((d-new Date(d.getFullYear(),0,0))/864e5); }
 
+
+/* ---------- Fuseau horaire de la ville (les horaires ne dépendent pas du réglage du téléphone) ---------- */
+const enFrance=L=>L&&L.lat!=null&&L.lat>41&&L.lat<51.5&&L.lon>-5.5&&L.lon<9.8;
+function lieuTz(){
+  const L=(S.cfg&&S.cfg.lieu)||{};
+  if(typeof isHsc==='function'&&isHsc()) return 'Europe/Paris';
+  if(L.tz) return L.tz;
+  if(L.lat==null||enFrance(L)) return 'Europe/Paris';
+  try{ return Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Paris'; }catch(e){ return 'Europe/Paris'; }
+}
+const _fmtTz={};
+function minIn(d,tz){
+  try{
+    const f=_fmtTz[tz]||(_fmtTz[tz]=new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}));
+    const p=f.formatToParts(d), g=t=>+((p.find(x=>x.type===t)||{}).value||0);
+    return (g('hour')%24)*60+g('minute')+g('second')/60;
+  }catch(e){ return d.getHours()*60+d.getMinutes()+d.getSeconds()/60; }
+}
+function jourIn(tz){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }catch(e){ return today(); } }
+const nowMin=()=>minIn(new Date(),lieuTz());
 /* ---------- Horaires ---------- */
 const _tcache={};
 function timesOf(k){
   const P=S.cfg.priere||{}, L=S.cfg.lieu||{};
   if(P.methode!=='hsc' && L.lat!=null && window.adhan){
-    const ck=k+'|'+P.methode+'|'+L.lat+'|'+L.lon; if(_tcache[ck]) return _tcache[ck];
+    const tz=lieuTz(), ck=k+'|'+P.methode+'|'+L.lat+'|'+L.lon+'|'+tz; if(_tcache[ck]) return _tcache[ck];
     try{
       const M=METHODES[P.methode]||METHODES.uoif, c=new adhan.Coordinates(L.lat,L.lon);
       const pr=new adhan.CalculationParameters('Other',M.f,M.i); pr.madhab=adhan.Madhab.Shafi; pr.highLatitudeRule=adhan.HighLatitudeRule.recommended(c);
-      const t=new adhan.PrayerTimes(c,dateOf(k),pr), mn=x=>x.getHours()*60+x.getMinutes();
+      const t=new adhan.PrayerTimes(c,dateOf(k),pr), mn=x=>Math.floor(minIn(x,tz)+1e-6);
       return _tcache[ck]=[mn(t.fajr),mn(t.sunrise),mn(t.dhuhr),mn(t.asr),mn(t.maghrib),mn(t.isha)];
     }catch(e){}
   }
@@ -1235,7 +1255,7 @@ function timesOf(k){
   return t; // minutes : fajr, chourouq, dhuhr, asr, maghrib, isha
 }
 function nextPrayer(){
-  const now=new Date(), k=today(), t=timesOf(k), m=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+  const k=jourIn(lieuTz()), t=timesOf(k), m=nowMin();
   for(const p of PRAYERS){ if(t[p.i]>m) return {p, at:t[p.i], k, cur:prevPrayer(m,t)}; }
   const k2=addDays(k,1); return {p:PRAYERS[0], at:timesOf(k2)[0]+1440, k:k2, cur:PRAYERS[4]};
 }
@@ -1568,7 +1588,7 @@ const prayCount=k=>{ const d=S.jours[k]; return d?PRAYERS.filter(p=>['heure','mo
 /* ---------- Dîn ---------- */
 function vDin(){
   const d=J(), t=timesOf(S.sel), isT=S.sel===today(), fri=dateOf(S.sel).getDay()===5;
-  const now=new Date(), m=now.getHours()*60+now.getMinutes(); const cur=isT?prevPrayer(m,t):null;
+  const m=nowMin(); const cur=isT?prevPrayer(m,t):null;
   const sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
   const moisSad=monthSadaqa(S.sel);
   const reg=prayerReg(30);
@@ -1868,7 +1888,7 @@ function vReglages(){
     <div class="sub">À une association, ou pour faire vivre NIYYA (gratuite et sans publicité).</div>
     <button class="btn green" onclick="ouvrirDons()">💚 Faire un don</button></div>
   <div class="panel mt"><h2><span class="ico">🕌</span>Horaires de prière</h2>
-    <div class="sub">${isHsc()?`Calendrier annuel de la mosquée An-Nour d'Hérouville-Saint-Clair (Mawaqit), iqama +${IQAMA} min, Joumouʿa ${JUMUA.join(' et ')}.`:`Calculés pour <b>${esc(C.lieu.nom||'—')}</b>.`}</div>
+    <div class="sub">${isHsc()?`Calendrier annuel de la mosquée An-Nour d'Hérouville-Saint-Clair (Mawaqit), iqama +${IQAMA} min, Joumouʿa ${JUMUA.join(' et ')}.`:`Calculés pour <b>${esc(C.lieu.nom||'—')}</b>, à l'heure locale (${esc(lieuTz())}).`}</div>
     ${lieuForm()}
   </div>`;
 }
@@ -2107,16 +2127,17 @@ function chercherVille(q){
   if(q.trim().length<2){ box.innerHTML=''; return; }
   _villeT=setTimeout(async()=>{
     const qq=encodeURIComponent(q.trim()), res=[];
-    const fr=fetch('https://api-adresse.data.gouv.fr/search/?type=municipality&limit=4&q='+qq).then(r=>r.json()).then(o=>(o.features||[]).map(x=>({nom:x.properties.label+' ('+x.properties.postcode+')', info:'France · '+(x.properties.postcode||''), lat:x.geometry.coordinates[1], lon:x.geometry.coordinates[0]}))).catch(()=>[]);
-    const monde=fetch('https://geocoding-api.open-meteo.com/v1/search?count=6&language=fr&format=json&name='+qq).then(r=>r.json()).then(o=>(o.results||[]).filter(x=>x.country_code!=='FR').map(x=>({nom:x.name+', '+(x.country||''), info:[x.admin1,x.country].filter(Boolean).join(' · '), lat:x.latitude, lon:x.longitude}))).catch(()=>[]);
+    const fr=fetch('https://api-adresse.data.gouv.fr/search/?type=municipality&limit=4&q='+qq).then(r=>r.json()).then(o=>(o.features||[]).map(x=>({nom:x.properties.label+' ('+x.properties.postcode+')', info:'France · '+(x.properties.postcode||''), lat:x.geometry.coordinates[1], lon:x.geometry.coordinates[0], tz:'Europe/Paris'}))).catch(()=>[]);
+    const monde=fetch('https://geocoding-api.open-meteo.com/v1/search?count=6&language=fr&format=json&name='+qq).then(r=>r.json()).then(o=>(o.results||[]).filter(x=>x.country_code!=='FR').map(x=>({nom:x.name+', '+(x.country||''), info:[x.admin1,x.country].filter(Boolean).join(' · '), lat:x.latitude, lon:x.longitude, tz:x.timezone||''}))).catch(()=>[]);
     const [a,b]=await Promise.all([fr,monde]); res.push(...a,...b);
     if(!document.getElementById('villeSugg')) return;
-    box.innerHTML=res.length?`<div class="sugg">${res.slice(0,8).map(x=>`<button onclick='choisirVille(${JSON.stringify(x.nom)},${x.lat},${x.lon})'>${esc(x.nom.replace(/ \(\d+\)$/,''))} <span class="muted">${esc(x.info)}</span></button>`).join('')}</div>`
+    box.innerHTML=res.length?`<div class="sugg">${res.slice(0,8).map(x=>`<button onclick='choisirVille(${JSON.stringify(x.nom)},${x.lat},${x.lon},${JSON.stringify(x.tz||'')})'>${esc(x.nom.replace(/ \(\d+\)$/,''))} <span class="muted">${esc(x.info)}</span></button>`).join('')}</div>`
       :`<p class="muted" style="font-size:.78rem;margin-top:6px">Ville introuvable. Vérifie l'orthographe ou utilise « ma position actuelle ».</p>`;
   },350);
 }
-function choisirVille(nom,lat,lon){
-  S.cfg.lieu={nom,lat:+lat.toFixed(4),lon:+lon.toFixed(4)}; if(S.cfg.priere.methode==='hsc') S.cfg.priere.methode='uoif';
+function choisirVille(nom,lat,lon,tz){
+  S.cfg.lieu={nom,lat:+lat.toFixed(4),lon:+lon.toFixed(4),tz:tz||(enFrance({lat,lon})?'Europe/Paris':'')}; for(const k in _tcache) delete _tcache[k];
+  if(!S.cfg.lieu.tz) fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=1`).then(r=>r.json()).then(o=>{ if(o.timezone&&S.cfg.lieu.lat===+lat.toFixed(4)){ S.cfg.lieu.tz=o.timezone; for(const k in _tcache) delete _tcache[k]; cfgTouch(); if(S.cfg.onb) render(); } }).catch(()=>{}); if(S.cfg.priere.methode==='hsc') S.cfg.priere.methode='uoif';
   cfgTouch(); if(S.cfg.onb){ render(); toast('🕌 Horaires mis à jour'); } else { const i=document.getElementById('villeIn'); if(i) i.value=nom; document.getElementById('villeSugg').innerHTML=''; }
 }
 function localiserMoi(){
@@ -2459,7 +2480,7 @@ let lastDay=today();
 function tick(){
   if(today()!==lastDay){ if(S.sel===lastDay) S.sel=today(); lastDay=today(); S.mindIdx=null; S.hadIdx=null; S.aimeI=null; S.nomI=null; render(); return; }
   const el=document.getElementById('npCount'); if(!el) return;
-  const np=nextPrayer(), now=new Date(), m=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+  const np=nextPrayer(), m=nowMin();
   const r=Math.max(0,Math.round((np.at-m)*60)); const h=Math.floor(r/3600), mi=Math.floor(r%3600/60), s=r%60;
   el.textContent=h?`dans ${h} h ${pad(mi)}`:`dans ${mi} min ${pad(s)} s`;
   const nm=document.getElementById('npName'); if(nm && nm.textContent!==np.p.n) render();
@@ -2503,6 +2524,7 @@ async function autotest(){
       for(const v of vues){ try{ S.view=v; render(); }catch(e){ err.push(pr.nom+'/'+v+': '+e.message); } }
       S.cfg.onb=false; render(); S.cfg.onb=true;
       if(typeof bilanTexte==='function') bilanTexte(7);
+      if(pr.lieu&&pr.lieu.nom==='Caen'){ const t=timesOf(today()); if(!(t[2]>=12*60+15&&t[2]<=14*60+30)) err.push('Dhuhr de Caen hors plage ('+hm(t[2])+') — problème de fuseau horaire'); }
     }catch(e){ err.push(pr.nom+': '+e.message); }
   }
   document.documentElement.dataset.autotest = err.length ? 'ERREUR: '+err.join(' | ') : 'ok';
