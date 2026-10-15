@@ -353,7 +353,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261015-191723'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261015-193034'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1235,6 +1235,15 @@ function minIn(d,tz){
 }
 function jourIn(tz){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }catch(e){ return today(); } }
 const nowMin=()=>minIn(new Date(),lieuTz());
+
+/* ---------- Vie gagnée : estimation de 20 minutes d'espérance de vie par cigarette évitée
+   (University College London, Journal of Addiction, 2025 : ~17 min pour un homme, ~22 min pour une femme) ---------- */
+const MIN_PAR_CIG=20;
+function vieGagnee(n){
+  const m=Math.round(n*MIN_PAR_CIG); if(m<60) return m+' min';
+  const j=Math.floor(m/1440), h=Math.floor(m%1440/60), mi=m%60;
+  return j?`${j} j ${h} h`:`${h} h${mi?' '+String(mi).padStart(2,'0'):''}`;
+}
 /* ---------- Horaires ---------- */
 const _tcache={};
 function timesOf(k){
@@ -1458,7 +1467,7 @@ function heroTabac(){
   const lim=firstCigLimit(S.sel);
   const before=S.sel>=S.cfg.tabac.debut;
   return `<div class="hero k-sunset">
-    <div class="row"><div class="h-lbl">🚭 Cigarettes ${S.sel===today()?'aujourd\'hui':'ce jour-là'}</div><div class="sp"></div><span class="chip">💶 ${Math.round(st.eco)} € économisés</span></div>
+    <div class="row"><div class="h-lbl">🚭 Cigarettes ${S.sel===today()?'aujourd\'hui':'ce jour-là'}</div><div class="sp"></div><span class="chip" title="Estimation : ${MIN_PAR_CIG} min de vie par cigarette évitée">⏳ ${vieGagnee(st.evitees)} de vie gagnées</span></div>
     <div class="cig">
       <button class="cbtn minus" onclick="cig(-1)" aria-label="Retirer une cigarette">−</button>
       <div style="text-align:center"><div class="n tnum">${n}<small> / ${t}</small></div>
@@ -1713,6 +1722,7 @@ function vTabac(){
     </div>
   </div>
   <div class="grid g2 mt" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+    <div class="hero k-magenta"><div class="h-lbl">⏳ Vie gagnée</div><div class="h-big tnum">${vieGagnee(st.evitees)}</div><div class="h-sub">≈ ${MIN_PAR_CIG} min par cigarette évitée (étude UCL, 2025)</div></div>
     <div class="hero k-emerald"><div class="h-lbl">💶 Économisés</div><div class="h-big tnum">${Math.round(st.eco)} €</div><div class="h-sub">journées terminées depuis le ${esc(fmtShort(T.debut))} (paquet ${T.prix} €)</div></div>
     <div class="hero k-sky"><div class="h-lbl">🚫 Évitées</div><div class="h-big tnum">${st.evitees}</div><div class="h-sub">cigarettes non fumées</div></div>
     <div class="hero k-violet"><div class="h-lbl">📉 Moyennes</div><div class="h-big tnum">${a7===null?'—':a7.toFixed(1)}</div><div class="h-sub">/ jour sur 7 j · ${a30===null?'—':a30.toFixed(1)} sur 30 j · hier ${hier??'—'}</div></div>
@@ -2001,7 +2011,7 @@ function bilanTexte(P){
   const lines=[`BILAN NIYYA de ${S.cfg.nom} — ${P} derniers jours (au ${fmtLong(today())})`];
   for(let i=P-1;i>=0;i--){ const k=addDays(today(),-i); if(!has(k)) continue; const d=J(k), s=scoreOf(k);
     lines.push(`${k} | score ${s.score} | prières ${prayCount(k)}/5 (${PRAYERS.map(p=>p.n[0]+':'+(d.p[p.k]||'-')).join(' ')}) | cig ${d.cig.length}/${targetOf(k)}${d.cig.length?' 1re '+hm(new Date(d.cig[0]).getHours()*60+new Date(d.cig[0]).getMinutes()):''} | sport ${d.sport?((d.sports||[]).length?d.sports.map(sportNom).join('+'):'oui'):d.repos?'repos':'non'} | coran ${d.coran?'oui':'non'} | lecture ${d.lecture?'oui':'non'} | famille ${d.famille?'oui':'non'} | fruits ${d.fruits||0}/5 | eau ${litres(d.eau)} L | Allah aime appliqué ${d.aime?'oui':'non'} | bonnes ${d.ba.filter(Boolean).length}/9 | istighfar ${d.istighfar} | prio ${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length}${d.sadaqa.length?' | sadaqa '+d.sadaqa.reduce((a,b)=>a+(+b.m||0),0)+'€':''}${d.poids?' | poids '+d.poids:''}${d.reussite?' | réussite: '+d.reussite:''}${d.ameliorer?' | à améliorer: '+d.ameliorer:''}`); }
-  const st=tabacStats(); if(S.cfg.fumeur) lines.push(`Tabac : ${st.evitees} cigarettes évitées, ${Math.round(st.eco)} € économisés, objectif actuel ${targetOf(today())}/jour.`);
+  const st=tabacStats(); if(S.cfg.fumeur) lines.push(`Tabac : ${st.evitees} cigarettes évitées, ${vieGagnee(st.evitees)} de vie gagnées, ${Math.round(st.eco)} € économisés, objectif actuel ${targetOf(today())}/jour.`);
   return lines.join('\n');
 }
 async function copyBilan(){ const t=bilanTexte(S.statsPer); try{ await navigator.clipboard.writeText(t); toast('📋 Bilan copié'); }catch(e){ openSheet(`<h3>Ton bilan</h3><textarea rows="12">${esc(t)}</textarea>`); } }
