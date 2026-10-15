@@ -62,7 +62,7 @@ const NOMS={jour:'🏠 Aujourd\'hui',din:'🕌 Dîn',noms:'📿 99 noms',coran:'
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const jm=d=>{ const [y,m,j]=String(d).split('-'); return +j+'/'+ +m; };
-let sb=null, D=null;
+let sb=null, D=null, CLE=null;
 
 function vLogin(msg){
   app.innerHTML=`<div class="auth"><div class="top" style="justify-content:center"><div class="logo">نية</div><div><h1>Back-office NIYYA</h1><div class="sub">Accès réservé à l'administrateur</div></div></div>
@@ -80,8 +80,10 @@ async function login(){
 }
 async function charger(){
   app.innerHTML='<p class="sub" style="text-align:center;margin-top:20vh">Chargement des statistiques…</p>';
-  const {data,error}=await sb.rpc('niyya_admin');
-  if(error){ if(/administrateur|42501/.test(error.message+error.code)) return vLogin('Ce compte n\'est pas administrateur.'); return vLogin('Erreur : '+error.message); }
+  const {data,error}=CLE?await sb.rpc('niyya_admin_lien',{p_cle:CLE}):await sb.rpc('niyya_admin');
+  if(error){
+    if(CLE){ CLE=null; try{ localStorage.removeItem('nya_admin_k'); }catch(e){} return vLogin('Lien d\'accès invalide ou expiré.'); }
+    if(/administrateur|42501/.test(error.message+error.code)) return vLogin('Ce compte n\'est pas administrateur.'); return vLogin('Erreur : '+error.message); }
   D=data; vDash();
 }
 function barres(rows,cle,cls){
@@ -96,7 +98,7 @@ function vDash(){
   const mxO=Math.max(1,...(D.onglets||[]).map(o=>+o.j30||0));
   app.innerHTML=`
   <div class="top"><div class="logo">نية</div><div><h1>Back-office NIYYA</h1><div class="sub">Mis à jour le ${esc(D.maj)}</div></div><span class="sp"></span>
-    <button class="btn" onclick="charger()">🔄 Actualiser</button><button class="btn" onclick="sb.auth.signOut().then(()=>vLogin())">Déconnexion</button></div>
+    <button class="btn" onclick="charger()">🔄 Actualiser</button><button class="btn" onclick="try{localStorage.removeItem('nya_admin_k')}catch(e){};CLE=null;sb.auth.signOut().then(()=>vLogin())">Déconnexion</button></div>
   <div class="grid">
     <div class="kpi k1"><span>👥 Comptes créés</span><b>${D.comptes}</b><small>+${D.nouveaux_7j} ces 7 derniers jours</small></div>
     <div class="kpi k2"><span>✅ Questionnaire fini</span><b>${D.questionnaire_fini}</b><small>${pct} % des comptes</small></div>
@@ -124,6 +126,10 @@ function vDash(){
 (async function(){
   if(!window.supabase){ app.innerHTML='<p class="note">Impossible de joindre le serveur.</p>'; return; }
   sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'nya_auth'}});
+  const k=new URLSearchParams(location.hash.slice(1)).get('k');
+  if(k&&/^[0-9a-f]{64}$/i.test(k)){ try{ localStorage.setItem('nya_admin_k',k); }catch(e){} }
+  try{ CLE=localStorage.getItem('nya_admin_k'); }catch(e){}
+  if(CLE) return charger();
   const {data}=await sb.auth.getSession();
   if(data&&data.session) charger(); else vLogin();
 })();

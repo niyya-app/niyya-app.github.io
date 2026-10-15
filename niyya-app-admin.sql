@@ -15,14 +15,11 @@ begin
   on conflict (jour, onglet) do update set nb = public.niyya_stats.nb + 1;
 end $$;
 
--- 2) Tableau de bord administrateur
-create or replace function public.niyya_admin()
+-- 2) Données du tableau de bord (fonction interne, jamais appelable directement)
+create or replace function public.niyya_admin_data()
 returns jsonb language plpgsql stable security definer set search_path = public, auth as $$
 declare aujourd date := (now() at time zone 'Europe/Paris')::date;
 begin
-  if coalesce(auth.jwt()->>'email','') <> 'hestia14000@gmail.com' then
-    raise exception 'Réservé à l''administrateur' using errcode = '42501';
-  end if;
   return jsonb_build_object(
     'maj', to_char(now() at time zone 'Europe/Paris','DD/MM/YYYY HH24:MI'),
     'comptes', (select count(*) from auth.users),
@@ -61,7 +58,35 @@ begin
   );
 end $$;
 
-revoke all on function public.niyya_admin() from public, anon;
+-- 3) Accès par compte administrateur (e-mail + mot de passe)
+create or replace function public.niyya_admin()
+returns jsonb language plpgsql stable security definer set search_path = public, auth as $$
+begin
+  if coalesce(auth.jwt()->>'email','') <> 'hestia14000@gmail.com' then
+    raise exception 'Réservé à l''administrateur' using errcode = '42501';
+  end if;
+  return public.niyya_admin_data();
+end $$;
+
+-- 4) Accès par LIEN SECRET (#k=…) : seule l'empreinte SHA-256 de la clé est stockée, jamais la clé
+create table if not exists public.niyya_admin_acces (empreinte text primary key, libelle text, cree_le timestamptz default now());
+alter table public.niyya_admin_acces enable row level security;
+revoke all on public.niyya_admin_acces from anon, authenticated;
+insert into public.niyya_admin_acces (empreinte, libelle) values ('35dc5e8339b2d1d1a3cfdbf785a752c507c5be2c6e187c981c27120118ba3456', 'Lien back-office de Mehdi du 15/10/2026') on conflict do nothing;
+
+create or replace function public.niyya_admin_lien(p_cle text)
+returns jsonb language plpgsql stable security definer set search_path = public, auth as $$
+begin
+  if p_cle is null or length(p_cle) < 32
+     or not exists (select 1 from public.niyya_admin_acces a where a.empreinte = encode(sha256(convert_to(p_cle,'UTF8')),'hex')) then
+    raise exception 'Lien d''accès invalide' using errcode = '42501';
+  end if;
+  return public.niyya_admin_data();
+end $$;
+
+revoke all on function public.niyya_admin_data() from public, anon, authenticated;
+revoke all on function public.niyya_admin(), public.niyya_admin_lien(text) from public, anon;
 grant execute on function public.niyya_admin() to authenticated;
+grant execute on function public.niyya_admin_lien(text) to anon, authenticated;
 
 select 'Back-office prêt' as etat;
