@@ -82,6 +82,7 @@ async function charger(){
   app.innerHTML='<p class="sub" style="text-align:center;margin-top:20vh">Chargement des statistiques…</p>';
   const {data,error}=CLE?await sb.rpc('niyya_admin_lien',{p_cle:CLE}):await sb.rpc('niyya_admin');
   if(error){
+    if(CLE && /PGRST202|schema cache|Could not find/.test((error.code||'')+error.message)){ app.innerHTML='<div class="auth"><div class="panel"><h2>⏳ Base pas encore installée</h2><p class="note">Le back-office est prêt, mais le code SQL n\'a pas encore été lancé dans Supabase (projet niyya → SQL Editor). Une fois fait, recharge cette page.</p></div></div>'; return; }
     if(CLE){ CLE=null; try{ localStorage.removeItem('nya_admin_k'); }catch(e){} return vLogin('Lien d\'accès invalide ou expiré.'); }
     if(/administrateur|42501/.test(error.message+error.code)) return vLogin('Ce compte n\'est pas administrateur.'); return vLogin('Erreur : '+error.message); }
   D=data; vDash();
