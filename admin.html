@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>NIYYA — Back-office</title>
+<link rel="icon" type="image/png" href="niyya-icon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Amiri:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{--bg1:#eef2ff;--bg2:#faf5ff;--card:#fff;--card2:#f8f7ff;--ink:#0f172a;--muted:#64748b;--line:#e9e7f5;--indigo:#6366f1;--violet:#8b5cf6;--emerald:#10b981;--sh:0 10px 30px rgba(79,70,229,.08)}
+@media (prefers-color-scheme:dark){:root{--bg1:#0b1020;--bg2:#130f22;--card:#171b30;--card2:#1d2140;--ink:#eceefb;--muted:#9aa3bd;--line:#2a2f4d;--sh:0 10px 30px rgba(0,0,0,.35)}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--ink);background:linear-gradient(180deg,var(--bg1),var(--bg2));background-attachment:fixed;min-height:100vh;padding:20px 16px 60px}
+button,input{font-family:inherit;color:inherit}
+.wrap{max-width:1100px;margin:0 auto}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#fff;font-family:'Amiri',serif;font-size:1.3rem;background:linear-gradient(135deg,#6366f1,#ec4899);box-shadow:0 8px 18px rgba(99,102,241,.35)}
+h1{font-size:1.35rem;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:.8rem;font-weight:600}
+.sp{flex:1}
+.btn{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:9px 14px;font-weight:800;font-size:.84rem;cursor:pointer}
+.btn.pri{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:transparent}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.kpi{border-radius:18px;padding:16px;color:#fff;box-shadow:0 12px 28px rgba(79,70,229,.16)}
+.kpi b{display:block;font-size:2rem;font-weight:800;letter-spacing:-.02em;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:.8rem;font-weight:800;opacity:.95}.kpi small{font-size:.72rem;font-weight:600;opacity:.9}
+.k1{background:linear-gradient(135deg,#6366f1,#8b5cf6)}.k2{background:linear-gradient(135deg,#10b981,#059669)}.k3{background:linear-gradient(135deg,#f59e0b,#fb7185)}.k4{background:linear-gradient(135deg,#0ea5e9,#2563eb)}.k5{background:linear-gradient(135deg,#a855f7,#ec4899)}.k6{background:linear-gradient(135deg,#14b8a6,#0ea5e9)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--sh);margin-top:14px;min-width:0}
+.panel h2{font-size:1rem;font-weight:800;margin-bottom:4px}
+.two{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:860px){.two{grid-template-columns:1fr 1fr}}
+.chart{display:flex;align-items:flex-end;gap:3px;height:140px;margin-top:12px}
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+.bar{width:100%;border-radius:5px 5px 2px 2px;min-height:2px;background:linear-gradient(180deg,#8b5cf6,#6366f1)}
+.bar.g{background:linear-gradient(180deg,#10b981,#059669)}
+.x{font-size:.55rem;color:var(--muted);font-weight:700;margin-top:4px}
+.n{font-size:.6rem;font-weight:800;color:var(--muted);margin-bottom:2px}
+table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:10px}
+th{text-align:left;color:var(--muted);font-weight:800;font-size:.72rem;padding:8px 6px;border-bottom:1.5px solid var(--line)}
+td{padding:9px 6px;border-bottom:1px dashed var(--line);font-weight:600;vertical-align:middle}
+.tw{overflow-x:auto}
+.hb{height:9px;border-radius:100px;background:var(--card2);overflow:hidden;min-width:60px}
+.hb div{height:100%;border-radius:100px;background:linear-gradient(90deg,#6366f1,#ec4899)}
+.tag{display:inline-block;border-radius:100px;padding:2px 9px;font-size:.7rem;font-weight:800;background:var(--card2);border:1px solid var(--line)}
+.ok{color:#059669}.ko{color:#e11d48}
+.auth{max-width:420px;margin:10vh auto 0}
+.inp{width:100%;border:1.5px solid var(--line);background:var(--card2);border-radius:12px;padding:12px;font-size:.95rem;font-weight:600;margin-top:6px}
+label{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin-top:12px}
+.note{font-size:.74rem;color:var(--muted);font-weight:600;margin-top:10px;line-height:1.5}
+.legend{display:flex;gap:12px;font-size:.72rem;font-weight:700;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><p class="sub" style="text-align:center;margin-top:20vh">Chargement…</p></div>
+<script src="vendor/supabase.min.js"></script>
+<script>
+'use strict';
+const SB_URL='https://acalynsfttpchvnomjwb.supabase.co', SB_KEY='sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN';
+const NOMS={jour:'🏠 Aujourd\'hui',din:'🕌 Dîn',noms:'📿 99 noms',coran:'📖 Coran',qibla:'🧭 Qibla',tabac:'🚭 Tabac',voyage:'✈️ Voyage',bilan:'📊 Bilan',reglages:'⚙️ Réglages',don:'💚 Don'};
+const app=document.getElementById('app');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jm=d=>{ const [y,m,j]=String(d).split('-'); return +j+'/'+ +m; };
+let sb=null, D=null;
+
+function vLogin(msg){
+  app.innerHTML=`<div class="auth"><div class="top" style="justify-content:center"><div class="logo">نية</div><div><h1>Back-office NIYYA</h1><div class="sub">Accès réservé à l'administrateur</div></div></div>
+  <div class="panel"><form onsubmit="event.preventDefault();login()">
+    <label>E-mail</label><input class="inp" id="em" type="email" autocomplete="username" required>
+    <label>Mot de passe</label><input class="inp" id="pw" type="password" autocomplete="current-password" required>
+    <button class="btn pri" style="width:100%;margin-top:14px;padding:12px" type="submit">Se connecter</button></form>
+    ${msg?`<p class="note ko">${esc(msg)}</p>`:''}
+    <p class="note">Même compte que dans l'appli NIYYA.</p></div></div>`;
+}
+async function login(){
+  const {error}=await sb.auth.signInWithPassword({email:document.getElementById('em').value.trim().toLowerCase(),password:document.getElementById('pw').value});
+  if(error) return vLogin('E-mail ou mot de passe incorrect.');
+  charger();
+}
+async function charger(){
+  app.innerHTML='<p class="sub" style="text-align:center;margin-top:20vh">Chargement des statistiques…</p>';
+  const {data,error}=await sb.rpc('niyya_admin');
+  if(error){ if(/administrateur|42501/.test(error.message+error.code)) return vLogin('Ce compte n\'est pas administrateur.'); return vLogin('Erreur : '+error.message); }
+  D=data; vDash();
+}
+function barres(rows,cle,cls){
+  const mx=Math.max(1,...rows.map(r=>+r[cle]||0));
+  return `<div class="chart">${rows.map(r=>`<div class="col" title="${jm(r.jour)} : ${r[cle]}">${+r[cle]?`<div class="n">${r[cle]}</div>`:''}<div class="bar ${cls||''}" style="height:${(+r[cle]||0)/mx*100}%"></div><div class="x">${new Date(r.jour).getDate()}</div></div>`).join('')}</div>`;
+}
+function vDash(){
+  const q=D.quotidien||[], ins=D.inscriptions||[];
+  const s=(a,k)=>a.reduce((t,r)=>t+(+r[k]||0),0);
+  const appli30=s(q,'appli'), web30=s(q,'web'), clics30=s(q,'clics');
+  const pct=D.comptes?Math.round(D.questionnaire_fini/D.comptes*100):0;
+  const mxO=Math.max(1,...(D.onglets||[]).map(o=>+o.j30||0));
+  app.innerHTML=`
+  <div class="top"><div class="logo">نية</div><div><h1>Back-office NIYYA</h1><div class="sub">Mis à jour le ${esc(D.maj)}</div></div><span class="sp"></span>
+    <button class="btn" onclick="charger()">🔄 Actualiser</button><button class="btn" onclick="sb.auth.signOut().then(()=>vLogin())">Déconnexion</button></div>
+  <div class="grid">
+    <div class="kpi k1"><span>👥 Comptes créés</span><b>${D.comptes}</b><small>+${D.nouveaux_7j} ces 7 derniers jours</small></div>
+    <div class="kpi k2"><span>✅ Questionnaire fini</span><b>${D.questionnaire_fini}</b><small>${pct} % des comptes</small></div>
+    <div class="kpi k3"><span>🔥 Actifs aujourd'hui</span><b>${D.actifs_1j}</b><small>ont enregistré une saisie (24 h)</small></div>
+    <div class="kpi k4"><span>📅 Actifs 7 jours</span><b>${D.actifs_7j}</b><small>${D.actifs_30j} sur 30 jours</small></div>
+    <div class="kpi k5"><span>📱 Ouvertures depuis l'icône</span><b>${appli30}</b><small>30 j · ${web30} depuis le navigateur</small></div>
+    <div class="kpi k6"><span>👆 Clics sur les onglets</span><b>${clics30}</b><small>sur 30 jours</small></div>
+  </div>
+  <div class="two">
+    <div class="panel"><h2>📈 Inscriptions par jour</h2><div class="sub">30 derniers jours</div>${barres(ins,'nb','g')}</div>
+    <div class="panel"><h2>🔥 Utilisateurs actifs par jour</h2><div class="sub">Appareils ayant ouvert l'appli (compteur anonyme)</div>${barres(q,'actifs')}</div>
+  </div>
+  <div class="two">
+    <div class="panel"><h2>👆 Rapport des clics par onglet</h2><div class="sub">Aujourd'hui · 7 jours · 30 jours (anonyme)</div>
+      ${(D.onglets||[]).length?`<div class="tw"><table><tr><th>Onglet</th><th>Auj.</th><th>7 j</th><th>30 j</th><th style="width:30%"></th></tr>
+      ${D.onglets.map(o=>`<tr><td>${esc(NOMS[o.onglet]||o.onglet)}</td><td>${o.aujourdhui}</td><td>${o.j7}</td><td><b>${o.j30}</b></td><td><div class="hb"><div style="width:${o.j30/mxO*100}%"></div></div></td></tr>`).join('')}</table></div>`:'<p class="note">Pas encore de clics enregistrés.</p>'}</div>
+    <div class="panel"><h2>📍 Villes</h2><div class="sub">Ville choisie dans le questionnaire</div>
+      <div class="tw"><table><tr><th>Ville</th><th>Comptes</th></tr>${(D.villes||[]).map(v=>`<tr><td>${esc(v.ville)}</td><td><b>${v.nb}</b></td></tr>`).join('')}</table></div></div>
+  </div>
+  <div class="panel"><h2>👥 Utilisateurs</h2><div class="sub">Comptes, du plus récent au plus ancien — aucune donnée personnelle de pratique n'est affichée</div>
+    <div class="tw"><table><tr><th>Prénom</th><th>E-mail</th><th>Inscrit le</th><th>Questionnaire</th><th>Ville</th><th>Jours remplis</th><th>Dernière activité</th></tr>
+    ${(D.utilisateurs||[]).map(u=>`<tr><td><b>${esc(u.prenom)}</b></td><td>${esc(u.email)}</td><td>${esc(u.inscrit)}</td><td>${u.questionnaire?'<span class="ok">✓</span>':'<span class="ko">✗</span>'}</td><td>${esc(u.ville)}</td><td>${u.jours}</td><td>${esc(u.derniere||'—')}</td></tr>`).join('')}</table></div>
+    <p class="note">ℹ️ NIYYA n'est pas sur l'App Store : il n'existe donc pas de « téléchargements » au sens strict. Les meilleurs indicateurs sont les <b>comptes créés</b> et les <b>ouvertures depuis l'icône</b> (personnes qui ont ajouté NIYYA à leur écran d'accueil). Les clics et les actifs par jour sont comptés de façon anonyme, à partir du 15/10/2026.</p></div>`;
+}
+(async function(){
+  if(!window.supabase){ app.innerHTML='<p class="note">Impossible de joindre le serveur.</p>'; return; }
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'nya_auth'}});
+  const {data}=await sb.auth.getSession();
+  if(data&&data.session) charger(); else vLogin();
+})();
+</script>
+</body>
+</html>

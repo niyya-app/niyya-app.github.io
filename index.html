@@ -353,7 +353,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261014-192845'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261015-111023'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1310,6 +1310,7 @@ async function pull(){
     if(S.dirty.size||S.cfgDirty) planPush();
     if(!S.pret){ S.pret=true; render(); compter(S.view||'jour'); }
     else if(changed && !document.activeElement?.matches('input,textarea')) render();
+    compterJournee();
   }catch(e){ setSync(e.invalid?'invalid':'off'); if(!S.pret){ S.pret=true; render(); } }
   pulling=false;
 }
@@ -2457,6 +2458,15 @@ function compter(onglet){
   }catch(e){}
   sb.rpc('niyya_compter',{p_onglet:onglet}).then(()=>{},()=>{});
 }
+function compterJournee(){ // 1 « actif » par appareil et par jour + mode d'ouverture (icône / navigateur)
+  if(!S.uid || !sb || location.hash==='#autotest') return;
+  try{
+    const k='nya_actif_'+today(); if(localStorage.getItem(k)) return; localStorage.setItem(k,'1');
+    const icone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+    sb.rpc('niyya_compter',{p_onglet:'actif'}).then(()=>{},()=>{});
+    sb.rpc('niyya_compter',{p_onglet:icone?'lancement_appli':'lancement_web'}).then(()=>{},()=>{});
+  }catch(e){}
+}
 let _stats=null;
 async function chargerStats(){
   const el=document.getElementById('statsBox'); if(el) el.innerHTML='<p class="muted">Chargement…</p>';
@@ -2473,7 +2483,8 @@ function statsPanel(){
        <button class="btn sm mt" onclick="chargerStats()">🔄 Actualiser</button>`;
   return `<div class="panel mt"><h2><span class="ico">📈</span>Statistiques d'utilisation<span class="cnt">admin</span></h2>
     <div class="sub">Ouvertures d'onglets, tous utilisateurs confondus, anonymes (une ouverture comptée au plus toutes les 10 min par personne et par onglet).</div>
-    <div id="statsBox">${body}</div></div>`;
+    <div id="statsBox">${body}</div>
+    <a class="btn pri" style="display:inline-block;margin-top:12px;text-decoration:none" href="admin.html" target="_blank" rel="noopener">🗂️ Ouvrir le back-office complet</a></div>`;
 }
 /* ---------- Horloge (compte à rebours prière) ---------- */
 let lastDay=today();
