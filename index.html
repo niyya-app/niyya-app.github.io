@@ -353,7 +353,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261015-193200'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261016-090723'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1275,7 +1275,7 @@ function prevPrayer(m,t){ let c=null; for(const p of PRAYERS){ if(t[p.i]<=m) c=p
 /* ---------- Jours ---------- */
 function blank(){ return { p:{}, cig:[], sport:false, repos:false, coran:false, lecture:false, famille:false,
   adhM:false, adhS:false, istighfar:0, ba:Array(9).fill(false), prio:[{t:'',ok:false},{t:'',ok:false},{t:'',ok:false}],
-  sadaqa:[], envies:0, fruits:0, eau:0, aime:false, sports:[], reussite:'', ameliorer:'', poids:null, u:0 }; }
+  sadaqa:[], envies:0, fruits:0, eau:0, aime:false, sports:[], nafl:{}, jumua:false, ghusl:false, reussite:'', ameliorer:'', poids:null, u:0 }; }
 function J(k){ k=k||S.sel; if(!S.jours[k]) S.jours[k]=blank(); else S.jours[k]=Object.assign(blank(),S.jours[k]); return S.jours[k]; }
 function has(k){ const d=S.jours[k]; return !!(d && d.u); }
 function touch(k){ k=k||S.sel; J(k).u=Date.now(); S.dirty.add(k); saveLocal(); planPush(); }
@@ -1615,6 +1615,7 @@ function vDin(){
         <div class="hr tnum">${hm(t[p.i])}</div>
         <div class="seg">${PSTAT.map(s=>`<button class="s-${s.k} ${d.p[p.k]===s.k?'on':''}" onclick="setPrayer('${p.k}','${s.k}')">${s.l}</button>`).join('')}</div>
       </div>`).join('')}
+      ${naflPanel()}
     </div>
     <div>
       <div class="hero k-teal">
@@ -1772,7 +1773,7 @@ function vBilan(){
     f.forEach(k=>{ const d=J(k), s=scoreOf(k), sp=Object.fromEntries(s.parts.map(p=>[p.k,p.f]));
       o.score+=s.score; o.pr+=prayCount(k); o.sport+=d.sport?1:0; (d.sports||[]).forEach(x=>{ o.disc=o.disc||{}; o.disc[x]=(o.disc[x]||0)+1; }); o.coran+=d.coran?1:0; o.lecture+=d.lecture?1:0; o.famille+=d.famille?1:0;
       o.ba+=d.ba.filter(Boolean).length; o.fruits=(o.fruits||0)+Math.min(5,d.fruits||0); o.eau=(o.eau||0)+Math.min(6,d.eau||0); o.cig+=d.cig.length; o.cigN++; o.sad+=(d.sadaqa||[]).reduce((a,b)=>a+(+b.m||0),0);
-      doms.religion.push((sp.prieres*3+sp.coran+(d.adhM?1:0)*.5+(d.adhS?1:0)*.5+Math.min(1,d.istighfar/100))/6);
+      doms.religion.push((sp.prieres*3+sp.coran+(d.adhM?1:0)*.5+(d.adhS?1:0)*.5+Math.min(1,d.istighfar/100)+naflN(d)/NAFL.length)/7);
       doms.sante.push(S.cfg.fumeur?(sp.tabac+sp.sport+sp.fruits+sp.eau)/4:(sp.sport+sp.fruits+sp.eau)/3);
       doms.famille.push((sp.famille+baCat(k,'famille'))/2);
       doms.business.push(sp.business);
@@ -2010,7 +2011,7 @@ document.getElementById('sheetBg').addEventListener('click',e=>{ if(e.target.id=
 function bilanTexte(P){
   const lines=[`BILAN NIYYA de ${S.cfg.nom} — ${P} derniers jours (au ${fmtLong(today())})`];
   for(let i=P-1;i>=0;i--){ const k=addDays(today(),-i); if(!has(k)) continue; const d=J(k), s=scoreOf(k);
-    lines.push(`${k} | score ${s.score} | prières ${prayCount(k)}/5 (${PRAYERS.map(p=>p.n[0]+':'+(d.p[p.k]||'-')).join(' ')}) | cig ${d.cig.length}/${targetOf(k)}${d.cig.length?' 1re '+hm(new Date(d.cig[0]).getHours()*60+new Date(d.cig[0]).getMinutes()):''} | sport ${d.sport?((d.sports||[]).length?d.sports.map(sportNom).join('+'):'oui'):d.repos?'repos':'non'} | coran ${d.coran?'oui':'non'} | lecture ${d.lecture?'oui':'non'} | famille ${d.famille?'oui':'non'} | fruits ${d.fruits||0}/5 | eau ${litres(d.eau)} L | Allah aime appliqué ${d.aime?'oui':'non'} | bonnes ${d.ba.filter(Boolean).length}/9 | istighfar ${d.istighfar} | prio ${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length}${d.sadaqa.length?' | sadaqa '+d.sadaqa.reduce((a,b)=>a+(+b.m||0),0)+'€':''}${d.poids?' | poids '+d.poids:''}${d.reussite?' | réussite: '+d.reussite:''}${d.ameliorer?' | à améliorer: '+d.ameliorer:''}`); }
+    lines.push(`${k} | score ${s.score} | prières ${prayCount(k)}/5 (${PRAYERS.map(p=>p.n[0]+':'+(d.p[p.k]||'-')).join(' ')}) | cig ${d.cig.length}/${targetOf(k)}${d.cig.length?' 1re '+hm(new Date(d.cig[0]).getHours()*60+new Date(d.cig[0]).getMinutes()):''} | sport ${d.sport?((d.sports||[]).length?d.sports.map(sportNom).join('+'):'oui'):d.repos?'repos':'non'} | coran ${d.coran?'oui':'non'} | lecture ${d.lecture?'oui':'non'} | famille ${d.famille?'oui':'non'} | fruits ${d.fruits||0}/5 | eau ${litres(d.eau)} L | Allah aime appliqué ${d.aime?'oui':'non'} | bonnes ${d.ba.filter(Boolean).length}/9 | surérogatoires ${naflN(d)}/${NAFL.length}${d.jumua?' | Joumouʿa à la mosquée':''} | istighfar ${d.istighfar} | prio ${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length}${d.sadaqa.length?' | sadaqa '+d.sadaqa.reduce((a,b)=>a+(+b.m||0),0)+'€':''}${d.poids?' | poids '+d.poids:''}${d.reussite?' | réussite: '+d.reussite:''}${d.ameliorer?' | à améliorer: '+d.ameliorer:''}`); }
   const st=tabacStats(); if(S.cfg.fumeur) lines.push(`Tabac : ${st.evitees} cigarettes évitées, ${vieGagnee(st.evitees)} de vie gagnées, ${Math.round(st.eco)} € économisés, objectif actuel ${targetOf(today())}/jour.`);
   return lines.join('\n');
 }
@@ -2532,6 +2533,48 @@ function vCitadelle(){
   return head+th.items.map(duaCard).join('')+`<p class="muted" style="font-size:.72rem;font-weight:600;margin-top:12px">Thèmes inspirés du livre « La Citadelle du musulman » (Sa'id al-Qahtani). Les textes arabes sont copiés des recueils de hadiths et du Coran ; le sens en français est proposé par NIYYA (Coran : trad. Hamidullah).</p>`;
 }
 function vCitadelleVoyage(){ const k=themesCit().findIndex(x=>x.voyage); S.citI=k; S.view='citadelle'; return vCitadelle(); }
+
+/* ---------- Prières surérogatoires et Joumouʿa (sources vérifiées dans les recueils) ---------- */
+const NAFL=[
+  ['fajr2','2 rak\'at avant Fajr'],
+  ['dhuhr','Sunna de Dhuhr (4 avant, 2 après)'],
+  ['maghrib2','2 rak\'at après Maghrib'],
+  ['isha2','2 rak\'at après Isha'],
+  ['duha','Duha (prière du matin)'],
+  ['witr','Witr'],
+  ['qiyam','Prière de la nuit (qiyam / tahajjud)'],
+];
+const NAFL_SRC=[
+  ['« Tout serviteur musulman qui prie pour Allah, chaque jour, douze rak\'at surérogatoires en plus des prescrites, Allah lui bâtit une maison au Paradis. »','Muslim n° 728, d\'après Oumm Habiba'],
+  ['Le Prophète ﷺ ne délaissait jamais quatre rak\'at avant Dhuhr et deux rak\'at avant Fajr.','Al-Boukhari n° 1182, d\'après \'Aïcha'],
+  ['Mon ami ﷺ m\'a recommandé : trois jours de jeûne chaque mois, deux rak\'at de Duha, et le Witr avant de dormir.','Muslim n° 721, d\'après Abou Hourayra'],
+  ['« La meilleure prière après les prières prescrites est la prière de la nuit. »','Muslim n° 1163, d\'après Abou Hourayra'],
+];
+const JUMUA_SRC=[
+  ['« Que celui d\'entre vous qui se rend à la Joumouʿa fasse le ghusl (grande ablution). »','Al-Boukhari n° 877, d\'après Ibn \'Omar'],
+  ['« Le vendredi, les anges se tiennent à la porte de la mosquée et inscrivent les arrivants dans l\'ordre de leur arrivée… »','Al-Boukhari n° 929, d\'après Abou Hourayra'],
+];
+function naflN(d){ return NAFL.filter(([k])=>d.nafl&&d.nafl[k]).length; }
+function toggleNafl(k){ const d=J(); d.nafl=Object.assign({},d.nafl); d.nafl[k]=!d.nafl[k]; vib(); touch(); render(); if(d.nafl[k]) toast('✨ Qu\'Allah accepte ta prière'); }
+function toggleJumua(k){ const d=J(); d[k]=!d[k]; if(k==='jumua'){ if(d.jumua) d.p.dhuhr='mosquee'; else if(d.p.dhuhr==='mosquee') delete d.p.dhuhr; } vib(); touch(); render(); if(d[k]) toast(k==='jumua'?'🕌 Joumouʿa notée, qu\'Allah l\'accepte':'🚿 Ghusl noté'); }
+function srcLines(arr){ return arr.map(([t,r])=>`<div style="font-size:.74rem;font-weight:600;color:var(--muted);margin-top:6px;line-height:1.4">📜 ${esc(t)} <span class="tag">${esc(r)}</span></div>`).join(''); }
+function naflPanel(){
+  const d=J(), n=naflN(d), fri=dateOf(S.sel).getDay()===5;
+  const jum = fri?`<div class="panel mt" style="border-color:#a7f3d0">
+      <h2><span class="ico">🕌</span>Vendredi : la Joumouʿa<span class="cnt">${(d.jumua?1:0)+(d.ghusl?1:0)}/2</span></h2>
+      <div class="checks" style="margin-top:8px">
+        <button class="ck ${d.jumua?'on':''}" onclick="toggleJumua('jumua')"><span class="box"></span>J'ai prié la Joumouʿa à la mosquée</button>
+        <button class="ck ${d.ghusl?'on':''}" onclick="toggleJumua('ghusl')"><span class="box"></span>J'ai fait le ghusl du vendredi</button>
+      </div>${srcLines(JUMUA_SRC)}</div>`:'';
+  return jum+`<div class="panel mt">
+      <button onclick="S.naflOpen=!S.naflOpen;render()" style="all:unset;display:block;width:100%;cursor:pointer">
+        <h2><span class="ico">✨</span>Prières surérogatoires<span class="cnt">${n}/${NAFL.length} <span style="display:inline-block;transform:rotate(${S.naflOpen?180:0}deg)">▾</span></span></h2>
+        <div class="sub" style="margin-bottom:8px">${S.naflOpen?'Sunan, Duha, Witr et prière de la nuit.':'Touche pour ouvrir et cocher tes prières surérogatoires.'}</div>
+        <div class="wbar"><div style="width:${n/NAFL.length*100}%;background:linear-gradient(90deg,#10b981,#14b8a6)"></div></div>
+      </button>
+      ${S.naflOpen?`<div class="checks" style="margin-top:12px">${NAFL.map(([k,l])=>`<button class="ck ${d.nafl&&d.nafl[k]?'on':''}" onclick="toggleNafl('${k}')"><span class="box"></span>${esc(l)}</button>`).join('')}</div>${srcLines(NAFL_SRC)}`:''}
+    </div>`;
+}
 /* ---------- Horloge (compte à rebours prière) ---------- */
 let lastDay=today();
 function tick(){
