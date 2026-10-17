@@ -350,6 +350,25 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .ram .tg.on .box{background:#fde68a}
 .ram .tg.on .box::before{content:"✓"}
 .ram .src{font-size:.7rem;opacity:.85;margin-top:10px;line-height:1.4}
+.prog{border-radius:var(--r);padding:18px;color:#fff;background:linear-gradient(135deg,#7c3aed,#db2777 55%,#f59e0b);box-shadow:0 12px 28px rgba(124,58,237,.25);margin-bottom:14px}
+.prog .niv{font-size:2rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.prog .xpbar{height:12px;border-radius:100px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:10px}
+.prog .xpbar div{height:100%;border-radius:100px;background:linear-gradient(90deg,#fde68a,#fff)}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+@media (min-width:760px){.badges{grid-template-columns:repeat(6,1fr)}}
+.badge{border:1.5px solid var(--line);border-radius:16px;padding:12px 6px;text-align:center;background:var(--card2)}
+.badge .i{font-size:1.9rem;line-height:1.2}
+.badge b{display:block;font-size:.72rem;font-weight:800;margin-top:4px;line-height:1.2}
+.badge small{display:block;font-size:.62rem;color:var(--muted);font-weight:700;margin-top:3px}
+.badge.bl .i{filter:grayscale(1);opacity:.35}
+.badge.bo{border-color:#fbbf24;background:color-mix(in srgb,#fbbf24 12%,var(--card))}
+.badge .pb{height:5px;border-radius:100px;background:var(--line);overflow:hidden;margin-top:5px}
+.badge .pb div{height:100%;background:linear-gradient(90deg,#f59e0b,#ec4899)}
+.fete-bg{position:fixed;inset:0;z-index:85;display:grid;place-items:center;background:rgba(15,23,42,.55);animation:cfond 3.2s ease forwards;cursor:pointer}
+.fete{background:var(--card);border-radius:24px;padding:26px 22px;text-align:center;max-width:320px;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:cbat 3.2s ease forwards}
+.fete .i{font-size:4.2rem;line-height:1.1}
+.fete h3{font-size:1.3rem;font-weight:800;margin-top:6px}
+.fete p{color:var(--muted);font-weight:700;font-size:.9rem;margin-top:4px}
 .hide{display:none!important}
 .tag{display:inline-block;border-radius:100px;padding:2px 9px;font-size:.7rem;font-weight:800;background:var(--card2);border:1px solid var(--line)}
 </style>
@@ -374,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-102926'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-110408'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1312,7 +1331,7 @@ function blank(){ return { p:{}, cig:[], sport:false, repos:false, coran:false, 
   sadaqa:[], envies:0, fruits:0, eau:0, aime:false, sports:[], nafl:{}, jumua:false, ghusl:false, jeune:'', tarawih:false, juz:0, jeuneNafl:false, reussite:'', ameliorer:'', poids:null, u:0 }; }
 function J(k){ k=k||S.sel; if(!S.jours[k]) S.jours[k]=blank(); else S.jours[k]=Object.assign(blank(),S.jours[k]); return S.jours[k]; }
 function has(k){ const d=S.jours[k]; return !!(d && d.u); }
-function touch(k){ k=k||S.sel; J(k).u=Date.now(); S.dirty.add(k); saveLocal(); planPush(); }
+function touch(k){ k=k||S.sel; J(k).u=Date.now(); S.dirty.add(k); saveLocal(); planPush(); clearTimeout(touch._r); touch._r=setTimeout(()=>{ try{ verifRecompenses(); }catch(e){} },600); }
 function saveLocal(){ if(!S.uid) return; lsSet(LS.jours,S.jours); lsSet(LS.cfg,S.cfg); lsSet(LS.dirty,[...S.dirty]); }
 function cfgTouch(){ S.cfg.u=Date.now(); S.cfgDirty=true; saveLocal(); planPush(); }
 
@@ -1542,8 +1561,8 @@ function vJour(){
     <div class="hero k-violet">
       <div class="score-wrap">${ring(sc.score,96)}
         <div><div class="h-lbl">Score du jour</div>
-        <div class="h-sub" style="font-size:.9rem;margin-top:4px">${sc.score>=80?'Journée excellente, mashaAllah 🔥':sc.score>=60?'Belle journée, continue':sc.score>=30?'On avance, un pas après l\'autre':'Chaque case cochée compte'}</div>
-        <div class="h-sub">${streakTxt()}</div></div>
+        <div class="h-sub" style="font-size:.9rem;margin-top:4px">${sc.score>=80?'Journée excellente, mashaAllah 🌟':sc.score>=60?'Belle journée, continue':sc.score>=30?'On avance, un pas après l\'autre':'Chaque case cochée compte'}</div>
+        <div class="h-sub">${streakTxt()}</div>${progCarte(true)}</div>
       </div>
       <div class="chips">${sc.parts.map(p=>`<span class="chip">${p.bonus?'🍽️ '+p.l+' +'+p.pts:p.l+' '+p.pts+'/'+p.max}</span>`).join('')}</div>
     </div>
@@ -1629,7 +1648,7 @@ function sportWeek(k){ // séances du lundi au dimanche
 function streakTxt(){
   let p=0; for(let k=has(today())&&prayCount(today())===5?today():addDays(today(),-1); has(k)&&prayCount(k)===5; k=addDays(k,-1)) p++;
   let s=0; for(let k=today(); ; k=addDays(k,-1)){ const x=S.jours[k]; if(x&&(x.sport||x.repos)) s++; else if(k===today()) continue; else break; if(s>400) break; }
-  const bits=[]; if(p) bits.push(`🔥 ${p} j de suite 5/5 prières`); if(s) bits.push(`💪 ${s} j sport/repos`);
+  const bits=[]; if(p) bits.push(`🕌 ${p} j de suite 5/5 prières`); if(s) bits.push(`💪 ${s} j sport/repos`);
   return bits.join(' · ')||'Commence ta série aujourd\'hui';
 }
 const prayCount=k=>{ const d=S.jours[k]; return d?PRAYERS.filter(p=>['heure','mosquee','retard'].includes((d.p||{})[p.k])).length:0; };
@@ -1834,7 +1853,7 @@ function vBilan(){
     cal+=`<div class="d ${k===S.sel?'sel':''} ${fut?'fut':''}" style="background:${has(k)?scoreColor(s):''};color:${has(k)&&s>0?'#fff':''}" ${fut?'':`onclick="openDay('${k}')"`} title="${s}">${i}</div>`; }
   const sel=S.sel, dsel=J(sel), ssel=scoreOf(sel);
   const delta=(a,b)=>a===null||b===null?'':(a-b>=.05?`<span class="up">▲${(a-b).toFixed(1)}</span>`:a-b<=-.05?`<span class="down">▼${(b-a).toFixed(1)}</span>`:'<span class="muted">=</span>');
-  return `
+  return `${progCarte(false)}<div class="mt"></div>
   <div class="nav" style="position:static;margin-bottom:14px;border-radius:14px;border:1px solid var(--line);padding:5px">
     ${[[7,'7 jours'],[30,'30 jours'],[90,'90 jours'],[365,'1 an']].map(([n,l])=>`<button class="${P===n?'on':''}" style="flex-direction:row;justify-content:center;font-size:.82rem;padding:10px" onclick="setPer(${n})">${l}</button>`).join('')}
   </div>
@@ -2722,6 +2741,92 @@ function jeunePanel(){
     ${dem.liste.length&&!J0.interdit?`<p style="font-size:.8rem;font-weight:700;margin-top:10px">🌙 Demain : jeûne recommandé (${esc(dem.liste.map(x=>x[0]).join(', '))}). Pense au suhur !</p>`:''}
     ${qa?`<div class="row mt" style="flex-wrap:wrap"><span style="font-weight:800;font-size:.86rem">🌙 Jeûnes de Ramadan à rattraper : ${qa}</span><span class="sp"></span><button class="btn sm" onclick="qadaFait()">+1 jour rattrapé</button></div>`:''}
   </div>`;
+}
+
+/* =====================================================================
+   🎮 Progression : points d'expérience, niveaux, badges, séries (🌟, jamais de flamme)
+   Tout est recalculé à partir de l'historique : rien à tricher, rien à perdre.
+   ===================================================================== */
+const NIVEAUX=[[1,'Débutant'],[3,'Apprenti'],[5,'Persévérant'],[8,'Régulier'],[12,'Engagé'],[16,'Constant'],[20,'Discipliné'],[25,'Inspirant'],[32,'Exemplaire'],[40,'Maître de soi']];
+const seuilNiv=n=>150*n*(n-1);                      // XP total pour atteindre le niveau n
+function niveauDe(xp){ let n=1; while(n<60 && xp>=seuilNiv(n+1)) n++; return n; }
+const titreNiv=n=>NIVEAUX.filter(x=>n>=x[0]).pop()[1];
+let _prog=null, _progSig='';
+function progression(){
+  const ks=Object.keys(S.jours).filter(has).sort();
+  const sig=ks.length+'|'+ks.map(k=>S.jours[k].u).reduce((a,b)=>Math.max(a,b),0)+'|'+(S.cfg.u||0);
+  if(_prog && _progSig===sig) return _prog;
+  const sc={}; ks.forEach(k=>{ sc[k]=scoreOf(k).score; });
+  const xp=ks.reduce((t,k)=>t+sc[k],0), niv=niveauDe(xp);
+  const serie=(test)=>{ let n=0; for(let k=today();;k=addDays(k,-1)){ const ok=has(k)&&test(k,J(k)); if(ok) n++; else if(k===today()) continue; else break; if(n>3650) break; } return n; };
+  const meilleure=(test)=>{ let best=0,cur=0,prev=null; for(const k of ks){ if(test(k,J(k))){ cur=(prev&&addDays(prev,1)===k)?cur+1:1; best=Math.max(best,cur); prev=k; } else { cur=0; prev=k; } } return best; };
+  const cpt=(test)=>ks.filter(k=>test(k,J(k))).length;
+  const T={
+    regul:(k)=>sc[k]>=50, prieres:(k,d)=>prayCount(k)===5, coran:(k,d)=>d.coran, sport:(k,d)=>d.sport,
+    tabac:(k,d)=>S.cfg.fumeur!==false&&k>=S.cfg.tabac.debut&&k<today()&&(d.cig||[]).length<=targetOf(k), eau:(k,d)=>(d.eau||0)>=6,
+    jeune:(k,d)=>d.jeuneNafl||d.jeune==='fait', sadaqa:(k,d)=>(d.sadaqa||[]).length>0, ba9:(k,d)=>(d.ba||[]).filter(Boolean).length===9,
+  };
+  const nbBA=ks.reduce((t,k)=>t+(J(k).ba||[]).filter(Boolean).length,0);
+  const nbSad=ks.reduce((t,k)=>t+(J(k).sadaqa||[]).length,0);
+  const maxScore=ks.reduce((m,k)=>Math.max(m,sc[k]),0);
+  const ramadanComplet=(()=>{ const par={}; ks.forEach(k=>{ const h=hijriParts(k); if(h.m===9&&J(k).jeune==='fait') par[h.a]=(par[h.a]||0)+1; }); return Math.max(0,...Object.values(par),0); })();
+  const B=[ // [id, icône, nom, valeur, objectif]
+    ['b1','🌱','Premier pas',ks.length,1],
+    ['b7','🌟','7 jours réguliers',meilleure(T.regul),7],
+    ['b30','💫','30 jours réguliers',meilleure(T.regul),30],
+    ['p7','🕌','7 jours 5/5 prières',meilleure(T.prieres),7],
+    ['p30','🕋','30 jours 5/5 prières',meilleure(T.prieres),30],
+    ['c7','📖','Coran 7 jours d\'affilée',meilleure(T.coran),7],
+    ['c30','📚','Coran 30 jours',cpt(T.coran),30],
+    ['s10','💪','10 séances de sport',cpt(T.sport),10],
+    ['s50','🏅','50 séances de sport',cpt(T.sport),50],
+    ...(S.cfg.fumeur!==false?[['t7','🚭','7 jours d\'objectif tabac',meilleure(T.tabac),7],['t0','🌿','1 jour sans tabac',cpt((k,d)=>k>=S.cfg.tabac.debut&&k<today()&&(d.cig||[]).length===0),1]]:[]),
+    ['e7','💧','7 jours à 1,5 L d\'eau',meilleure(T.eau),7],
+    ['j1','🍽️','Premier jeûne',cpt(T.jeune),1],
+    ['j10','🌙','10 jours de jeûne',cpt(T.jeune),10],
+    ['r30','🌛','Ramadan complet',ramadanComplet,30],
+    ['d1','💚','Première sadaqa',nbSad,1],
+    ['d10','🤲','10 sadaqas',nbSad,10],
+    ['a9','✨','9/9 bonnes actions',cpt(T.ba9),1],
+    ['a100','🌸','100 bonnes actions',nbBA,100],
+    ['m80','⭐','Score de 80',maxScore>=80?1:0,1],
+    ['m100','👑','Journée parfaite (100)',maxScore>=100?1:0,1],
+  ];
+  _prog={xp,niv,titre:titreNiv(niv),serie:serie(T.regul),seriePrieres:serie(T.prieres),badges:B.map(([id,i,n,v,o])=>({id,i,n,v:Math.min(v,o),o,ok:v>=o}))};
+  _progSig=sig; return _prog;
+}
+function fete(icone,titre,msg){
+  try{ navigator.vibrate&&navigator.vibrate([40,40,40,40,80]); }catch(e){}
+  const el=document.createElement('div'); el.className='fete-bg';
+  el.innerHTML=`<div class="fete"><div class="i">${icone}</div><h3>${esc(titre)}</h3><p>${esc(msg)}</p></div>`;
+  el.onclick=()=>el.remove(); document.body.appendChild(el); setTimeout(()=>el.remove(),3300);
+}
+function verifRecompenses(){
+  if(!S.cfg || (typeof S.uid!=='undefined' && !S.uid && typeof vAuth==='function') || location.hash==='#autotest') return;
+  const P=progression(), vus=S.cfg.badgesVus||null;
+  if(vus===null){ S.cfg.badgesVus=P.badges.filter(b=>b.ok).map(b=>b.id); S.cfg.nivVu=P.niv; cfgTouch(); return; } // 1re fois : pas de pluie de badges
+  const nouveaux=P.badges.filter(b=>b.ok&&!vus.includes(b.id));
+  if(P.niv>(S.cfg.nivVu||1)){ S.cfg.nivVu=P.niv; cfgTouch(); setTimeout(()=>fete('🎉','Niveau '+P.niv+' !','Tu deviens « '+P.titre+' ». BarakAllahu fik.'),400); }
+  else if(nouveaux.length){ const b=nouveaux[0]; S.cfg.badgesVus=[...vus,...nouveaux.map(x=>x.id)]; cfgTouch(); setTimeout(()=>fete(b.i,'Nouveau badge','« '+b.n+' » débloqué !'),400); }
+}
+function progCarte(court){
+  const P=progression(), a=seuilNiv(P.niv), b=seuilNiv(P.niv+1), pct=Math.round((P.xp-a)/(b-a)*100);
+  if(court) return `<div class="h-sub" style="margin-top:6px">🏆 Niveau ${P.niv} · ${esc(P.titre)} · ${P.xp} XP${P.serie>1?` · 🌟 ${P.serie} j réguliers`:''}</div>`;
+  const ok=P.badges.filter(x=>x.ok).length;
+  return `<div class="prog">
+    <div class="row"><div><div style="font-weight:800;font-size:.84rem;opacity:.95">🏆 Ma progression</div><div class="niv">Niveau ${P.niv}</div><div style="font-weight:800">${esc(P.titre)}</div></div><span class="sp"></span>
+      <div style="text-align:right"><div style="font-size:1.6rem;font-weight:800">${P.xp}</div><div style="font-size:.74rem;font-weight:700;opacity:.9">points d'expérience</div></div></div>
+    <div class="xpbar"><div style="width:${pct}%"></div></div>
+    <div style="font-size:.76rem;font-weight:700;margin-top:6px;opacity:.95">${b-P.xp} XP avant le niveau ${P.niv+1} · chaque journée rapporte son score en XP</div>
+    <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+      <span class="chip">🌟 Série : ${P.serie} jour${P.serie>1?'s':''} (score ≥ 50)</span>
+      <span class="chip">🕌 ${P.seriePrieres} j de suite 5/5</span>
+      <span class="chip">🏅 ${ok}/${P.badges.length} badges</span>
+    </div></div>
+    <div class="panel"><h2><span class="ico">🏅</span>Mes badges<span class="cnt">${ok}/${P.badges.length}</span></h2>
+      <div class="sub">Ils se débloquent tout seuls selon tes journées.</div>
+      <div class="badges">${P.badges.map(x=>`<div class="badge ${x.ok?'bo':'bl'}"><div class="i">${x.i}</div><b>${esc(x.n)}</b>${x.ok?'<small>Débloqué ✓</small>':`<small>${x.v} / ${x.o}</small><div class="pb"><div style="width:${x.v/x.o*100}%"></div></div>`}</div>`).join('')}</div>
+    </div>`;
 }
 /* ---------- Horloge (compte à rebours prière) ---------- */
 let lastDay=today();
