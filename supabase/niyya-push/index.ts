@@ -2,7 +2,7 @@
 // - action "cle"       : renvoie la clé publique VAPID (générée et stockée par la fonction elle-même au 1er appel)
 // - action "tick"      : appelée chaque minute par pg_cron → notification à l'heure exacte de chaque adhan
 //                        (sans secret : l'appel est idempotent, une prière n'est jamais notifiée deux fois)
-// - action "tick" envoie aussi : 📜 hadith du jour à 8 h et 💡 phrase mindset à 10 h (heure locale de l'utilisateur),
+// - action "tick" envoie aussi : 📜 hadith du jour à 8 h et 💡 phrase mindset à 9 h (heure locale de l'utilisateur),
 //                        contenu lu dans https://niyya-app.github.io/quotidien.json (généré à chaque mise en ligne, identique à l'appli)
 // - action "test"      : envoie une notification de test à un abonnement donné
 // - action "broadcast" : message de l'administrateur à tous les abonnés (lien secret du back-office requis)
@@ -89,7 +89,7 @@ async function quotidien() {
   catch (e) { console.error("quotidien", e); }
   return QUOT?.data || null;
 }
-const RAPPELS = [["h", 8 * 60, "hadith"], ["m", 10 * 60, "mindset"]] as const;
+const RAPPELS = [["h", 8 * 60, "hadith"], ["m", 9 * 60, "mindset"]] as const;
 
 // 📊 Récap de la semaine (dimanche 20 h) : calculé à partir des journées de l'utilisateur, envoyé à lui seul
 const decale = (jour: string, n: number) => { const d = new Date(jour + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
