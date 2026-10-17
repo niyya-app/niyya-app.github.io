@@ -393,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-112648'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-114952'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1372,6 +1372,7 @@ async function pull(){
     if(S.dirty.size||S.cfgDirty) planPush();
     if(!S.pret){ S.pret=true; render(); compter(S.view||'jour'); }
     else if(changed && !document.activeElement?.matches('input,textarea')) render();
+    { let ci=null; try{ ci=localStorage.getItem('nya_import'); }catch(e){} if(ci) importAncien(ci); } // lien d'import automatique (#import=…)
     compterJournee();
   }catch(e){ setSync(e.invalid?'invalid':'off'); if(!S.pret){ S.pret=true; render(); } }
   pulling=false;
@@ -2170,9 +2171,10 @@ async function supprimerCompte(){
   try{ for(const k of Object.values(LS)) if(k!=='nya_ui') localStorage.removeItem(k); }catch(e){}
   await sb.auth.signOut().catch(()=>{}); S.uid=null; S.pret=false; S.authStep='login'; render(); toast('Compte supprimé');
 }
-async function importAncien(){
-  const v=(document.getElementById('oldLien').value||'').trim(); const m=v.match(/k=([0-9a-f]{32,})/i);
+async function importAncien(cle){
+  const v=cle?('k='+cle):((document.getElementById('oldLien')||{}).value||'').trim(); const m=v.match(/k=([0-9a-f]{32,})/i);
   if(!m) return toast('Colle ton ancien lien (avec #k=…)');
+  toast('📂 Import en cours…');
   try{
     const r=await fetch(OLD_URL+'/rest/v1/rpc/niyya_lire',{method:'POST',headers:{apikey:OLD_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_cle:m[1]})});
     if(!r.ok) throw new Error('lien refusé'); const o=await r.json(); let n=0;
@@ -2183,7 +2185,7 @@ async function importAncien(){
     for(const k of ['poidsObj','poidsDepart','sportSemaine','sportsPerso','qadaFaits','zakatFitr','hijriDecal','lecture','qz','badgesVus','nivVu','poids']) if(c[k]!=null){ S.cfg[k]=c[k]; nr++; }
     if(!c.priere||c.priere.methode==='hsc'||!c.lieu){ S.cfg.priere=Object.assign({},S.cfg.priere,{methode:'hsc'}); nr++; } // l'ancienne version utilisait le calendrier de la mosquée An-Nour
     if(nr) cfgTouch();
-    saveLocal(); planPush(); render(); toast(`📂 ${n} journée${n>1?'s':''} importée${n>1?'s':''}${nr?' + tes réglages (tabac, poids, mosquée An-Nour…)':''}`,4500);
+    saveLocal(); try{ localStorage.removeItem('nya_import'); }catch(e){} try{ await push(); }catch(e){ planPush(); } render(); toast(`📂 ${n} journée${n>1?'s':''} importée${n>1?'s':''}${nr?' + tes réglages (tabac, poids, mosquée An-Nour…)':''}`,4500);
   }catch(e){ toast('Import impossible : '+esc(e.message),4000); }
 }
 function setFumeur(v){
@@ -2962,6 +2964,7 @@ async function autotest(){
   if(!window.supabase){ app.innerHTML='<div class="auth"><div class="panel">Impossible de joindre le serveur. Vérifie ta connexion internet puis recharge la page.</div></div>'; document.documentElement.dataset.ok='1'; return; }
   sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'nya_auth'}});
   if(location.hash==='#autotest'){ await autotest(); document.documentElement.dataset.ok='1'; return; }
+  { const mi=location.hash.match(/import=([0-9a-f]{32,})/i); if(mi){ try{ localStorage.setItem('nya_import',mi[1]); }catch(e){} history.replaceState(null,'',location.pathname+location.search); } }
   render(); // écran de connexion en attendant la session
   const recup=/type=recovery/.test(location.hash);
   try{ const {data}=await sb.auth.getSession(); if(recup){ S.authStep='newpass'; render(); } else if(data&&data.session) demarrer(data.session.user); }catch(e){}
