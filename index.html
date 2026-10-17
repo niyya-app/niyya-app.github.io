@@ -393,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-110408'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-111402'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1333,7 +1333,7 @@ function J(k){ k=k||S.sel; if(!S.jours[k]) S.jours[k]=blank(); else S.jours[k]=O
 function has(k){ const d=S.jours[k]; return !!(d && d.u); }
 function touch(k){ k=k||S.sel; J(k).u=Date.now(); S.dirty.add(k); saveLocal(); planPush(); clearTimeout(touch._r); touch._r=setTimeout(()=>{ try{ verifRecompenses(); }catch(e){} },600); }
 function saveLocal(){ if(!S.uid) return; lsSet(LS.jours,S.jours); lsSet(LS.cfg,S.cfg); lsSet(LS.dirty,[...S.dirty]); }
-function cfgTouch(){ S.cfg.u=Date.now(); S.cfgDirty=true; saveLocal(); planPush(); }
+function cfgTouch(){ S.cfg.u=Date.now(); S.cfgDirty=true; saveLocal(); planPush(); if(S.cfg.notifOn&&typeof pushMajParams==='function') pushMajParams(); }
 
 /* =====================================================================
    Synchro Supabase (fonctions liées au compte connecté)
@@ -1952,6 +1952,7 @@ function vReglages(){
     </div>
   </div>
   ${statsPanel()}
+  ${notifPanel()}
   <div class="panel mt"><h2><span class="ico">🔄</span>Mise à jour</h2>
     <div class="sub">Version installée : ${esc(VERSION)}. L'appli se met à jour toute seule ; ce bouton force le rechargement si une nouveauté n'apparaît pas.</div>
     <button class="btn pri" onclick="forcerMaj()">🔄 Mettre à jour maintenant</button></div>
@@ -2828,6 +2829,72 @@ function progCarte(court){
       <div class="badges">${P.badges.map(x=>`<div class="badge ${x.ok?'bo':'bl'}"><div class="i">${x.i}</div><b>${esc(x.n)}</b>${x.ok?'<small>Débloqué ✓</small>':`<small>${x.v} / ${x.o}</small><div class="pb"><div style="width:${x.v/x.o*100}%"></div></div>`}</div>`).join('')}</div>
     </div>`;
 }
+
+/* =====================================================================
+   🔔 Notifications push (heure exacte de l'adhan + annonces de l'administrateur)
+   ===================================================================== */
+let VAPID_PUBLIC=null; // fournie par la fonction niyya-push (action « cle »)
+const PUSH_BASE='https://acalynsfttpchvnomjwb.supabase.co', PUSH_KEY='sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN';
+const SW_PATH='sw.js';
+const NOTIF_PRIERES=[['fajr','Fajr'],['dhuhr','Dhuhr'],['asr','Asr'],['maghrib','Maghrib'],['isha','Isha']];
+const estIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const estInstallee=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+function b64uVersOctets(s){ const p='='.repeat((4-s.length%4)%4), b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from([...b].map(c=>c.charCodeAt(0))); }
+async function swEnregistrer(){ try{ if('serviceWorker' in navigator) await navigator.serviceWorker.register(SW_PATH); }catch(e){} }
+async function pushAbonnement(){ try{ if(!('serviceWorker' in navigator)) return null; const r=await navigator.serviceWorker.getRegistration(); return r&&r.pushManager?await r.pushManager.getSubscription():null; }catch(e){ return null; } }
+async function pushMajEtat(){
+  let e;
+  if(estIOS()&&!estInstallee()) e='ios';
+  else if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)) e='non';
+  else if(Notification.permission==='denied') e='refus';
+  else e=(await pushAbonnement())?'actif':'inactif';
+  if(e!==S.pushEtat){ S.pushEtat=e; if(S.view==='reglages') render(); }
+  return e;
+}
+function pushParams(){
+  const L=(S.cfg&&S.cfg.lieu)||{};
+  return { tz:lieuTz(), lat:L.lat??null, lon:L.lon??null, methode:(S.cfg.priere||{}).methode||'uoif', hsc:typeof isHsc==='function'?isHsc():true,
+           prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0), url:'./' };
+}
+async function pushRpc(fn,args){ const r=await fetch(PUSH_BASE+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:PUSH_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)}); if(!r.ok) throw new Error(await r.text()); }
+async function pushEnvoyerAbo(sub){ await pushRpc('niyya_push_abonner',{p_sub:sub.toJSON(),p_params:pushParams()}); }
+async function activerNotifs(){
+  try{
+    await swEnregistrer();
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){ await pushMajEtat(); return toast('Notifications refusées : autorise-les dans les réglages du téléphone',4000); }
+    const reg=await navigator.serviceWorker.ready;
+    if(!VAPID_PUBLIC){ const r=await fetch(PUSH_BASE+'/functions/v1/niyya-push',{method:'POST',headers:{'Content-Type':'application/json',apikey:PUSH_KEY},body:JSON.stringify({action:'cle'})}); VAPID_PUBLIC=(await r.json()).publique; if(!VAPID_PUBLIC) throw new Error('serveur de notifications indisponible'); }
+    const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uVersOctets(VAPID_PUBLIC)});
+    await pushEnvoyerAbo(sub);
+    S.cfg.notifOn=true; cfgTouch(); await pushMajEtat(); render();
+    toast('🔔 Notifications activées'); testerNotif(true);
+  }catch(e){ toast('Activation impossible : '+esc(e.message||e),5000); }
+}
+async function desactiverNotifs(){
+  try{ const sub=await pushAbonnement(); if(sub){ try{ await pushRpc('niyya_push_desabonner',{p_endpoint:sub.endpoint}); }catch(e){} await sub.unsubscribe(); } }catch(e){}
+  S.cfg.notifOn=false; cfgTouch(); await pushMajEtat(); render(); toast('🔕 Notifications désactivées');
+}
+async function testerNotif(silencieux){
+  const sub=await pushAbonnement(); if(!sub) return toast('Active d\'abord les notifications');
+  try{ const r=await fetch(PUSH_BASE+'/functions/v1/niyya-push',{method:'POST',headers:{'Content-Type':'application/json',apikey:PUSH_KEY},body:JSON.stringify({action:'test',endpoint:sub.endpoint})}); const o=await r.json(); if(!silencieux) toast(o.ok?'📨 Notification de test envoyée':'Échec : '+esc(o.erreur||'inconnu'),4000); }
+  catch(e){ if(!silencieux) toast('Échec de l\'envoi de test',4000); }
+}
+let _pushMajT=null;
+function pushMajParams(){ clearTimeout(_pushMajT); _pushMajT=setTimeout(async()=>{ const sub=await pushAbonnement(); if(sub) try{ await pushEnvoyerAbo(sub); }catch(e){} },1500); }
+function notifBascule(k){ const off=new Set(S.cfg.notifOff||[]); off.has(k)?off.delete(k):off.add(k); S.cfg.notifOff=[...off]; cfgTouch(); pushMajParams(); render(); }
+function notifPanel(){
+  const e=S.pushEtat||'inactif', off=S.cfg.notifOff||[];
+  const corps = e==='ios'?`<div class="coach" style="font-size:.84rem;font-weight:600;line-height:1.55">📱 Sur iPhone, les notifications ne marchent que si NIYYA est <b>installée sur l'écran d'accueil</b> :<br>1. Dans Safari, bouton Partager ⬆️ → <b>« Sur l'écran d'accueil »</b>.<br>2. Ouvre NIYYA <b>depuis l'icône</b>, puis reviens ici.</div>`
+    : e==='non'?`<p class="muted" style="font-size:.84rem;font-weight:600">Ce navigateur ne permet pas les notifications. Sur iPhone, mets à jour iOS (16.4 minimum) et installe NIYYA sur l'écran d'accueil.</p>`
+    : e==='refus'?`<div class="coach" style="font-size:.84rem;font-weight:600">🔕 Les notifications ont été refusées. Pour les autoriser : <b>Réglages de l'iPhone → Notifications → NIYYA</b> (ou les réglages du site dans ton navigateur), puis reviens ici.</div>`
+    : e==='actif'?`<p style="font-weight:800;color:var(--emerald-d)">✅ Activées : tu es prévenu à l'heure exacte de l'adhan.</p>
+        <label class="f">Prières à notifier</label><div class="opt">${NOTIF_PRIERES.map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
+        <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>`
+    : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, ainsi que les annonces de NIYYA.</p>
+        <button class="btn pri" onclick="activerNotifs()">🔔 Activer les notifications</button>`;
+  return `<div class="panel mt"><h2><span class="ico">🔔</span>Notifications de prière</h2>${corps}</div>`;
+}
 /* ---------- Horloge (compte à rebours prière) ---------- */
 let lastDay=today();
 function tick(){
@@ -2895,6 +2962,7 @@ async function autotest(){
   sb.auth.onAuthStateChange((ev,ses)=>{ if(ev==='SIGNED_OUT' && S.uid){ S.uid=null; S.pret=false; render(); }
     if(ev==='PASSWORD_RECOVERY'){ S.uid=null; S.authStep='newpass'; render(); } });
   document.documentElement.dataset.ok='1'; // utilisé par le test automatique avant publication
+  if(location.hash!=='#autotest'){ swEnregistrer().then(()=>pushMajEtat()); }
   checkUpdate();
   setInterval(()=>{ if(S.uid && document.visibilityState==='visible') pull(); },30000);
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(S.uid) pull(); tick(); checkUpdate(); } else if(S.dirty.size||S.cfgDirty) push(); });

@@ -85,7 +85,16 @@ async function charger(){
     if(CLE && /PGRST202|schema cache|Could not find/.test((error.code||'')+error.message)){ app.innerHTML='<div class="auth"><div class="panel"><h2>⏳ Base pas encore installée</h2><p class="note">Le back-office est prêt, mais le code SQL n\'a pas encore été lancé dans Supabase (projet niyya → SQL Editor). Une fois fait, recharge cette page.</p></div></div>'; return; }
     if(CLE){ CLE=null; try{ localStorage.removeItem('nya_admin_k'); }catch(e){} return vLogin('Lien d\'accès invalide ou expiré.'); }
     if(/administrateur|42501/.test(error.message+error.code)) return vLogin('Ce compte n\'est pas administrateur.'); return vLogin('Erreur : '+error.message); }
-  D=data; vDash();
+  D=data; (D.onglets||[]).sort((p,q)=>(+q.j30||0)-(+p.j30||0)); vDash();
+}
+async function annoncer(){
+  const t=document.getElementById('anT').value.trim(), m=document.getElementById('anM').value.trim(), r=document.getElementById('anR');
+  if(!m) return r.textContent='Écris un message.';
+  if(!confirm('Envoyer cette notification à tous les utilisateurs abonnés ?')) return;
+  r.textContent='Envoi…';
+  try{ const x=await fetch(SB_URL+'/functions/v1/niyya-push',{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY},body:JSON.stringify({action:'broadcast',cle:CLE,titre:t||'NIYYA',message:m})}); const o=await x.json();
+    r.textContent=o.ok?`✅ Envoyée à ${o.envoyes} appareil(s) sur ${o.abonnes} abonné(s).`:'❌ '+(o.erreur||'échec'); }
+  catch(e){ r.textContent='❌ Erreur réseau'; }
 }
 function barres(rows,cle,cls){
   const mx=Math.max(1,...rows.map(r=>+r[cle]||0));
@@ -119,6 +128,10 @@ function vDash(){
     <div class="panel"><h2>📍 Villes</h2><div class="sub">Ville choisie dans le questionnaire</div>
       <div class="tw"><table><tr><th>Ville</th><th>Comptes</th></tr>${(D.villes||[]).map(v=>`<tr><td>${esc(v.ville)}</td><td><b>${v.nb}</b></td></tr>`).join('')}</table></div></div>
   </div>
+  ${CLE?`<div class="panel"><h2>📣 Envoyer une notification à tous</h2><div class="sub">Tous les utilisateurs qui ont activé les notifications la recevront tout de suite.</div>
+    <label>Titre</label><input class="inp" id="anT" maxlength="80" placeholder="Ex. Ramadan approche 🌙">
+    <label>Message</label><textarea class="inp" id="anM" rows="3" maxlength="300" placeholder="Ex. Le mois béni commence dans 3 jours, préparons-nous !"></textarea>
+    <button class="btn pri" style="margin-top:12px" onclick="annoncer()">📣 Envoyer à tous</button><span id="anR" class="note" style="margin-left:10px"></span></div>`:''}
   <div class="panel"><h2>👥 Utilisateurs</h2><div class="sub">Comptes, du plus récent au plus ancien — aucune donnée personnelle de pratique n'est affichée</div>
     <div class="tw"><table><tr><th>Prénom</th><th>E-mail</th><th>Inscrit le</th><th>Questionnaire</th><th>Ville</th><th>Jours remplis</th><th>Dernière activité</th></tr>
     ${(D.utilisateurs||[]).map(u=>`<tr><td><b>${esc(u.prenom)}</b></td><td>${esc(u.email)}</td><td>${esc(u.inscrit)}</td><td>${u.questionnaire?'<span class="ok">✓</span>':'<span class="ko">✗</span>'}</td><td>${esc(u.ville)}</td><td>${u.jours}</td><td>${esc(u.derniere||'—')}</td></tr>`).join('')}</table></div>
