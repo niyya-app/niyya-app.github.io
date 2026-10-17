@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-181001'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-181320'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1507,8 +1507,21 @@ function ouvrir(cible){
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
   S.sel=today(); S.mindIdx=null; S.hadIdx=null;
   go(cible==='recap'?'bilan':'jour');
+  if(/^priere-/.test(cible)) versetPriere(cible.slice(7));
   const id={hadith:'cHadith',mindset:'cMindset'}[cible];
   if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
+}
+// Verset envoyé avec l'adhan, affiché EN ENTIER (la notification de l'iPhone le coupe)
+async function versetPriere(k){
+  const idx=['fajr','dhuhr','asr','maghrib','isha'].indexOf(k); if(idx<0) return;
+  let v=null; try{ const r=await fetch('quotidien.json?t='+today(),{cache:'no-cache'}); const o=await r.json(); v=(o[today()]&&o[today()].v||[])[idx]; }catch(e){}
+  if(!v) return;
+  const nom={fajr:'Fajr',dhuhr:'Dhuhr',asr:'Asr',maghrib:'Maghrib',isha:'Isha'}[k];
+  openSheet(`<h2 style="margin:0 0 4px">📖 Verset de ${nom}</h2>
+    <div class="sub">Envoyé avec l'adhan d'aujourd'hui · traduction Hamidullah</div>
+    <div class="quote k-emerald" style="margin-top:12px"><p style="font-size:1.05rem;line-height:1.55">« ${esc(v[0])} »</p><div class="src">${esc(v[1])}</div></div>
+    <p style="margin:12px 0 0;font-weight:700">C'est l'heure de la prière. Qu'Allah l'accepte. 🤲</p>
+    <button class="btn pri mt" onclick="closeSheet()">Fermer</button>`);
 }
 function go(v){ S.scoreOpen=false; S.ouv={}; if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
 function setDay(k){ S.sel=k>today()?today():k; render(); }

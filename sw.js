@@ -57,7 +57,7 @@ self.addEventListener('push', e => {
 
 // Toucher une notification ouvre directement le bon écran
 function cibleDe(tag) {
-  if (/^priere-/.test(tag)) return 'priere';
+  if (/^priere-/.test(tag)) return tag; // ex. priere-asr : l'appli affiche le verset en entier
   if (tag === 'hadith' || tag === 'mindset' || tag === 'recap') return tag;
   return 'jour';
 }
