@@ -48,7 +48,7 @@ function partsTz(d: Date, tz: string) {
 }
 const hm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
-function horaires(params: any, now: Date): { tz: string; t: number[]; jour: string; min: number; vendredi: boolean } {
+function horaires(params: any, now: Date): { tz: string; t: number[]; jour: string; min: number; vendredi: boolean; dimanche: boolean } {
   const hsc = !!params.hsc;
   const tz = hsc ? "Europe/Paris" : (params.tz || "Europe/Paris");
   const P = partsTz(now, tz);
@@ -66,7 +66,7 @@ function horaires(params: any, now: Date): { tz: string; t: number[]; jour: stri
     const mn = (x: Date) => partsTz(x, tz).min;
     t = [mn(pt.fajr), mn(pt.sunrise), mn(pt.dhuhr), mn(pt.asr), mn(pt.maghrib), mn(pt.isha)];
   }
-  return { tz, t, jour, min: P.min, vendredi: P.wd === "Fri" };
+  return { tz, t, jour, min: P.min, vendredi: P.wd === "Fri", dimanche: P.wd === "Sun" };
 }
 
 async function envoyer(row: any, payload: Record<string, unknown>) {
@@ -91,6 +91,34 @@ async function quotidien() {
 }
 const RAPPELS = [["h", 8 * 60, "hadith"], ["m", 10 * 60, "mindset"]] as const;
 
+// 📊 Récap de la semaine (dimanche 20 h) : calculé à partir des journées de l'utilisateur, envoyé à lui seul
+const decale = (jour: string, n: number) => { const d = new Date(jour + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+async function recap(uid: string, jour: string) {
+  const { data: jours } = await sb.from("niyya_jours").select("jour, data").eq("user_id", uid).gte("jour", decale(jour, -13)).lte("jour", jour);
+  const { data: prof } = await sb.from("niyya_profils").select("data").eq("user_id", uid).maybeSingle();
+  const debut = decale(jour, -6);
+  const sem = (jours || []).filter((j: any) => j.jour >= debut), avant = (jours || []).filter((j: any) => j.jour < debut);
+  if (!sem.length) return null;
+  let prieres = 0, mosquee = 0, sport = 0, coran = 0;
+  for (const j of sem) {
+    const p = (j.data && j.data.p) || {};
+    for (const v of Object.values(p)) { if (v === "heure" || v === "retard" || v === "mosquee") prieres++; if (v === "mosquee") mosquee++; }
+    if (j.data?.sport) sport++;
+    if (j.data?.coran) coran++;
+  }
+  const lignes = [`🕌 ${prieres}/35 prières${mosquee ? ` (${mosquee} à la mosquée)` : ""}`, `🏃 Sport : ${sport} j · 📖 Coran : ${coran} j`];
+  if (prof?.data?.fumeur) {
+    const moy = (l: any[]) => l.length ? l.reduce((s, j) => s + ((j.data?.cig || []).length), 0) / l.length : null;
+    const m1 = moy(sem), m0 = moy(avant);
+    if (m1 != null) {
+      const diff = m0 != null ? Math.round(m1 - m0) : 0;
+      lignes.push(`🚭 ${Math.round(m1)} cigarettes/jour${m0 != null && diff !== 0 ? ` (${diff > 0 ? "+" : "−"}${Math.abs(diff)} vs semaine passée)` : ""}`);
+    }
+  }
+  lignes.push(prieres >= 30 ? "Superbe semaine, mashaAllah 🌟" : "Chaque pas compte, qu'Allah t'accorde la constance 🤲");
+  return { title: "📊 Ta semaine NIYYA", body: lignes.join("\n"), tag: "recap" };
+}
+
 async function sha256hex(s: string) {
   const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
@@ -107,7 +135,7 @@ Deno.serve(async (req) => {
 
   if (action === "tick") {
     const now = new Date();
-    const { data: subs, error } = await sb.from("niyya_push").select("endpoint, sub, params, dernier, dernier_q").eq("actif", true);
+    const { data: subs, error } = await sb.from("niyya_push").select("endpoint, sub, params, dernier, dernier_q, user_id").eq("actif", true);
     if (error) return rep({ erreur: error.message }, 500);
     let envoyes = 0;
     for (const row of subs || []) {
@@ -136,6 +164,13 @@ Deno.serve(async (req) => {
         const ok = await envoyer(row, payload);
         await sb.from("niyya_push").update({ dernier_q: cleq }).eq("endpoint", row.endpoint);
         if (ok) envoyes++;
+      }
+      if (H.dimanche && H.min === 20 * 60 && params.recap !== false && row.user_id && row.dernier_q !== `${H.jour}|s`) {
+        try {
+          const r = await recap(row.user_id, H.jour);
+          if (r && await envoyer(row, { ...r, url: params.url || "./" })) envoyes++;
+        } catch (e) { console.error("recap", e); }
+        await sb.from("niyya_push").update({ dernier_q: `${H.jour}|s` }).eq("endpoint", row.endpoint);
       }
     }
     return rep({ ok: true, abonnes: (subs || []).length, envoyes });
@@ -174,6 +209,11 @@ Deno.serve(async (req) => {
     if (action === "abonnes") return rep((subs || []).map((r: any) => ({ fin: r.endpoint.slice(-12), user_id: r.user_id, maj_le: r.maj_le, tz: r.params?.tz, hsc: r.params?.hsc })));
     const row = (subs || []).find((r: any) => r.endpoint.endsWith(String(body.fin || "\u0000")));
     if (!row) return rep({ erreur: "abonnement introuvable" }, 404);
+    if (body.type === "s") {
+      if (!row.user_id) return rep({ erreur: "abonnement pas encore rattaché à un compte" }, 409);
+      const r = await recap(row.user_id, horaires(row.params || {}, new Date()).jour);
+      return rep(r ? { ok: await envoyer(row, { ...r, url: row.params?.url || "./" }) } : { erreur: "aucune journée cette semaine" });
+    }
     const x = (await quotidien())?.[horaires(row.params || {}, new Date()).jour];
     if (!x) return rep({ erreur: "contenu du jour introuvable" }, 500);
     const payload = body.type === "h"

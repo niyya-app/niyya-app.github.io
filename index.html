@@ -393,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-124145'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-132715'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1376,6 +1376,8 @@ async function pull(){
     saveLocal(); setSync('ok');
     if(S.dirty.size||S.cfgDirty) planPush();
     if(!S.pret){ S.pret=true; render(); compter(S.view||'jour'); }
+    if(S.ouvrirEnAttente && S.cfg.onb){ const c=S.ouvrirEnAttente; S.ouvrirEnAttente=null; ouvrir(c); }
+    if(!S._aboOk){ S._aboOk=true; pushAbonnement().then(sub=>{ if(sub) pushEnvoyerAbo(sub).catch(()=>{}); }); } // rattache l'abonnement aux notifications à ce compte
     else if(changed && !document.activeElement?.matches('input,textarea')) render();
     { let ci=null; try{ ci=localStorage.getItem('nya_import'); }catch(e){} if(ci) importAncien(ci); } // lien d'import automatique (#import=…)
     compterJournee();
@@ -1497,6 +1499,14 @@ function render(){
   app.innerHTML=head+alerte+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
   tick();
 }
+// Ouverture depuis une notification : ?ouvrir=priere|hadith|mindset|recap
+function ouvrir(cible){
+  if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
+  S.sel=today(); S.mindIdx=null; S.hadIdx=null;
+  go(cible==='recap'?'bilan':'jour');
+  const id={hadith:'cHadith',mindset:'cMindset'}[cible];
+  if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
+}
 function go(v){ if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
 function setDay(k){ S.sel=k>today()?today():k; render(); }
 function shiftDay(n){ setDay(addDays(S.sel,n)); }
@@ -1614,7 +1624,7 @@ function vJour(){
     </div>
   </div>
   <div class="grid g2 mt">
-    <div class="quote k-emerald">
+    <div class="quote k-emerald" id="cHadith">
       <span class="q-tag">📜 Hadith du jour${h[4]?' · '+esc(h[4]):''}</span>
       <p>« ${esc(h[0])} »</p>
       ${h[3]&&S.hadAr?`<div class="ar" style="margin-top:10px">${esc(h[3])}</div>`:''}
@@ -1622,7 +1632,7 @@ function vJour(){
       ${h[3]?`<button class="chip" style="border:none;color:#fff;cursor:pointer;margin-top:8px" onclick="S.hadAr=!S.hadAr;render()">${S.hadAr?'Masquer':'Voir'} le texte arabe</button>`:''}
       <div style="font-size:.66rem;opacity:.8;margin-top:8px">Sens en français proposé par NIYYA, vérifié sur le texte arabe.${h[4]?' Thème inspiré des chapitres de Riyad as-Salihin (imam An-Nawawi).':''} Référence pour retrouver le hadith : sunnah.com ou ton recueil.</div>
     </div>
-    <div class="quote ${b.c}">
+    <div class="quote ${b.c}" id="cMindset">
       <span class="q-tag">💡 Mindset du jour</span>
       <p>${esc(m[1])}</p>
       <div class="src">D'après « ${esc(b.t)} »<button onclick="nextMind()">Une autre ↻</button></div>
@@ -2868,7 +2878,7 @@ function pushParams(){
   const L=(S.cfg&&S.cfg.lieu)||{};
   return { tz:lieuTz(), lat:L.lat??null, lon:L.lon??null, methode:(S.cfg.priere||{}).methode||'uoif', hsc:typeof isHsc==='function'?isHsc():true,
            prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0),
-           hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, url:'./' };
+           hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, recap:(S.cfg.notifOff||[]).indexOf('recap')<0, url:'./' };
 }
 async function pushRpc(fn,args){ let jwt=null; try{ const {data}=await sb.auth.getSession(); jwt=data&&data.session&&data.session.access_token; }catch(e){} const r=await fetch(PUSH_BASE+'/rest/v1/rpc/'+fn,{method:'POST',headers:Object.assign({apikey:PUSH_KEY,'Content-Type':'application/json'},jwt?{Authorization:'Bearer '+jwt}:{}),body:JSON.stringify(args)}); if(!r.ok) throw new Error(await r.text()); }
 async function pushEnvoyerAbo(sub){ await pushRpc('niyya_push_abonner',{p_sub:sub.toJSON(),p_params:pushParams()}); }
@@ -2904,9 +2914,9 @@ function notifPanel(){
     : e==='refus'?`<div class="coach" style="font-size:.84rem;font-weight:600">🔕 Les notifications ont été refusées. Pour les autoriser : <b>Réglages de l'iPhone → Notifications → NIYYA</b> (ou les réglages du site dans ton navigateur), puis reviens ici.</div>`
     : e==='actif'?`<p style="font-weight:800;color:var(--emerald-d)">✅ Activées : tu es prévenu à l'heure exacte de l'adhan.</p>
         <label class="f">Prières à notifier</label><div class="opt">${NOTIF_PRIERES.map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
-        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 10 h']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
+        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 10 h'],['recap','📊 Récap de la semaine · dim. 20 h']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
         <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>`
-    : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, le hadith du jour à 8 h, une phrase mindset à 10 h, ainsi que les annonces de NIYYA.</p>
+    : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, le hadith du jour à 8 h, une phrase mindset à 10 h, ton récap de la semaine le dimanche à 20 h, ainsi que les annonces de NIYYA.</p>
         <button class="btn pri" onclick="activerNotifs()">🔔 Activer les notifications</button>`;
   return `<div class="panel mt"><h2><span class="ico">🔔</span>Notifications de prière</h2>${corps}</div>`;
 }
@@ -2929,8 +2939,9 @@ async function forcerMaj(){ toast('🔄 Mise à jour…'); try{ if(S.dirty.size|
 async function checkUpdate(){
   if(VERSION==='dev') return;
   try{
-    const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}); const t=await r.text();
-    const m=t.match(new RegExp('^const '+'VERSION=\'([^\']+)\'','m'));
+    // petit fichier version.json (quelques octets) au lieu de retélécharger toute la page
+    let m=null; try{ const rv=await fetch('version.json?t='+Date.now(),{cache:'no-store'}); if(rv.ok){ const o=await rv.json(); if(o&&o.v) m=[null,o.v]; } }catch(e){}
+    if(!m){ const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}); const t=await r.text(); m=t.match(new RegExp('^const '+'VERSION=\'([^\']+)\'','m')); }
     if(m && m[1]!==VERSION && sessionStorage.getItem('niyya_maj')!==m[1]){
       sessionStorage.setItem('niyya_maj',m[1]);
       if(S.dirty.size||S.cfgDirty) await push();
@@ -2972,6 +2983,8 @@ async function autotest(){
   sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'nya_auth'}});
   if(location.hash==='#autotest'){ await autotest(); document.documentElement.dataset.ok='1'; return; }
   { const mi=location.hash.match(/import=([0-9a-f]{32,})/i); if(mi){ try{ localStorage.setItem('nya_import',mi[1]); }catch(e){} history.replaceState(null,'',location.pathname+location.search); } }
+  { const mo=new URLSearchParams(location.search).get('ouvrir'); if(mo){ S.ouvrirEnAttente=mo; history.replaceState(null,'',location.pathname+location.hash); } }
+  try{ navigator.serviceWorker&&navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.ouvrir) ouvrir(ev.data.ouvrir); }); }catch(e){}
   render(); // écran de connexion en attendant la session
   const recup=/type=recovery/.test(location.hash);
   try{ const {data}=await sb.auth.getSession(); if(recup){ S.authStep='newpass'; render(); } else if(data&&data.session) demarrer(data.session.user); }catch(e){}

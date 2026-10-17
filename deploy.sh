@@ -26,6 +26,7 @@ if [ -x "$CHROME" ]; then
   echo "✔︎ Autotest fuseau horaire étranger réussi"
 fi
 # contenu des notifications de 8 h (hadith) et 10 h (mindset), identique à l'appli
+printf '{"v":"%s"}\n' "$V" > "$REPO/version.json"
 node "$REPO/gen-quotidien.js" || { echo "❌ Génération de quotidien.json en échec — publication annulée"; exit 1; }
 git add -A
 if git diff --cached --quiet; then echo "ℹ️ Aucun changement — déjà à jour."; exit 0; fi
