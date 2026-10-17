@@ -99,14 +99,20 @@ async function recap(uid: string, jour: string) {
   const debut = decale(jour, -6);
   const sem = (jours || []).filter((j: any) => j.jour >= debut), avant = (jours || []).filter((j: any) => j.jour < debut);
   if (!sem.length) return null;
-  let prieres = 0, mosquee = 0, sport = 0, coran = 0;
+  let prieres = 0, mosquee = 0, sport = 0, coran = 0, essN = 0;
+  // les 6 essentiels choisis par l'utilisateur (par défaut : sport, Coran, lecture, famille, adhkar matin/soir)
+  const HIST = ["sport", "coran", "lecture", "famille", "adhM", "adhS"];
+  const ess: string[] = (Array.isArray(prof?.data?.ess) ? prof.data.ess : HIST).slice(0, 6);
   for (const j of sem) {
+    for (const id of ess) { const d = j.data || {}; if (HIST.includes(id) ? (id === "sport" ? (d.sport || d.repos) : d[id]) : d.essX?.[id]) essN++; }
     const p = (j.data && j.data.p) || {};
     for (const v of Object.values(p)) { if (v === "heure" || v === "retard" || v === "mosquee") prieres++; if (v === "mosquee") mosquee++; }
     if (j.data?.sport) sport++;
     if (j.data?.coran) coran++;
   }
-  const lignes = [`🕌 ${prieres}/35 prières${mosquee ? ` (${mosquee} à la mosquée)` : ""}`, `🏃 Sport : ${sport} j · 📖 Coran : ${coran} j`];
+  const detail = [ess.includes("sport") ? `🏃 Sport : ${sport} j` : "", ess.includes("coran") ? `📖 Coran : ${coran} j` : ""].filter(Boolean).join(" · ");
+  const lignes = [`🕌 ${prieres}/35 prières${mosquee ? ` (${mosquee} à la mosquée)` : ""}`, `✅ Essentiels : ${essN}/${sem.length * 6}`];
+  if (detail) lignes.push(detail);
   if (prof?.data?.fumeur) {
     const moy = (l: any[]) => l.length ? l.reduce((s, j) => s + ((j.data?.cig || []).length), 0) / l.length : null;
     const m1 = moy(sem), m0 = moy(avant);
