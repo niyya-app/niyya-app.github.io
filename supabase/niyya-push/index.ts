@@ -2,6 +2,8 @@
 // - action "cle"       : renvoie la clé publique VAPID (générée et stockée par la fonction elle-même au 1er appel)
 // - action "tick"      : appelée chaque minute par pg_cron → notification à l'heure exacte de chaque adhan
 //                        (sans secret : l'appel est idempotent, une prière n'est jamais notifiée deux fois)
+// - action "tick" envoie aussi : 📜 hadith du jour à 8 h et 💡 phrase mindset à 10 h (heure locale de l'utilisateur),
+//                        contenu lu dans https://niyya-app.github.io/quotidien.json (généré à chaque mise en ligne, identique à l'appli)
 // - action "test"      : envoie une notification de test à un abonnement donné
 // - action "broadcast" : message de l'administrateur à tous les abonnés (lien secret du back-office requis)
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
@@ -79,6 +81,16 @@ async function envoyer(row: any, payload: Record<string, unknown>) {
   }
 }
 
+// Hadith + mindset du jour (fichier généré par l'appli à chaque mise en ligne)
+let QUOT: { data: Record<string, { h: string[]; m: string[] }>; le: number } | null = null;
+async function quotidien() {
+  if (QUOT && Date.now() - QUOT.le < 3600e3) return QUOT.data;
+  try { const r = await fetch("https://niyya-app.github.io/quotidien.json?t=" + Date.now()); if (r.ok) QUOT = { data: await r.json(), le: Date.now() }; }
+  catch (e) { console.error("quotidien", e); }
+  return QUOT?.data || null;
+}
+const RAPPELS = [["h", 8 * 60, "hadith"], ["m", 10 * 60, "mindset"]] as const;
+
 async function sha256hex(s: string) {
   const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
@@ -95,7 +107,7 @@ Deno.serve(async (req) => {
 
   if (action === "tick") {
     const now = new Date();
-    const { data: subs, error } = await sb.from("niyya_push").select("endpoint, sub, params, dernier").eq("actif", true);
+    const { data: subs, error } = await sb.from("niyya_push").select("endpoint, sub, params, dernier, dernier_q").eq("actif", true);
     if (error) return rep({ erreur: error.message }, 500);
     let envoyes = 0;
     for (const row of subs || []) {
@@ -110,6 +122,19 @@ Deno.serve(async (req) => {
         const titre = k === "dhuhr" && H.vendredi ? `🕌 Joumouʿa — ${hm(H.t[i])}` : `🕌 ${nom} — ${hm(H.t[i])}`;
         const ok = await envoyer(row, { title: titre, body: "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲", tag: "priere-" + k, url: params.url || "./" });
         await sb.from("niyya_push").update({ dernier: cle, envoye_le: new Date().toISOString() }).eq("endpoint", row.endpoint);
+        if (ok) envoyes++;
+      }
+      for (const [q, minute, champ] of RAPPELS) {
+        if (params[champ] === false || H.min !== minute) continue;
+        const cleq = `${H.jour}|${q}`;
+        if (row.dernier_q === cleq) continue;
+        const x = (await quotidien())?.[H.jour];
+        if (!x) continue;
+        const payload = q === "h"
+          ? { title: "📜 Hadith du jour", body: `« ${x.h[0]} »\n— ${x.h[1]}`, tag: "hadith", url: params.url || "./" }
+          : { title: "💡 Mindset du jour", body: `« ${x.m[0]} »\n— ${x.m[1]}`, tag: "mindset", url: params.url || "./" };
+        const ok = await envoyer(row, payload);
+        await sb.from("niyya_push").update({ dernier_q: cleq }).eq("endpoint", row.endpoint);
         if (ok) envoyes++;
       }
     }

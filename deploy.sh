@@ -25,6 +25,8 @@ if [ -x "$CHROME" ]; then
   if [ "$AT2" != 'data-autotest="ok"' ]; then echo "❌ Autotest avec un téléphone réglé sur un autre fuseau horaire en échec — publication annulée : ${AT2:-aucun résultat}"; exit 1; fi
   echo "✔︎ Autotest fuseau horaire étranger réussi"
 fi
+# contenu des notifications de 8 h (hadith) et 10 h (mindset), identique à l'appli
+node "$REPO/gen-quotidien.js" || { echo "❌ Génération de quotidien.json en échec — publication annulée"; exit 1; }
 git add -A
 if git diff --cached --quiet; then echo "ℹ️ Aucun changement — déjà à jour."; exit 0; fi
 git commit -q -m "NIYYA $(date '+%Y-%m-%d %H:%M')

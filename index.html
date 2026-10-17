@@ -393,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-121224'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-122631'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2867,7 +2867,8 @@ async function pushMajEtat(){
 function pushParams(){
   const L=(S.cfg&&S.cfg.lieu)||{};
   return { tz:lieuTz(), lat:L.lat??null, lon:L.lon??null, methode:(S.cfg.priere||{}).methode||'uoif', hsc:typeof isHsc==='function'?isHsc():true,
-           prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0), url:'./' };
+           prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0),
+           hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, url:'./' };
 }
 async function pushRpc(fn,args){ const r=await fetch(PUSH_BASE+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:PUSH_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)}); if(!r.ok) throw new Error(await r.text()); }
 async function pushEnvoyerAbo(sub){ await pushRpc('niyya_push_abonner',{p_sub:sub.toJSON(),p_params:pushParams()}); }
@@ -2903,8 +2904,9 @@ function notifPanel(){
     : e==='refus'?`<div class="coach" style="font-size:.84rem;font-weight:600">🔕 Les notifications ont été refusées. Pour les autoriser : <b>Réglages de l'iPhone → Notifications → NIYYA</b> (ou les réglages du site dans ton navigateur), puis reviens ici.</div>`
     : e==='actif'?`<p style="font-weight:800;color:var(--emerald-d)">✅ Activées : tu es prévenu à l'heure exacte de l'adhan.</p>
         <label class="f">Prières à notifier</label><div class="opt">${NOTIF_PRIERES.map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
+        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 10 h']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
         <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>`
-    : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, ainsi que les annonces de NIYYA.</p>
+    : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, le hadith du jour à 8 h, une phrase mindset à 10 h, ainsi que les annonces de NIYYA.</p>
         <button class="btn pri" onclick="activerNotifs()">🔔 Activer les notifications</button>`;
   return `<div class="panel mt"><h2><span class="ico">🔔</span>Notifications de prière</h2>${corps}</div>`;
 }
