@@ -11,7 +11,7 @@ begin
   if auth.uid() is null then return; end if;
   if p_onglet not in ('jour','din','noms','coran','qibla','tabac','voyage','bilan','reglages','don',
                       'actif','lancement_appli','lancement_web','citadelle','notif_msg','notif_cache','notif_url',
-                      'ouvert_priere','ouvert_hadith','ouvert_mindset','ouvert_recap','ouvert_annonce') then return; end if;
+                      'ouvert_priere','ouvert_hadith','ouvert_mindset','ouvert_recap','ouvert_annonce','ouvert_soir') then return; end if;
   insert into public.niyya_stats (jour, onglet, nb) values ((now() at time zone 'Europe/Paris')::date, p_onglet, 1)
   on conflict (jour, onglet) do update set nb = public.niyya_stats.nb + 1;
 end $$;
@@ -20,12 +20,31 @@ end $$;
 create or replace function public.niyya_compter_envoi(p_type text, p_n integer)
 returns void language plpgsql volatile security definer set search_path = public as $$
 begin
-  if p_type not in ('priere','hadith','mindset','recap','annonce') or coalesce(p_n,0) <= 0 then return; end if;
+  if p_type not in ('priere','hadith','mindset','recap','annonce','soir') or coalesce(p_n,0) <= 0 then return; end if;
   insert into public.niyya_stats (jour, onglet, nb) values ((now() at time zone 'Europe/Paris')::date, 'envoi_' || p_type, p_n)
   on conflict (jour, onglet) do update set nb = public.niyya_stats.nb + p_n;
 end $$;
 revoke all on function public.niyya_compter_envoi(text, integer) from public, anon, authenticated;
 grant execute on function public.niyya_compter_envoi(text, integer) to service_role;
+
+-- 1 ter) État du robot des notifications (écrit à chaque passage par niyya-push)
+create table if not exists public.niyya_push_etat (id int primary key default 1, dernier_tick timestamptz, jour date, envoyes_jour int default 0, echecs_jour int default 0, derniere_erreur text);
+alter table public.niyya_push_etat enable row level security;
+revoke all on public.niyya_push_etat from anon, authenticated;
+grant select, insert, update on public.niyya_push_etat to service_role;
+create or replace function public.niyya_robot_passage(p_envoyes integer, p_echecs integer, p_erreur text)
+returns void language plpgsql volatile security definer set search_path = public as $$
+declare j date := (now() at time zone 'Europe/Paris')::date;
+begin
+  insert into public.niyya_push_etat (id, dernier_tick, jour, envoyes_jour, echecs_jour, derniere_erreur)
+  values (1, now(), j, coalesce(p_envoyes,0), coalesce(p_echecs,0), p_erreur)
+  on conflict (id) do update set dernier_tick = now(),
+    envoyes_jour = case when public.niyya_push_etat.jour = j then public.niyya_push_etat.envoyes_jour else 0 end + coalesce(p_envoyes,0),
+    echecs_jour  = case when public.niyya_push_etat.jour = j then public.niyya_push_etat.echecs_jour  else 0 end + coalesce(p_echecs,0),
+    derniere_erreur = coalesce(p_erreur, public.niyya_push_etat.derniere_erreur), jour = j;
+end $$;
+revoke all on function public.niyya_robot_passage(integer, integer, text) from public, anon, authenticated;
+grant execute on function public.niyya_robot_passage(integer, integer, text) to service_role;
 
 -- 2) Données du tableau de bord (fonction interne, jamais appelable directement)
 create or replace function public.niyya_admin_data()
@@ -61,7 +80,10 @@ begin
         'ouvert_j7', coalesce((select sum(nb) from public.niyya_stats where onglet = 'ouvert_'||t and jour > aujourd - 7),0),
         'envoi_j30', coalesce((select sum(nb) from public.niyya_stats where onglet = 'envoi_'||t and jour > aujourd - 30),0),
         'ouvert_j30',coalesce((select sum(nb) from public.niyya_stats where onglet = 'ouvert_'||t and jour > aujourd - 30),0)))
-      from unnest(array['priere','hadith','mindset','recap','annonce']) t), '[]'::jsonb),
+      from unnest(array['priere','hadith','mindset','soir','recap','annonce']) t), '[]'::jsonb),
+    'robot', (select jsonb_build_object('dernier_tick', to_char(e.dernier_tick at time zone 'Europe/Paris','DD/MM HH24:MI'),
+        'minutes', round(extract(epoch from now() - e.dernier_tick)/60), 'envoyes_jour', case when e.jour = aujourd then e.envoyes_jour else 0 end,
+        'echecs_jour', case when e.jour = aujourd then e.echecs_jour else 0 end, 'derniere_erreur', e.derniere_erreur) from public.niyya_push_etat e where e.id = 1),
     'abonnes_notifs', (select count(*) from public.niyya_push where actif),
     'villes', coalesce((select jsonb_agg(jsonb_build_object('ville', v, 'nb', n) order by n desc) from (
         select regexp_replace(coalesce(p.data->'lieu'->>'nom','—'),'\s*\(\d+\)$','') v, count(*) n
@@ -74,7 +96,15 @@ begin
         'ville', regexp_replace(coalesce(p.data->'lieu'->>'nom','—'),'\s*\(\d+\)$',''),
         'jours', (select count(*) from public.niyya_jours j where j.user_id = u.id),
         'derniere', (select to_char(max(j.updated_at) at time zone 'Europe/Paris','DD/MM/YY HH24:MI') from public.niyya_jours j where j.user_id = u.id),
-        'notifs', exists(select 1 from public.niyya_push n where n.user_id = u.id and n.actif)
+        'notifs', exists(select 1 from public.niyya_push n where n.user_id = u.id and n.actif),
+        'id', u.id,
+        'icone', coalesce((p.data->>'vuIcone')::boolean, false),
+        'jours_inscrit', ((now() at time zone 'Europe/Paris')::date - (u.created_at at time zone 'Europe/Paris')::date),
+        -- fidélité : revenu le lendemain de l'inscription / encore actif 7 jours après (null si trop récent)
+        'j1', case when (now() at time zone 'Europe/Paris')::date > (u.created_at at time zone 'Europe/Paris')::date + 1
+                then exists(select 1 from public.niyya_jours j where j.user_id = u.id and j.jour = (u.created_at at time zone 'Europe/Paris')::date + 1) end,
+        'j7', case when (now() at time zone 'Europe/Paris')::date > (u.created_at at time zone 'Europe/Paris')::date + 7
+                then exists(select 1 from public.niyya_jours j where j.user_id = u.id and j.jour >= (u.created_at at time zone 'Europe/Paris')::date + 7) end
       ) order by u.created_at desc) from auth.users u left join public.niyya_profils p on p.user_id = u.id), '[]'::jsonb)
   );
 end $$;

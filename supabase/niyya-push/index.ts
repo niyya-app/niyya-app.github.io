@@ -69,6 +69,7 @@ function horaires(params: any, now: Date): { tz: string; t: number[]; jour: stri
   return { tz, t, jour, min: P.min, vendredi: P.wd === "Fri", dimanche: P.wd === "Sun" };
 }
 
+let ECHECS = 0, ERREUR: string | null = null; // suivi de santé du robot (affiché dans le back-office)
 async function envoyer(row: any, payload: Record<string, unknown>) {
   try {
     await webpush.sendNotification(row.sub, JSON.stringify(payload), { TTL: 1800, urgency: "high" });
@@ -77,6 +78,7 @@ async function envoyer(row: any, payload: Record<string, unknown>) {
     const code = e?.statusCode;
     if (code === 404 || code === 410) await sb.from("niyya_push").update({ actif: false }).eq("endpoint", row.endpoint);
     console.error("push", code, e?.body || e?.message);
+    if (code !== 404 && code !== 410) { ECHECS++; ERREUR = `${new Date().toISOString().slice(0, 16)} · ${code || ""} ${String(e?.body || e?.message || "").slice(0, 120)}`; }
     return false;
   }
 }
@@ -144,7 +146,8 @@ Deno.serve(async (req) => {
     const { data: subs, error } = await sb.from("niyya_push").select("endpoint, sub, params, dernier, dernier_q, user_id").eq("actif", true);
     if (error) return rep({ erreur: error.message }, 500);
     let envoyes = 0;
-    const parType: Record<string, number> = { priere: 0, hadith: 0, mindset: 0, recap: 0 }; // statistiques anonymes d'envoi
+    const parType: Record<string, number> = { priere: 0, hadith: 0, mindset: 0, recap: 0, soir: 0 }; // statistiques anonymes d'envoi
+    ECHECS = 0; ERREUR = null;
     for (const row of subs || []) {
       const params = row.params || {};
       const actives: string[] = Array.isArray(params.prieres) ? params.prieres : PRIERES.map((p) => p[0]);
@@ -177,6 +180,14 @@ Deno.serve(async (req) => {
         await sb.from("niyya_push").update({ dernier_q: cleq }).eq("endpoint", row.endpoint);
         if (ok) envoyes++;
       }
+      // 🌙 rappel doux à 21 h si rien n'a été rempli aujourd'hui (désactivable)
+      if (H.min === 21 * 60 && params.soir !== false && row.user_id && row.dernier_q !== `${H.jour}|r`) {
+        try {
+          const { count } = await sb.from("niyya_jours").select("jour", { count: "exact", head: true }).eq("user_id", row.user_id).eq("jour", H.jour);
+          if (!count && await envoyer(row, { title: "🌙 Ta journée NIYYA", body: "Tu n'as encore rien coché aujourd'hui. 30 secondes pour tes prières et tes essentiels 🤲", tag: "soir", url: params.url || "./" })) { envoyes++; parType.soir++; }
+        } catch (e) { console.error("soir", e); }
+        await sb.from("niyya_push").update({ dernier_q: `${H.jour}|r` }).eq("endpoint", row.endpoint);
+      }
       if (H.dimanche && H.min === 20 * 60 && params.recap !== false && row.user_id && row.dernier_q !== `${H.jour}|s`) {
         try {
           const r = await recap(row.user_id, H.jour);
@@ -186,6 +197,7 @@ Deno.serve(async (req) => {
       }
     }
     for (const [t, n] of Object.entries(parType)) if (n) await sb.rpc("niyya_compter_envoi", { p_type: t, p_n: n });
+    await sb.rpc("niyya_robot_passage", { p_envoyes: envoyes, p_echecs: ECHECS, p_erreur: ERREUR });
     return rep({ ok: true, abonnes: (subs || []).length, envoyes });
   }
 
@@ -213,13 +225,22 @@ Deno.serve(async (req) => {
     return rep({ ok: true, abonnes: (subs || []).length, envoyes: ok });
   }
 
-  // Outils administrateur (lien secret du back-office) : lister les abonnements, envoyer un rappel d'essai à UN abonnement
-  if (action === "abonnes" || action === "essai") {
+  // Outils administrateur (lien secret du back-office) : lister les abonnements, envoyer un rappel d'essai à UN abonnement,
+  // ou un message à UNE personne (« cible » : tous ses téléphones abonnés)
+  if (action === "abonnes" || action === "essai" || action === "cible") {
     const cle = String(body.cle || "");
     if (cle.length < 32) return rep({ erreur: "lien invalide" }, 403);
     const { data: acces } = await sb.from("niyya_admin_acces").select("empreinte").eq("empreinte", await sha256hex(cle)).maybeSingle();
     if (!acces) return rep({ erreur: "lien invalide" }, 403);
     const { data: subs } = await sb.from("niyya_push").select("endpoint, sub, params, user_id, maj_le").eq("actif", true).order("maj_le", { ascending: false });
+    if (action === "cible") {
+      const titre = String(body.titre || "NIYYA").slice(0, 80), message = String(body.message || "").slice(0, 300);
+      const lignes = (subs || []).filter((r: any) => r.user_id && r.user_id === String(body.user_id || ""));
+      if (!message || !lignes.length) return rep({ erreur: lignes.length ? "message vide" : "aucun téléphone abonné pour cette personne" }, 400);
+      let n = 0; for (const r of lignes) if (await envoyer(r, { title: titre, body: message, tag: "annonce-" + Date.now(), url: r.params?.url || "./" })) n++;
+      if (n) await sb.rpc("niyya_compter_envoi", { p_type: "annonce", p_n: n });
+      return rep({ ok: n > 0, envoyes: n });
+    }
     if (action === "abonnes") return rep((subs || []).map((r: any) => ({ fin: r.endpoint.slice(-12), user_id: r.user_id, maj_le: r.maj_le, tz: r.params?.tz, hsc: r.params?.hsc })));
     const row = (subs || []).find((r: any) => r.endpoint.endsWith(String(body.fin || "\u0000")));
     if (!row) return rep({ erreur: "abonnement introuvable" }, 404);

@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-231836'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-233049'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1380,6 +1380,7 @@ async function pull(){
     if(S.dirty.size||S.cfgDirty) planPush();
     if(!S.pret){ S.pret=true; render(); compter(S.view||'jour'); }
     if(S.ouvrirEnAttente && S.cfg.onb){ const c=S.ouvrirEnAttente; S.ouvrirEnAttente=null; ouvrir(c); } else lireClicNotif();
+    if(S.cfg.onb && !S._rappelVu && location.hash!=='#autotest'){ S._rappelVu=true; setTimeout(()=>{ if(!document.getElementById('sheetBg').classList.contains('on')) proposerRappels(false); },2500); }
     if(!S._aboOk){ S._aboOk=true; pushAbonnement().then(sub=>{ if(sub) pushEnvoyerAbo(sub).catch(()=>{}); }); } // rattache l'abonnement aux notifications à ce compte
     else if(changed && !document.activeElement?.matches('input,textarea')) render();
     { let ci=null; try{ ci=localStorage.getItem('nya_import'); }catch(e){} if(ci){ if(S.email===ADMIN_EMAIL) importAncien(ci); else { try{ localStorage.removeItem('nya_import'); }catch(e){} } } } // lien d'import automatique (#import=…) : réservé à l'administrateur
@@ -1497,7 +1498,7 @@ function render(){
   const v={jour:vJour,din:vDin,noms:vNoms,voyage:vCitadelleVoyage,citadelle:vCitadelle,coran:vCoran,qibla:vQibla,tabac:vTabac,bilan:vBilan,reglages:vReglages}[S.view]();
   const alerte = S.sync==='invalid' ? `<div class="hero" style="background:linear-gradient(135deg,#ef4444,#be123c);margin-bottom:14px"><div class="h-lbl">⚠️ Ta session a expiré</div><div class="h-sub" style="margin:6px 0 10px">Tes saisies sont gardées sur cet appareil et seront envoyées dès que tu te reconnectes.</div><button class="btn" style="background:#fff;color:#be123c;border:none" onclick="deconnexion(true)">Me reconnecter</button></div>` : '';
   document.body.classList.toggle('ramadan',estRamadan(S.sel));
-  app.innerHTML=head+alerte+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
+  app.innerHTML=head+alerte+(S.view==='jour'?carteBienvenue():'')+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
   tick();
 }
 // Clic sur une notification noté par le service worker (fiable même si l'appli était déjà ouverte)
@@ -1511,6 +1512,52 @@ async function lireClicNotif(){
 // Journal des derniers clics de notification (sur ce téléphone seulement, pour comprendre une panne)
 function diagNotif(t){ try{ const L=JSON.parse(localStorage.getItem('nya_diag')||'[]'); const d=new Date(); L.unshift(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')} ${t}`); localStorage.setItem('nya_diag',JSON.stringify(L.slice(0,12))); }catch(e){} }
 function diagTexte(){ try{ return JSON.parse(localStorage.getItem('nya_diag')||'[]'); }catch(e){ return []; } }
+/* ---------- Accueil : bienvenue, installation, rappels, invitation ---------- */
+function carteBienvenue(){
+  const C=S.cfg; if(C.bienvenueVue || S.sel!==today()) return '';
+  const debut=(C.consent||'').slice(0,10); if(!debut || addDays(debut,2)<today()) return ''; // les 2 premiers jours seulement
+  return `<div class="panel" style="border:2px solid #facc15;margin-bottom:14px">
+    <h2><span class="ico">👋</span>Bienvenue sur NIYYA</h2>
+    <div class="checks" style="gap:6px;font-size:.88rem;font-weight:600;line-height:1.45">
+      <div>🕌 <b>Prières</b> : touche une prière pour dire si tu l'as faite à l'heure, en retard ou à la mosquée.</div>
+      <div>✅ <b>Mes essentiels</b> : touche une case quand c'est fait. Une seule touche suffit.</div>
+      <div>🤲 <b>Bonnes actions</b> : ouvre la liste et coche-en au moins une, c'est déjà le score maximum.</div>
+      <div>🌙 <b>Le soir</b> : 30 secondes pour ton bilan. Ton score se calcule tout seul.</div>
+    </div>
+    <div class="row mt" style="flex-wrap:wrap;gap:8px">${S.pushEtat!=='actif'?'<button class="btn pri sm" onclick="proposerRappels(true)">🔔 Recevoir les rappels de prière</button>':''}<button class="btn sm" onclick="S.cfg.bienvenueVue=true;cfgTouch();render()">J'ai compris ✓</button></div>
+  </div>`;
+}
+async function proposerRappels(force){
+  const C=S.cfg; const e=await pushMajEtat(); if(e==='actif'||e==='non') return;
+  if(!force){ const p=C.rappelPropose||{n:0,d:''}; if(p.n>=3 || (p.d && addDays(p.d,3)>today())) return; C.rappelPropose={n:p.n+1,d:today()}; cfgTouch(); }
+  const iphoneAInstaller = e==='ios';
+  openSheet(iphoneAInstaller?`<h2 style="margin:0 0 4px">📱 Installe NIYYA sur ton iPhone</h2>
+      <div class="sub">C'est indispensable pour recevoir l'adhan et les rappels. 20 secondes :</div>
+      <div class="checks" style="margin-top:12px;gap:10px;font-weight:600;line-height:1.45">
+        <div><b>1.</b> En bas de Safari, touche le bouton <b>Partager</b> <span style="display:inline-block;border:1.5px solid currentColor;border-radius:6px;padding:0 6px">⬆️</span></div>
+        <div><b>2.</b> Fais défiler et choisis <b>« Sur l'écran d'accueil »</b> ➕</div>
+        <div><b>3.</b> Touche <b>Ajouter</b>, puis ouvre NIYYA <b>depuis la nouvelle icône</b>.</div>
+        <div><b>4.</b> L'appli te proposera alors d'activer les rappels 🔔</div>
+      </div>
+      <p class="muted" style="font-size:.75rem;margin-top:10px">Tu es dans WhatsApp ou un autre appli ? Ouvre d'abord le lien dans <b>Safari</b> (bouton ⋯ → « Ouvrir dans Safari »).</p>
+      <button class="btn pri mt" onclick="closeSheet()">Compris</button>`
+    : e==='refus'?`<h2 style="margin:0 0 4px">🔕 Notifications bloquées</h2><div class="sub">Pour recevoir l'adhan : Réglages de ton téléphone → Notifications → NIYYA → Autoriser.</div><button class="btn mt" onclick="closeSheet()">OK</button>`
+    :`<h2 style="margin:0 0 4px">🔔 Active tes rappels</h2>
+      <div class="sub">Chaque jour, à l'heure exacte :</div>
+      <div class="checks" style="margin-top:10px;gap:6px;font-weight:600">
+        <div>🕌 L'adhan de chaque prière, avec un verset du Coran</div>
+        <div>📜 Le hadith du jour à 8 h · 💡 une phrase mindset à 9 h 30</div>
+        <div>📊 Ton récap de la semaine le dimanche soir</div>
+      </div>
+      <p class="muted" style="font-size:.75rem;margin-top:8px">Tu choisis ensuite ce que tu veux garder dans ⚙️ → 🔔.</p>
+      <button class="btn pri mt" onclick="closeSheet();activerNotifs()">🔔 Activer les rappels</button><button class="btn mt" onclick="closeSheet()">Plus tard</button>`);
+}
+async function inviter(){
+  const url='https://niyya-app.github.io', texte=`Salam ! J'utilise NIYYA pour mes prières, le Coran et mes bonnes habitudes. C'est gratuit, sans pub, et chacun garde ses données pour lui. Essaie : ${url}`;
+  try{ if(navigator.share){ await navigator.share({title:'NIYYA',text:texte}); compter('inviter'); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
+  try{ await navigator.clipboard.writeText(texte); toast('📋 Message copié : colle-le dans WhatsApp ou par SMS',4000); compter('inviter'); }
+  catch(e){ openSheet(`<h2 style="margin:0 0 6px">💌 Inviter un proche</h2><div class="sub">Copie ce message :</div><textarea class="inp" rows="4" readonly>${esc(texte)}</textarea><button class="btn mt" onclick="closeSheet()">Fermer</button>`); }
+}
 function deroul(k){ S.ouv=S.ouv||{}; S.ouv[k]=!S.ouv[k]; render(); }
 // Ouverture depuis une notification : ?ouvrir=priere|hadith|mindset|recap
 function ouvrir(cible){
@@ -1519,7 +1566,7 @@ function ouvrir(cible){
   S.sel=today(); S.mindIdx=null; S.hadIdx=null;
   go(cible==='recap'?'bilan':'jour');
   if(/^priere-/.test(cible)){ const c=S.clicCorps; S.clicCorps=''; versetPriere(cible.slice(7),c); }
-  if(S.diagClic){ compter(S.diagClic); compter('ouvert_'+(/^priere-/.test(cible)?'priere':['hadith','mindset','recap'].includes(cible)?cible:'annonce')); S.diagClic=null; } // taux d'ouverture anonyme
+  if(S.diagClic){ compter(S.diagClic); compter('ouvert_'+(/^priere-/.test(cible)?'priere':['hadith','mindset','recap','soir'].includes(cible)?cible:'annonce')); S.diagClic=null; } // taux d'ouverture anonyme
   const id={hadith:'cHadith',mindset:'cMindset'}[cible];
   if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
 }
@@ -1609,7 +1656,7 @@ function essChoisir(slot,accueil){
   if(slot==null){
     openSheet(`<h2 style="margin:0 0 4px">✅ ${accueil?'Choisis tes 6 essentiels':'Mes 6 essentiels'}</h2><div class="sub">${accueil?'Les 6 habitudes que tu veux tenir chaque jour. Garde celles-ci ou touche une case pour la remplacer (tu pourras changer plus tard).':'Touche une case pour la remplacer. 6 cases, chacune vaut autant dans le score.'}</div>
       <div class="checks" style="margin-top:12px">${L.map((id,i)=>{ const c=essInfo(id); return `<button class="ck" onclick="essChoisir(${i})" style="justify-content:space-between"><span>${esc(c.i||'✅')} <b>${esc(c.t)}</b></span><span class="muted">Changer ›</span></button>`; }).join('')}</div>
-      <button class="btn ${accueil?'pri':''} mt" onclick="closeSheet()">${accueil?'C\'est bon, on commence':'Fermer'}</button>`); return;
+      <button class="btn ${accueil?'pri':''} mt" onclick="${accueil?'closeSheet();setTimeout(()=>proposerRappels(true),300)':'closeSheet()'}">${accueil?'C\'est bon, on continue':'Fermer'}</button>`); return;
   }
   const libres=Object.keys(ESS_CAT).filter(k=>!L.includes(k));
   const perso=Object.keys(S.cfg.essPerso||{}).filter(k=>!L.includes(k));
@@ -1736,7 +1783,8 @@ function vJour(){
       <div class="kv"><span>Fin de journée pro</span><b>${esc(S.cfg.travail.fin)}</b></div>
       <div class="kv"><span>Famille · Maghrib · Isha · bilan</span><b>${hm(timesOf(S.sel)[4])} · ${hm(timesOf(S.sel)[5])}</b></div></div>`}
   </div>
-  ${hr>=17||S.sel!==today()?'':`<div class="mt">${soir}</div>`}`;
+  ${hr>=17||S.sel!==today()?'':`<div class="mt">${soir}</div>`}
+  <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
 function sportWeek(k){ // séances du lundi au dimanche
   const d=dateOf(k), dow=(d.getDay()+6)%7, lun=addDays(k,-dow); let n=0;
@@ -2011,6 +2059,7 @@ function vReglages(){
   <div class="grid g2">
     <div class="panel">
       <h2><span class="ico">👤</span>Général</h2>
+      <button class="btn green" style="margin-bottom:10px" onclick="inviter()">💌 Inviter un proche</button>
       <label class="f">Prénom</label><input class="inp" value="${esc(C.nom)}" onchange="setCfg('nom',this.value)">
       <label class="f">Horaires de travail</label>
       <div class="row"><input class="inp" type="time" value="${esc(C.travail.debut)}" onchange="setCfg('travail.debut',this.value)"><span class="muted">→</span><input class="inp" type="time" value="${esc(C.travail.fin)}" onchange="setCfg('travail.fin',this.value)"></div>
@@ -2663,6 +2712,7 @@ function compterJournee(){ // 1 « actif » par appareil et par jour + mode d'ou
   try{
     const k='nya_actif_'+today(); if(localStorage.getItem(k)) return; localStorage.setItem(k,'1');
     const icone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+    if(icone && !S.cfg.vuIcone){ S.cfg.vuIcone=true; cfgTouch(); }
     sb.rpc('niyya_compter',{p_onglet:'actif'}).then(()=>{},()=>{});
     sb.rpc('niyya_compter',{p_onglet:icone?'lancement_appli':'lancement_web'}).then(()=>{},()=>{});
   }catch(e){}
@@ -2983,7 +3033,7 @@ function pushParams(){
   const L=(S.cfg&&S.cfg.lieu)||{};
   return { tz:lieuTz(), lat:L.lat??null, lon:L.lon??null, methode:(S.cfg.priere||{}).methode||'uoif', hsc:typeof isHsc==='function'?isHsc():true,
            prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0),
-           hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, recap:(S.cfg.notifOff||[]).indexOf('recap')<0, url:'./' };
+           hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, recap:(S.cfg.notifOff||[]).indexOf('recap')<0, soir:(S.cfg.notifOff||[]).indexOf('soir')<0, url:'./' };
 }
 async function pushRpc(fn,args){ let jwt=null; try{ const {data}=await sb.auth.getSession(); jwt=data&&data.session&&data.session.access_token; }catch(e){} const r=await fetch(PUSH_BASE+'/rest/v1/rpc/'+fn,{method:'POST',headers:Object.assign({apikey:PUSH_KEY,'Content-Type':'application/json'},jwt?{Authorization:'Bearer '+jwt}:{}),body:JSON.stringify(args)}); if(!r.ok) throw new Error(await r.text()); }
 async function pushEnvoyerAbo(sub){ await pushRpc('niyya_push_abonner',{p_sub:sub.toJSON(),p_params:pushParams()}); }
@@ -3019,7 +3069,7 @@ function notifPanel(){
     : e==='refus'?`<div class="coach" style="font-size:.84rem;font-weight:600">🔕 Les notifications ont été refusées. Pour les autoriser : <b>Réglages de l'iPhone → Notifications → NIYYA</b> (ou les réglages du site dans ton navigateur), puis reviens ici.</div>`
     : e==='actif'?`<p style="font-weight:800;color:var(--emerald-d)">✅ Activées : tu es prévenu à l'heure exacte de l'adhan.</p>
         <label class="f">Prières à notifier</label><div class="opt">${NOTIF_PRIERES.map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
-        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 9 h 30'],['recap','📊 Récap de la semaine · dim. 20 h']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
+        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 9 h 30'],['recap','📊 Récap de la semaine · dim. 20 h'],['soir','🌙 Rappel à 21 h si rien coché']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
         <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>
         ${diagTexte().length?`<details class="mt"><summary class="muted" style="font-size:.75rem;font-weight:700;cursor:pointer">🔧 Derniers clics sur une notification</summary><div class="muted" style="font-size:.7rem;font-family:ui-monospace,monospace;white-space:pre-wrap;margin-top:6px">${esc(diagTexte().join('\n'))}</div></details>`:''}`
     : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, le hadith du jour à 8 h, une phrase mindset à 9 h 30, ton récap de la semaine le dimanche à 20 h, ainsi que les annonces de NIYYA.</p>
