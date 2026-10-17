@@ -393,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-132715'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-133321'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1449,8 +1449,8 @@ function scoreOf(k){
   parts.push({k:'sport',l:'Sport',f:(d.sport||d.repos)?1:0,txt:d.sport?'fait':d.repos?'repos':'—'});
   parts.push({k:'coran',l:'Coran',f:d.coran?1:0,txt:d.coran?'20 min':'—'});
   parts.push({k:'lecture',l:'Lecture',f:d.lecture?1:0,txt:d.lecture?'20 min':'—'});
-  const nb=d.ba.filter(Boolean).length;
-  parts.push({k:'bonnes',l:'Bonnes actions',f:nb/9,txt:`${nb}/9`});
+  const nb=baNb(d);
+  parts.push({k:'bonnes',l:'Bonnes actions',f:Math.min(1,nb/9),txt:`${nb}/9`});
   parts.push({k:'famille',l:'Famille',f:d.famille?1:0,txt:d.famille?'oui':'—'});
   parts.push({k:'fruits',l:'Fruits',f:Math.min(5,d.fruits||0)/5,txt:`${d.fruits||0}/5`});
   parts.push({k:'eau',l:'Eau',f:Math.min(6,d.eau||0)/6,txt:`${litres(d.eau)} L`});
@@ -1507,7 +1507,7 @@ function ouvrir(cible){
   const id={hadith:'cHadith',mindset:'cMindset'}[cible];
   if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
 }
-function go(v){ if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
+function go(v){ S.scoreOpen=false; if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
 function setDay(k){ S.sel=k>today()?today():k; render(); }
 function shiftDay(n){ setDay(addDays(S.sel,n)); }
 
@@ -1559,7 +1559,7 @@ function tileBtn(key,ico,title,sub,grad,alt){
 function vJour(){
   const d=J(), sc=scoreOf(S.sel);
   const sem=sportWeek(S.sel);
-  const nb=d.ba.filter(Boolean).length;
+  const nb=baNb(d);
   const di=dayOfYear(S.sel);
   const h=HADITHS[S.hadIdx??(di%HADITHS.length)];
   const mi=S.mindIdx??((di*7)%MINDSET.length); const m=MINDSET[mi]; const b=BOOKS[m[0]];
@@ -1574,14 +1574,17 @@ function vJour(){
     </div>`;
   return `
   <div class="grid g2">
-    <div class="hero k-violet">
+    ${!S.scoreOpen?`<button onclick="S.scoreOpen=true;render()" style="all:unset;box-sizing:border-box;display:block;cursor:pointer;width:100%" aria-label="Voir mon score du jour"><div class="hero k-violet" style="margin:0">
+      <div class="row" style="justify-content:space-between;align-items:center;gap:10px"><div><div class="h-lbl">⭐ Score du jour</div><div class="h-sub" style="font-size:.9rem;margin-top:4px">Touche pour voir ton score</div></div><span style="font-size:1.4rem;font-weight:800">▾</span></div>
+    </div></button>`:`<div class="hero k-violet">
+      <button class="scoreFermer" onclick="S.scoreOpen=false;render()" style="all:unset;cursor:pointer;float:right;font-size:1.4rem;font-weight:800;padding:0 4px" aria-label="Masquer le score">▴</button>
       <div class="score-wrap">${ring(sc.score,96)}
         <div><div class="h-lbl">Score du jour</div>
         <div class="h-sub" style="font-size:.9rem;margin-top:4px">${sc.score>=80?'Journée excellente, mashaAllah 🌟':sc.score>=60?'Belle journée, continue':sc.score>=30?'On avance, un pas après l\'autre':'Chaque case cochée compte'}</div>
         <div class="h-sub">${streakTxt()}</div>${progCarte(true)}</div>
       </div>
       <div class="chips">${sc.parts.map(p=>`<span class="chip">${p.bonus?'🍽️ '+p.l+' +'+p.pts:p.l+' '+p.pts+'/'+p.max}</span>`).join('')}</div>
-    </div>
+    </div>`}
     ${heroPriere()}
   </div>
   <div class="grid g2 mt">
@@ -1620,7 +1623,12 @@ function vJour(){
         <div class="wbar"><div style="width:${nb/9*100}%;background:linear-gradient(90deg,#10b981,#14b8a6)"></div></div>
       </button>
       ${S.baOpen?`<div class="checks" style="margin-top:12px">${baJour(S.sel).map((id,i)=>{ const a=BA_POOL[id], h=a[1]>=0?HADITHS[a[1]]:null, src=h?`📜 « ${esc(h[0].length>110?h[0].slice(0,108)+'…':h[0])} » — ${esc(h[1])}`:`📖 « ${esc(a[3])} » — Coran, ${esc(SURATES[parseInt(a[4])-1][2])} ${esc(a[4])}`; return `<button class="ck ${d.ba[i]?'on':''}" onclick="ba(${i})" style="align-items:flex-start"><span class="box" style="margin-top:2px"></span><span>${esc(a[0])}<small style="display:block;font-weight:600;color:var(--muted);font-size:.72rem;margin-top:3px;line-height:1.35">${src}</small></span></button>`; }).join('')}
-        <p class="muted" style="font-size:.7rem;font-weight:600;margin-top:4px">9 nouvelles actions chaque jour, chacune appuyée par un verset du Coran (trad. Hamidullah) ou un hadith authentique vérifié (Bukhari / Muslim).</p></div>`:''}
+        <p class="muted" style="font-size:.7rem;font-weight:600;margin-top:4px">9 nouvelles actions chaque jour, chacune appuyée par un verset du Coran (trad. Hamidullah) ou un hadith authentique vérifié (Bukhari / Muslim).</p>
+        <div style="margin-top:14px;font-weight:800;font-size:.9rem">✍️ Mes bonnes actions</div>
+        <div class="sub" style="margin:2px 0 8px">Tu as fait une bonne action qui n'est pas dans la liste ? Ajoute-la, elle compte dans ton score.</div>
+        ${(d.baPerso||[]).length?`<div class="checks">${d.baPerso.map((x,k)=>`<div class="prio"><button class="ck ${x.ok?'on':''}" onclick="baP(${k})" aria-label="Fait"><span class="box"></span></button><span style="flex:1;font-weight:700;align-self:center">${esc(x.t)}</span><button class="btn sm" onclick="baPSuppr(${k})" aria-label="Retirer" title="Retirer">✕</button></div>`).join('')}</div>`:''}
+        <div class="row mt"><input class="inp" id="baPIn" maxlength="80" placeholder="Ex. Aider un voisin, appeler ma mère…" onkeydown="if(event.key==='Enter')baPAjout()" style="flex:1"><button class="btn green" onclick="baPAjout()">Ajouter</button></div>
+        ${(()=>{ const deja=(d.baPerso||[]).map(x=>x.t.toLowerCase()), L=(S.cfg.baPersoListe||[]).map((t,k)=>[t,k]).filter(([t])=>!deja.includes(t.toLowerCase())); return L.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${L.map(([t,k])=>`<span class="chip" style="background:#ecfdf5;color:#047857;display:inline-flex;gap:6px;align-items:center"><button onclick="baPFav(${k})" style="all:unset;cursor:pointer;font-weight:800">+ ${esc(t)}</button><button onclick="baPOubli(${k})" style="all:unset;cursor:pointer;opacity:.6" aria-label="Oublier">✕</button></span>`).join('')}</div>`:''; })()}</div>`:''}
     </div>
   </div>
   <div class="grid g2 mt">
@@ -1847,7 +1855,7 @@ function vBilan(){
     const doms={religion:[],sante:[],famille:[],business:[],devperso:[],bonnes:[]};
     f.forEach(k=>{ const d=J(k), s=scoreOf(k), sp=Object.fromEntries(s.parts.map(p=>[p.k,p.f]));
       o.score+=s.score; o.pr+=prayCount(k); o.sport+=d.sport?1:0; (d.sports||[]).forEach(x=>{ o.disc=o.disc||{}; o.disc[x]=(o.disc[x]||0)+1; }); o.coran+=d.coran?1:0; o.lecture+=d.lecture?1:0; o.famille+=d.famille?1:0;
-      o.ba+=d.ba.filter(Boolean).length; o.fruits=(o.fruits||0)+Math.min(5,d.fruits||0); o.eau=(o.eau||0)+Math.min(6,d.eau||0); o.cig+=d.cig.length; o.cigN++; o.sad+=(d.sadaqa||[]).reduce((a,b)=>a+(+b.m||0),0);
+      o.ba+=baNb(d); o.fruits=(o.fruits||0)+Math.min(5,d.fruits||0); o.eau=(o.eau||0)+Math.min(6,d.eau||0); o.cig+=d.cig.length; o.cigN++; o.sad+=(d.sadaqa||[]).reduce((a,b)=>a+(+b.m||0),0);
       doms.religion.push((sp.prieres*3+sp.coran+(d.adhM?1:0)*.5+(d.adhS?1:0)*.5+Math.min(1,d.istighfar/100)+naflN(d)/NAFL.length+((d.jeune==='fait'||d.jeuneNafl)?1:0))/(estRamadan(k)?8:7));
       doms.sante.push(S.cfg.fumeur?(sp.tabac+sp.sport+sp.fruits+sp.eau)/4:(sp.sport+sp.fruits+sp.eau)/3);
       doms.famille.push((sp.famille+baCat(k,'famille'))/2);
@@ -2032,7 +2040,21 @@ function envieOk(){ const d=J(); d.envies=(d.envies||0)+1; touch(); closeSheet()
 function fruit(n){ const d=J(); d.fruits=(d.fruits||0)===n?n-1:n; vib(); touch(); render(); if(d.fruits===5) toast('🍎 5 fruits & légumes, ton corps te dit merci'); }
 function eau(n){ const d=J(); d.eau=(d.eau||0)===n?n-1:n; vib(); touch(); render(); if(d.eau===6) toast('💧 1,5 L bu, bravo !'); }
 const litres=n=>((n||0)*0.25).toFixed(2).replace(/0$/,'').replace('.',',');
-function ba(i){ const d=J(); if(!d.baIds) d.baIds=baJour(S.sel); d.ba[i]=!d.ba[i]; vib(); touch(); render(); if(d.ba[i]&&d.ba.every(Boolean)) toast('🌟 9/9 bonnes actions, qu\'Allah accepte'); }
+// ✍️ Bonnes actions ajoutées à la main (en plus des 9 du jour)
+const baNb=d=>(d.ba||[]).filter(Boolean).length+(d.baPerso||[]).filter(x=>x.ok).length;
+function baPAjout(t){
+  const el=document.getElementById('baPIn'); t=String(t??(el?el.value:'')).trim().slice(0,80); if(!t) return toast('Écris ta bonne action');
+  const d=J(); d.baPerso=d.baPerso||[];
+  if(d.baPerso.some(x=>x.t.toLowerCase()===t.toLowerCase())) return toast('Déjà dans ta liste du jour');
+  d.baPerso.push({t,ok:true}); vib();
+  const L=(S.cfg.baPersoListe||[]).filter(x=>x.toLowerCase()!==t.toLowerCase()); S.cfg.baPersoListe=[t,...L].slice(0,12); cfgTouch();
+  touch(); render(); toast('🤲 Ajoutée, qu\'Allah accepte');
+}
+function baPFav(i){ const t=(S.cfg.baPersoListe||[])[i]; if(t) baPAjout(t); }
+function baPOubli(i){ (S.cfg.baPersoListe||[]).splice(i,1); cfgTouch(); render(); }
+function baP(i){ const d=J(); if(!d.baPerso||!d.baPerso[i]) return; d.baPerso[i].ok=!d.baPerso[i].ok; vib(); touch(); render(); }
+function baPSuppr(i){ const d=J(); if(!d.baPerso) return; d.baPerso.splice(i,1); touch(); render(); }
+function ba(i){ const d=J(); if(!d.baIds) d.baIds=baJour(S.sel); d.ba[i]=!d.ba[i]; vib(); touch(); render(); if(d.ba[i]&&baNb(d)===9) toast('🌟 9/9 bonnes actions, qu\'Allah accepte'); }
 function prioOk(i){ const d=J(); d.prio[i].ok=!d.prio[i].ok; vib(); touch(); render(); }
 function prioTxt(i,v){ J().prio[i].t=v; touch(); }
 function setTxt(k,v){ J()[k]=v; touch(); }
@@ -2788,7 +2810,7 @@ function progression(){
   const T={
     regul:(k)=>sc[k]>=50, prieres:(k,d)=>prayCount(k)===5, coran:(k,d)=>d.coran, sport:(k,d)=>d.sport,
     tabac:(k,d)=>S.cfg.fumeur!==false&&k>=S.cfg.tabac.debut&&k<today()&&(d.cig||[]).length<=targetOf(k), eau:(k,d)=>(d.eau||0)>=6,
-    jeune:(k,d)=>d.jeuneNafl||d.jeune==='fait', sadaqa:(k,d)=>(d.sadaqa||[]).length>0, ba9:(k,d)=>(d.ba||[]).filter(Boolean).length===9,
+    jeune:(k,d)=>d.jeuneNafl||d.jeune==='fait', sadaqa:(k,d)=>(d.sadaqa||[]).length>0, ba9:(k,d)=>baNb(d)>=9,
   };
   const nbBA=ks.reduce((t,k)=>t+(J(k).ba||[]).filter(Boolean).length,0);
   const nbSad=ks.reduce((t,k)=>t+(J(k).sadaqa||[]).length,0);
@@ -2967,7 +2989,7 @@ async function autotest(){
   for(const pr of profils){
     try{
       S.uid='autotest-'+pr.nom; S.email='test@niyya'; S.cfg=merge(DEF_CFG,pr); S.jours={}; S.dirty=new Set(); S.pret=true; S.sel=today();
-      const d=J(today()); d.cig=[Date.now()]; d.sport=true; d.ba[0]=true; d.fruits=3; d.eau=2; d.p.fajr='heure'; d.u=Date.now();
+      const d=J(today()); d.cig=[Date.now()]; d.sport=true; d.ba[0]=true; d.baPerso=[{t:'Test <b>',ok:true}]; S.cfg.baPersoListe=['Appeler maman']; S.baOpen=true; d.fruits=3; d.eau=2; d.p.fajr='heure'; d.u=Date.now();
       for(const v of vues){ try{ S.view=v; render(); }catch(e){ err.push(pr.nom+'/'+v+': '+e.message); } }
       { let dec=0; for(let i=0;i<400;i++){ S.cfg.hijriDecal=i; if(estRamadan(today())){ dec=i; break; } } S.cfg.hijriDecal=dec+21; S.view='jour'; render(); S.view='din'; render(); S.cfg.hijriDecal=0; }
       S.cfg.onb=false; render(); S.cfg.onb=true;
@@ -2975,6 +2997,7 @@ async function autotest(){
       if(pr.lieu&&pr.lieu.nom==='Caen'){ const t=timesOf(today()); if(!(t[2]>=12*60+15&&t[2]<=14*60+30)) err.push('Dhuhr de Caen hors plage ('+hm(t[2])+') — problème de fuseau horaire'); }
     }catch(e){ err.push(pr.nom+': '+e.message); }
   }
+  S.baOpen=false;
   document.documentElement.dataset.autotest = err.length ? 'ERREUR: '+err.join(' | ') : 'ok';
 }
 (async function init(){
@@ -2994,7 +3017,7 @@ async function autotest(){
   if(location.hash!=='#autotest'){ swEnregistrer().then(()=>pushMajEtat()); }
   checkUpdate();
   setInterval(()=>{ if(S.uid && document.visibilityState==='visible') pull(); },30000);
-  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(S.uid) pull(); tick(); checkUpdate(); } else if(S.dirty.size||S.cfgDirty) push(); });
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible') S.scoreOpen=false; if(document.visibilityState==='visible'){ if(S.uid) pull(); tick(); checkUpdate(); } else if(S.dirty.size||S.cfgDirty) push(); });
 })();
 </script>
 </body>
