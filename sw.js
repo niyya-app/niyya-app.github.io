@@ -51,7 +51,7 @@ self.addEventListener('push', e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch (x) { d = { title: 'NIYYA', body: e.data ? e.data.text() : '' }; }
   e.waitUntil(self.registration.showNotification(d.title || 'NIYYA', {
     body: d.body || '', icon: 'niyya-icon-180.png', badge: 'niyya-icon-180.png', tag: d.tag || 'niyya', renotify: true,
-    data: { url: d.url || './', tag: d.tag || '' }
+    data: { url: d.url || './', tag: d.tag || '', body: d.body || '' }
   }));
 });
 
@@ -66,10 +66,11 @@ self.addEventListener('notificationclick', e => {
   const cible = cibleDe((e.notification.data && e.notification.data.tag) || e.notification.tag || '');
   const url = new URL('./?ouvrir=' + cible, self.registration.scope).href;
   // l'iPhone ne transmet pas toujours le message à l'appli déjà ouverte : on note aussi le clic, l'appli le lit en revenant au premier plan
-  const note = caches.open('niyya-clic').then(c => c.put('clic', new Response(JSON.stringify({ cible, t: Date.now() })))).catch(() => null);
+  const corps = (e.notification.data && e.notification.data.body) || e.notification.body || ''; // le texte complet voyage avec le clic (pas besoin de réseau)
+  const note = caches.open('niyya-clic').then(c => c.put('clic', new Response(JSON.stringify({ cible, t: Date.now(), corps })))).catch(() => null);
   e.waitUntil(note.then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
     for (const c of cs) {
-      if (c.url.startsWith(self.registration.scope) && !/admin\.html/.test(c.url) && 'focus' in c) { c.postMessage({ ouvrir: cible }); return c.focus(); }
+      if (c.url.startsWith(self.registration.scope) && !/admin\.html/.test(c.url) && 'focus' in c) { c.postMessage({ ouvrir: cible, corps }); return c.focus(); }
     }
     return self.clients.openWindow(url);
   })));

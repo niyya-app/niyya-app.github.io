@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-230523'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-230743'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1505,24 +1505,32 @@ let _clicVu=0;
 async function lireClicNotif(){
   try{ if(!('caches' in window)) return; const c=await caches.open('niyya-clic'); const r=await c.match('clic'); if(!r) return;
     const o=await r.json(); await c.delete('clic');
-    if(o && o.cible && o.t>_clicVu && Date.now()-o.t<5*60e3){ _clicVu=o.t; S.diagClic='notif_cache'; ouvrir(o.cible); } }catch(e){}
+    diagNotif('note lue : '+o.cible+(o.t<=_clicVu?' (déjà traitée)':Date.now()-o.t>=5*60e3?' (trop ancienne)':''));
+    if(o && o.cible && o.t>_clicVu && Date.now()-o.t<5*60e3){ _clicVu=o.t; S.diagClic='notif_cache'; S.clicCorps=o.corps||''; ouvrir(o.cible); } }catch(e){ diagNotif('erreur note : '+e.message); }
 }
+// Journal des derniers clics de notification (sur ce téléphone seulement, pour comprendre une panne)
+function diagNotif(t){ try{ const L=JSON.parse(localStorage.getItem('nya_diag')||'[]'); const d=new Date(); L.unshift(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')} ${t}`); localStorage.setItem('nya_diag',JSON.stringify(L.slice(0,12))); }catch(e){} }
+function diagTexte(){ try{ return JSON.parse(localStorage.getItem('nya_diag')||'[]'); }catch(e){ return []; } }
 function deroul(k){ S.ouv=S.ouv||{}; S.ouv[k]=!S.ouv[k]; render(); }
 // Ouverture depuis une notification : ?ouvrir=priere|hadith|mindset|recap
 function ouvrir(cible){
+  diagNotif('ouvrir '+cible+(!S.uid||!S.pret?' (en attente du chargement)':''));
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
   S.sel=today(); S.mindIdx=null; S.hadIdx=null;
   go(cible==='recap'?'bilan':'jour');
-  if(/^priere-/.test(cible)) versetPriere(cible.slice(7));
+  if(/^priere-/.test(cible)){ const c=S.clicCorps; S.clicCorps=''; versetPriere(cible.slice(7),c); }
   if(S.diagClic){ compter(S.diagClic); S.diagClic=null; }
   const id={hadith:'cHadith',mindset:'cMindset'}[cible];
   if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
 }
 // Verset envoyé avec l'adhan, affiché EN ENTIER (la notification de l'iPhone le coupe)
-async function versetPriere(k){
+async function versetPriere(k,corps){
   const idx=['fajr','dhuhr','asr','maghrib','isha'].indexOf(k); if(idx<0) return;
-  let v=null; try{ const r=await fetch('quotidien.json?t='+today(),{cache:'no-cache'}); const o=await r.json(); v=(o[today()]&&o[today()].v||[])[idx]; }catch(e){}
-  if(!v) return;
+  // 1) le texte de la notification elle-même (aucun réseau nécessaire) ; 2) sinon le fichier du jour
+  let v=null; const m=/📖 « ([\s\S]+) » — (.+)$/.exec(corps||''); if(m) v=[m[1],m[2].trim()];
+  if(!v){ try{ const r=await fetch('quotidien.json?t='+today(),{cache:'no-cache'}); const o=await r.json(); v=(o[today()]&&o[today()].v||[])[idx]; }catch(e){ diagNotif('verset : réseau indisponible'); } }
+  if(!v){ diagNotif('verset introuvable ('+k+')'); return toast('Verset indisponible pour le moment'); }
+  diagNotif('verset affiché ('+k+')');
   const nom={fajr:'Fajr',dhuhr:'Dhuhr',asr:'Asr',maghrib:'Maghrib',isha:'Isha'}[k];
   openSheet(`<h2 style="margin:0 0 4px">📖 Verset de ${nom}</h2>
     <div class="sub">Envoyé avec l'adhan d'aujourd'hui · traduction Hamidullah</div>
@@ -3012,7 +3020,8 @@ function notifPanel(){
     : e==='actif'?`<p style="font-weight:800;color:var(--emerald-d)">✅ Activées : tu es prévenu à l'heure exacte de l'adhan.</p>
         <label class="f">Prières à notifier</label><div class="opt">${NOTIF_PRIERES.map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
         <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 9 h 30'],['recap','📊 Récap de la semaine · dim. 20 h']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
-        <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>`
+        <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>
+        ${diagTexte().length?`<details class="mt"><summary class="muted" style="font-size:.75rem;font-weight:700;cursor:pointer">🔧 Derniers clics sur une notification</summary><div class="muted" style="font-size:.7rem;font-family:ui-monospace,monospace;white-space:pre-wrap;margin-top:6px">${esc(diagTexte().join('\n'))}</div></details>`:''}`
     : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, le hadith du jour à 8 h, une phrase mindset à 9 h 30, ton récap de la semaine le dimanche à 20 h, ainsi que les annonces de NIYYA.</p>
         <button class="btn pri" onclick="activerNotifs()">🔔 Activer les notifications</button>`;
   return `<div class="panel mt"><h2><span class="ico">🔔</span>Notifications de prière</h2>${corps}</div>`;
@@ -3082,7 +3091,7 @@ async function autotest(){
   if(location.hash==='#autotest'){ await autotest(); document.documentElement.dataset.ok='1'; return; }
   { const mi=location.hash.match(/import=([0-9a-f]{32,})/i); if(mi){ try{ localStorage.setItem('nya_import',mi[1]); }catch(e){} history.replaceState(null,'',location.pathname+location.search); } }
   { const mo=new URLSearchParams(location.search).get('ouvrir'); if(mo){ S.ouvrirEnAttente=mo; S.diagClic='notif_url'; history.replaceState(null,'',location.pathname+location.hash); } }
-  try{ if(navigator.serviceWorker){ navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.ouvrir){ _clicVu=Date.now(); caches.open('niyya-clic').then(c=>c.delete('clic')).catch(()=>{}); S.diagClic='notif_msg'; ouvrir(ev.data.ouvrir); } }); navigator.serviceWorker.startMessages&&navigator.serviceWorker.startMessages(); } }catch(e){} // Safari ne livre les messages qu'après startMessages()
+  try{ if(navigator.serviceWorker){ navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.ouvrir){ diagNotif('message reçu : '+ev.data.ouvrir); S.clicCorps=ev.data.corps||''; _clicVu=Date.now(); caches.open('niyya-clic').then(c=>c.delete('clic')).catch(()=>{}); S.diagClic='notif_msg'; ouvrir(ev.data.ouvrir); } }); navigator.serviceWorker.startMessages&&navigator.serviceWorker.startMessages(); } }catch(e){} // Safari ne livre les messages qu'après startMessages()
   window.addEventListener('focus',()=>[300,1200].forEach(t=>setTimeout(lireClicNotif,t)));
   // iPhone : après la fermeture du clavier, Safari laisse parfois le menu du bas « flotter » au milieu de l'écran.
   // On cache le menu pendant la saisie et on recale la page quand le clavier se ferme.
