@@ -10,10 +10,22 @@ returns void language plpgsql volatile security definer set search_path = public
 begin
   if auth.uid() is null then return; end if;
   if p_onglet not in ('jour','din','noms','coran','qibla','tabac','voyage','bilan','reglages','don',
-                      'actif','lancement_appli','lancement_web','citadelle','notif_msg','notif_cache','notif_url') then return; end if;
+                      'actif','lancement_appli','lancement_web','citadelle','notif_msg','notif_cache','notif_url',
+                      'ouvert_priere','ouvert_hadith','ouvert_mindset','ouvert_recap','ouvert_annonce') then return; end if;
   insert into public.niyya_stats (jour, onglet, nb) values ((now() at time zone 'Europe/Paris')::date, p_onglet, 1)
   on conflict (jour, onglet) do update set nb = public.niyya_stats.nb + 1;
 end $$;
+
+-- 1 bis) Compteur des notifications ENVOYÉES (appelé par la fonction niyya-push, jamais par l'appli)
+create or replace function public.niyya_compter_envoi(p_type text, p_n integer)
+returns void language plpgsql volatile security definer set search_path = public as $$
+begin
+  if p_type not in ('priere','hadith','mindset','recap','annonce') or coalesce(p_n,0) <= 0 then return; end if;
+  insert into public.niyya_stats (jour, onglet, nb) values ((now() at time zone 'Europe/Paris')::date, 'envoi_' || p_type, p_n)
+  on conflict (jour, onglet) do update set nb = public.niyya_stats.nb + p_n;
+end $$;
+revoke all on function public.niyya_compter_envoi(text, integer) from public, anon, authenticated;
+grant execute on function public.niyya_compter_envoi(text, integer) to service_role;
 
 -- 2) Données du tableau de bord (fonction interne, jamais appelable directement)
 create or replace function public.niyya_admin_data()
@@ -35,14 +47,22 @@ begin
         'actifs', coalesce((select nb from public.niyya_stats s where s.jour = d::date and s.onglet = 'actif'),0),
         'appli',  coalesce((select nb from public.niyya_stats s where s.jour = d::date and s.onglet = 'lancement_appli'),0),
         'web',    coalesce((select nb from public.niyya_stats s where s.jour = d::date and s.onglet = 'lancement_web'),0),
-        'clics',  coalesce((select sum(nb) from public.niyya_stats s where s.jour = d::date and s.onglet not in ('actif','lancement_appli','lancement_web')),0)) order by d)
+        'clics',  coalesce((select sum(nb) from public.niyya_stats s where s.jour = d::date and s.onglet not in ('actif','lancement_appli','lancement_web') and s.onglet !~ '^(envoi|ouvert|notif)_'),0)) order by d)
       from generate_series(aujourd - 29, aujourd, interval '1 day') d), '[]'::jsonb),
     'onglets', coalesce((select jsonb_agg(x order by x->>'j30' desc) from (
         select jsonb_build_object('onglet', onglet,
           'aujourdhui', coalesce(sum(nb) filter (where jour = aujourd),0),
           'j7',  coalesce(sum(nb) filter (where jour > aujourd - 7),0),
           'j30', coalesce(sum(nb) filter (where jour > aujourd - 30),0)) x
-        from public.niyya_stats where onglet not in ('actif','lancement_appli','lancement_web') group by onglet) t), '[]'::jsonb),
+        from public.niyya_stats where onglet not in ('actif','lancement_appli','lancement_web') and onglet !~ '^(envoi|ouvert|notif)_' group by onglet) t), '[]'::jsonb),
+    -- notifications : envoyées / ouvertes par type (anonyme)
+    'notifs', coalesce((select jsonb_agg(jsonb_build_object('type', t,
+        'envoi_j7',  coalesce((select sum(nb) from public.niyya_stats where onglet = 'envoi_'||t and jour > aujourd - 7),0),
+        'ouvert_j7', coalesce((select sum(nb) from public.niyya_stats where onglet = 'ouvert_'||t and jour > aujourd - 7),0),
+        'envoi_j30', coalesce((select sum(nb) from public.niyya_stats where onglet = 'envoi_'||t and jour > aujourd - 30),0),
+        'ouvert_j30',coalesce((select sum(nb) from public.niyya_stats where onglet = 'ouvert_'||t and jour > aujourd - 30),0)))
+      from unnest(array['priere','hadith','mindset','recap','annonce']) t), '[]'::jsonb),
+    'abonnes_notifs', (select count(*) from public.niyya_push where actif),
     'villes', coalesce((select jsonb_agg(jsonb_build_object('ville', v, 'nb', n) order by n desc) from (
         select regexp_replace(coalesce(p.data->'lieu'->>'nom','—'),'\s*\(\d+\)$','') v, count(*) n
         from public.niyya_profils p group by 1 order by 2 desc limit 15) t), '[]'::jsonb),
@@ -53,7 +73,8 @@ begin
         'questionnaire', coalesce((p.data->>'onb')::boolean,false),
         'ville', regexp_replace(coalesce(p.data->'lieu'->>'nom','—'),'\s*\(\d+\)$',''),
         'jours', (select count(*) from public.niyya_jours j where j.user_id = u.id),
-        'derniere', (select to_char(max(j.updated_at) at time zone 'Europe/Paris','DD/MM/YY HH24:MI') from public.niyya_jours j where j.user_id = u.id)
+        'derniere', (select to_char(max(j.updated_at) at time zone 'Europe/Paris','DD/MM/YY HH24:MI') from public.niyya_jours j where j.user_id = u.id),
+        'notifs', exists(select 1 from public.niyya_push n where n.user_id = u.id and n.actif)
       ) order by u.created_at desc) from auth.users u left join public.niyya_profils p on p.user_id = u.id), '[]'::jsonb)
   );
 end $$;

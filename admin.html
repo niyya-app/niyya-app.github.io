@@ -128,13 +128,17 @@ function vDash(){
     <div class="panel"><h2>📍 Villes</h2><div class="sub">Ville choisie dans le questionnaire</div>
       <div class="tw"><table><tr><th>Ville</th><th>Comptes</th></tr>${(D.villes||[]).map(v=>`<tr><td>${esc(v.ville)}</td><td><b>${v.nb}</b></td></tr>`).join('')}</table></div></div>
   </div>
+  <div class="panel"><h2>🔔 Notifications</h2><div class="sub">${D.abonnes_notifs??'—'} téléphone${(D.abonnes_notifs||0)>1?'s':''} abonné${(D.abonnes_notifs||0)>1?'s':''} · envoyées et ouvertes par type (anonyme, à partir du 17/10/2026)</div>
+    <div class="tw"><table><tr><th>Type</th><th>Envoyées 7 j</th><th>Ouvertes 7 j</th><th>Taux 7 j</th><th>Envoyées 30 j</th><th>Ouvertes 30 j</th><th>Taux 30 j</th></tr>
+    ${(D.notifs||[]).map(n=>{ const tx=(o,e)=>e?Math.round(o/e*100)+' %':'—'; return `<tr><td>${esc(({priere:'🕌 Prières (adhan + verset)',hadith:'📜 Hadith du jour',mindset:'💡 Mindset du jour',recap:'📊 Récap du dimanche',annonce:'📣 Annonces'})[n.type]||n.type)}</td><td>${n.envoi_j7}</td><td>${n.ouvert_j7}</td><td><b>${tx(n.ouvert_j7,n.envoi_j7)}</b></td><td>${n.envoi_j30}</td><td>${n.ouvert_j30}</td><td><b>${tx(n.ouvert_j30,n.envoi_j30)}</b></td></tr>`; }).join('')}</table></div>
+    <p class="note">« Ouverte » = la personne a touché la notification. On compte au plus une ouverture par type et par tranche de 10 minutes sur un même téléphone.</p></div>
   ${CLE?`<div class="panel"><h2>📣 Envoyer une notification à tous</h2><div class="sub">Tous les utilisateurs qui ont activé les notifications la recevront tout de suite.</div>
     <label>Titre</label><input class="inp" id="anT" maxlength="80" placeholder="Ex. Ramadan approche 🌙">
     <label>Message</label><textarea class="inp" id="anM" rows="3" maxlength="300" placeholder="Ex. Le mois béni commence dans 3 jours, préparons-nous !"></textarea>
     <button class="btn pri" style="margin-top:12px" onclick="annoncer()">📣 Envoyer à tous</button><span id="anR" class="note" style="margin-left:10px"></span></div>`:''}
   <div class="panel"><h2>👥 Utilisateurs</h2><div class="sub">Comptes, du plus récent au plus ancien — aucune donnée personnelle de pratique n'est affichée</div>
-    <div class="tw"><table><tr><th>Prénom</th><th>E-mail</th><th>Inscrit le</th><th>Questionnaire</th><th>Ville</th><th>Jours remplis</th><th>Dernière activité</th></tr>
-    ${(D.utilisateurs||[]).map(u=>`<tr><td><b>${esc(u.prenom)}</b></td><td>${esc(u.email)}</td><td>${esc(u.inscrit)}</td><td>${u.questionnaire?'<span class="ok">✓</span>':'<span class="ko">✗</span>'}</td><td>${esc(u.ville)}</td><td>${u.jours}</td><td>${esc(u.derniere||'—')}</td></tr>`).join('')}</table></div>
+    <div class="tw"><table><tr><th>Prénom</th><th>E-mail</th><th>Inscrit le</th><th>Questionnaire</th><th>Ville</th><th>Jours remplis</th><th>Dernière activité</th><th>🔔 Notifs</th></tr>
+    ${(D.utilisateurs||[]).map(u=>`<tr><td><b>${esc(u.prenom)}</b></td><td>${esc(u.email)}</td><td>${esc(u.inscrit)}</td><td>${u.questionnaire?'<span class="ok">✓</span>':'<span class="ko">✗</span>'}</td><td>${esc(u.ville)}</td><td>${u.jours}</td><td>${esc(u.derniere||'—')}</td><td>${u.notifs?'<span class="ok">✓ activées</span>':'<span class="ko">✗</span>'}</td></tr>`).join('')}</table></div>
     <p class="note">ℹ️ NIYYA n'est pas sur l'App Store : il n'existe donc pas de « téléchargements » au sens strict. Les meilleurs indicateurs sont les <b>comptes créés</b> et les <b>ouvertures depuis l'icône</b> (personnes qui ont ajouté NIYYA à leur écran d'accueil). Les clics et les actifs par jour sont comptés de façon anonyme, à partir du 15/10/2026.</p></div>`;
 }
 (async function(){

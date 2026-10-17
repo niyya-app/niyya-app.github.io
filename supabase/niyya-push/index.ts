@@ -144,6 +144,7 @@ Deno.serve(async (req) => {
     const { data: subs, error } = await sb.from("niyya_push").select("endpoint, sub, params, dernier, dernier_q, user_id").eq("actif", true);
     if (error) return rep({ erreur: error.message }, 500);
     let envoyes = 0;
+    const parType: Record<string, number> = { priere: 0, hadith: 0, mindset: 0, recap: 0 }; // statistiques anonymes d'envoi
     for (const row of subs || []) {
       const params = row.params || {};
       const actives: string[] = Array.isArray(params.prieres) ? params.prieres : PRIERES.map((p) => p[0]);
@@ -158,6 +159,7 @@ Deno.serve(async (req) => {
         const vs = (await quotidien())?.[H.jour]?.v?.[PRIERES.findIndex((p) => p[0] === k)];
         const corps = "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲" + (vs ? `\n📖 « ${vs[0]} » — ${vs[1]}` : "");
         const ok = await envoyer(row, { title: titre, body: corps, tag: "priere-" + k, url: params.url || "./" });
+        if (ok) parType.priere++;
         await sb.from("niyya_push").update({ dernier: cle, envoye_le: new Date().toISOString() }).eq("endpoint", row.endpoint);
         if (ok) envoyes++;
       }
@@ -171,17 +173,19 @@ Deno.serve(async (req) => {
           ? { title: "📜 Hadith du jour", body: `« ${x.h[0]} »\n— ${x.h[1]}`, tag: "hadith", url: params.url || "./" }
           : { title: "💡 Mindset du jour", body: `« ${x.m[0]} »\n— ${x.m[1]}`, tag: "mindset", url: params.url || "./" };
         const ok = await envoyer(row, payload);
+        if (ok) parType[q === "h" ? "hadith" : "mindset"]++;
         await sb.from("niyya_push").update({ dernier_q: cleq }).eq("endpoint", row.endpoint);
         if (ok) envoyes++;
       }
       if (H.dimanche && H.min === 20 * 60 && params.recap !== false && row.user_id && row.dernier_q !== `${H.jour}|s`) {
         try {
           const r = await recap(row.user_id, H.jour);
-          if (r && await envoyer(row, { ...r, url: params.url || "./" })) envoyes++;
+          if (r && await envoyer(row, { ...r, url: params.url || "./" })) { envoyes++; parType.recap++; }
         } catch (e) { console.error("recap", e); }
         await sb.from("niyya_push").update({ dernier_q: `${H.jour}|s` }).eq("endpoint", row.endpoint);
       }
     }
+    for (const [t, n] of Object.entries(parType)) if (n) await sb.rpc("niyya_compter_envoi", { p_type: t, p_n: n });
     return rep({ ok: true, abonnes: (subs || []).length, envoyes });
   }
 
@@ -204,6 +208,7 @@ Deno.serve(async (req) => {
     const { data: subs } = await sb.from("niyya_push").select("endpoint, sub, params").eq("actif", true);
     let ok = 0;
     for (const row of subs || []) if (await envoyer(row, { title: titre, body: message, tag: "annonce-" + Date.now(), url: (row.params || {}).url || "./" })) ok++;
+    if (ok) await sb.rpc("niyya_compter_envoi", { p_type: "annonce", p_n: ok });
     await sb.from("niyya_push_annonces").insert({ titre, message, envoyes: ok, abonnes: (subs || []).length });
     return rep({ ok: true, abonnes: (subs || []).length, envoyes: ok });
   }
