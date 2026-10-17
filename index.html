@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-182444'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-183203'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1507,7 +1507,7 @@ let _clicVu=0;
 async function lireClicNotif(){
   try{ if(!('caches' in window)) return; const c=await caches.open('niyya-clic'); const r=await c.match('clic'); if(!r) return;
     const o=await r.json(); await c.delete('clic');
-    if(o && o.cible && o.t>_clicVu && Date.now()-o.t<5*60e3){ _clicVu=o.t; ouvrir(o.cible); } }catch(e){}
+    if(o && o.cible && o.t>_clicVu && Date.now()-o.t<5*60e3){ _clicVu=o.t; S.diagClic='notif_cache'; ouvrir(o.cible); } }catch(e){}
 }
 function deroul(k){ S.ouv=S.ouv||{}; S.ouv[k]=!S.ouv[k]; render(); }
 // Ouverture depuis une notification : ?ouvrir=priere|hadith|mindset|recap
@@ -1516,6 +1516,7 @@ function ouvrir(cible){
   S.sel=today(); S.mindIdx=null; S.hadIdx=null;
   go(cible==='recap'?'bilan':'jour');
   if(/^priere-/.test(cible)) versetPriere(cible.slice(7));
+  if(S.diagClic){ compter(S.diagClic); S.diagClic=null; }
   const id={hadith:'cHadith',mindset:'cMindset'}[cible];
   if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
 }
@@ -3042,9 +3043,9 @@ async function autotest(){
   sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'nya_auth'}});
   if(location.hash==='#autotest'){ await autotest(); document.documentElement.dataset.ok='1'; return; }
   { const mi=location.hash.match(/import=([0-9a-f]{32,})/i); if(mi){ try{ localStorage.setItem('nya_import',mi[1]); }catch(e){} history.replaceState(null,'',location.pathname+location.search); } }
-  { const mo=new URLSearchParams(location.search).get('ouvrir'); if(mo){ S.ouvrirEnAttente=mo; history.replaceState(null,'',location.pathname+location.hash); } }
-  try{ navigator.serviceWorker&&navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.ouvrir){ _clicVu=Date.now(); caches.open('niyya-clic').then(c=>c.delete('clic')).catch(()=>{}); ouvrir(ev.data.ouvrir); } }); }catch(e){}
-  window.addEventListener('focus',()=>setTimeout(lireClicNotif,300));
+  { const mo=new URLSearchParams(location.search).get('ouvrir'); if(mo){ S.ouvrirEnAttente=mo; S.diagClic='notif_url'; history.replaceState(null,'',location.pathname+location.hash); } }
+  try{ if(navigator.serviceWorker){ navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.ouvrir){ _clicVu=Date.now(); caches.open('niyya-clic').then(c=>c.delete('clic')).catch(()=>{}); S.diagClic='notif_msg'; ouvrir(ev.data.ouvrir); } }); navigator.serviceWorker.startMessages&&navigator.serviceWorker.startMessages(); } }catch(e){} // Safari ne livre les messages qu'après startMessages()
+  window.addEventListener('focus',()=>[300,1200].forEach(t=>setTimeout(lireClicNotif,t)));
   // iPhone : après la fermeture du clavier, Safari laisse parfois le menu du bas « flotter » au milieu de l'écran.
   // On cache le menu pendant la saisie et on recale la page quand le clavier se ferme.
   try{
@@ -3069,7 +3070,7 @@ async function autotest(){
   if(location.hash!=='#autotest'){ swEnregistrer().then(()=>pushMajEtat()); }
   checkUpdate();
   setInterval(()=>{ if(S.uid && document.visibilityState==='visible') pull(); },30000);
-  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible'){ S.scoreOpen=false; S.ouv={}; } if(document.visibilityState==='visible'){ setTimeout(lireClicNotif,300); if(S.uid) pull(); tick(); checkUpdate(); } else if(S.dirty.size||S.cfgDirty) push(); });
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible'){ S.scoreOpen=false; S.ouv={}; } if(document.visibilityState==='visible'){ [300,1200,3000].forEach(t=>setTimeout(lireClicNotif,t)); if(S.uid) pull(); tick(); checkUpdate(); } else if(S.dirty.size||S.cfgDirty) push(); });
 })();
 </script>
 </body>
