@@ -374,7 +374,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-095616'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-102926'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1430,7 +1430,10 @@ function scoreOf(k){
   const pr=d.prio.filter(p=>p.t.trim()), po=pr.filter(p=>p.ok).length;
   parts.push({k:'business',l:'Business',f:pr.length?po/pr.length:0,txt:`${po}/${pr.length||3}`});
   let tot=0,max=0; parts.forEach(p=>{ p.max=W[p.k]||0; p.pts=Math.round(p.f*p.max*10)/10; tot+=p.f*p.max; max+=p.max; });
-  return {score:max?Math.round(tot/max*100):0, parts};
+  let score=max?Math.round(tot/max*100):0;
+  // Bonus jeûne : +10 points (jeûne surérogatoire ou jour de Ramadan jeûné), sans pénaliser les jours sans jeûne
+  if(d.jeuneNafl||d.jeune==='fait'){ parts.push({k:'jeune',l:'Jeûne',bonus:true,f:1,pts:10,max:0,txt:d.jeune==='fait'?'Ramadan':'surérogatoire'}); score=Math.min(100,score+10); }
+  return {score, parts};
 }
 function scoreColor(s){ return s>=80?'#10b981':s>=60?'#84cc16':s>=40?'#f59e0b':s>0?'#fb7185':'var(--card2)'; }
 
@@ -1542,7 +1545,7 @@ function vJour(){
         <div class="h-sub" style="font-size:.9rem;margin-top:4px">${sc.score>=80?'Journée excellente, mashaAllah 🔥':sc.score>=60?'Belle journée, continue':sc.score>=30?'On avance, un pas après l\'autre':'Chaque case cochée compte'}</div>
         <div class="h-sub">${streakTxt()}</div></div>
       </div>
-      <div class="chips">${sc.parts.map(p=>`<span class="chip">${p.l} ${p.pts}/${p.max}</span>`).join('')}</div>
+      <div class="chips">${sc.parts.map(p=>`<span class="chip">${p.bonus?'🍽️ '+p.l+' +'+p.pts:p.l+' '+p.pts+'/'+p.max}</span>`).join('')}</div>
     </div>
     ${heroPriere()}
   </div>
@@ -1861,7 +1864,7 @@ function vBilan(){
     <div class="panel">
       <h2><span class="ico">🔎</span>${sel===today()?'Aujourd\'hui':esc(fmtLong(sel))} · ${ssel.score}/100</h2>
       <div class="sub">Détail du calcul (les poids se règlent dans ⚙️)</div>
-      ${ssel.parts.map(p=>`<div class="kv"><span>${p.l} <span class="tag">${esc(p.txt)}</span></span><b>${p.pts} / ${p.max}</b></div>`).join('')}
+      ${ssel.parts.map(p=>`<div class="kv"><span>${p.l} <span class="tag">${esc(p.txt)}</span></span><b>${p.bonus?'+'+p.pts+' bonus':p.pts+' / '+p.max}</b></div>`).join('')}
       ${dsel.reussite?`<div class="coach mt">🏆 ${esc(dsel.reussite)}${dsel.ameliorer?`<br>🔧 ${esc(dsel.ameliorer)}`:''}</div>`:''}
       ${sel!==today()?`<button class="btn pri mt" onclick="S.view='jour';render()">Modifier cette journée</button>`:''}
     </div>
@@ -1950,7 +1953,7 @@ function toast(msg,ms){ const t=document.getElementById('toast'); t.innerHTML=ms
 function vib(){ try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){} }
 function toggle(k){
   const d=J(); d[k]=!d[k]; if(k==='sport'&&d.sport) d.repos=false; vib(); touch(); render();
-  if(d[k]) toast({sport:'💪 Séance validée !',coran:'📖 BarakAllahu fik',lecture:'📚 +20 min pour ton cerveau',famille:'❤️ Le meilleur investissement',adhM:'☀️ Protégé pour la journée',adhS:'🌙 Protégé pour la nuit',repos:'😴 Repos noté',aime:'🤍 Qu\'Allah t\'aime et t\'accepte'}[k]||'✓');
+  if(d[k]) toast({sport:'💪 Séance validée !',coran:'📖 BarakAllahu fik',lecture:'📚 +20 min pour ton cerveau',famille:'❤️ Le meilleur investissement',adhM:'☀️ Protégé pour la journée',adhS:'🌙 Protégé pour la nuit',repos:'😴 Repos noté',jeuneNafl:'🍽️ Qu\'Allah accepte ton jeûne · +10 points',aime:'🤍 Qu\'Allah t\'aime et t\'accepte'}[k]||'✓');
 }
 function cyclePrayer(p){ const order=[undefined,'heure','retard','manquee']; const d=J(); const i=order.indexOf(d.p[p]); setPrayer(p,order[(i+1)%order.length]||null,true); }
 function setPrayer(p,s,cyc){ const d=J(); d.p[p]=(!cyc&&d.p[p]===s)?null:s; if(!d.p[p]) delete d.p[p]; vib(); touch(); render();
@@ -2687,6 +2690,20 @@ function jeunesDuJour(k){
   if(w===1||w===4) out.push([w===1?'Lundi et jeudi':'Jeudi','« Les actions sont présentées le lundi et le jeudi, et j\'aime que mes actions soient présentées alors que je jeûne. »','At-Tirmidhi n° 747, d\'après Abou Hourayra — sahih']);
   return {liste:out.filter((x,i,a)=>!(x[0]==='Lundi et jeudi'&&a.some(y=>y[0]==='Lundi')))};
 }
+// Hadiths authentiques sur le jeûne (vérifiés dans les recueils)
+const JEUNE_HADITHS = [{"fr": "« Allah a dit : Toute œuvre du fils d'Adam est pour lui, sauf le jeûne : il est pour Moi, et c'est Moi qui en donne la récompense. Le jeûne est un bouclier. Le jour où l'un de vous jeûne, qu'il ne tienne pas de propos obscènes et qu'il ne crie pas. Si quelqu'un l'insulte ou cherche à se battre avec lui, qu'il dise : Je suis un homme qui jeûne. »", "src": "Al-Boukhari n° 1904 et Muslim n° 1151, d'après Abou Hourayra", "ar": "قَالَ اللَّهُ كُلُّ عَمَلِ ابْنِ آدَمَ لَهُ إِلاَّ الصِّيَامَ، فَإِنَّهُ لِي، وَأَنَا أَجْزِي بِهِ‏.‏ وَالصِّيَامُ جُنَّةٌ، وَإِذَا كَانَ يَوْمُ صَوْمِ أَحَدِكُمْ، فَلاَ يَرْفُثْ وَلاَ يَصْخَبْ، فَإِنْ سَابَّهُ أَحَدٌ، أَوْ قَاتَلَهُ فَلْيَقُلْ إِنِّي امْرُؤٌ صَائِمٌ"}, {"fr": "« Par Celui qui tient l'âme de Mouhammad dans Sa main ! L'haleine de la bouche du jeûneur est meilleure auprès d'Allah que le parfum du musc. Le jeûneur a deux joies : quand il rompt son jeûne, il se réjouit ; et quand il rencontrera son Seigneur, il se réjouira de son jeûne. »", "src": "Al-Boukhari n° 1904 et Muslim n° 1151, d'après Abou Hourayra", "ar": "وَالَّذِي نَفْسُ مُحَمَّدٍ بِيَدِهِ لَخُلُوفُ فَمِ الصَّائِمِ أَطْيَبُ عِنْدَ اللَّهِ مِنْ رِيحِ الْمِسْكِ، لِلصَّائِمِ فَرْحَتَانِ يَفْرَحُهُمَا إِذَا أَفْطَرَ فَرِحَ، وَإِذَا لَقِيَ رَبَّهُ فَرِحَ بِصَوْمِهِ"}, {"fr": "« Quiconque jeûne un jour dans le sentier d'Allah, Allah éloigne son visage du Feu de soixante-dix automnes. »", "src": "Al-Boukhari n° 2840 et Muslim n° 1153, d'après Abou Sa'îd Al-Khoudri", "ar": "مَنْ صَامَ يَوْمًا فِي سَبِيلِ اللَّهِ بَعَّدَ اللَّهُ وَجْهَهُ عَنِ النَّارِ سَبْعِينَ خَرِيفًا"}, {"fr": "« Il y a au Paradis une porte appelée Ar-Rayyân, par laquelle entreront les jeûneurs le Jour de la Résurrection ; nul autre qu'eux n'y entrera. On dira : Où sont les jeûneurs ? Ils se lèveront ; nul autre qu'eux n'y entrera. Une fois qu'ils seront entrés, elle sera fermée et plus personne n'y entrera. »", "src": "Al-Boukhari n° 1896 et Muslim n° 1152, d'après Sahl ibn Sa'd", "ar": "إِنَّ فِي الْجَنَّةِ بَابًا يُقَالُ لَهُ الرَّيَّانُ، يَدْخُلُ مِنْهُ الصَّائِمُونَ يَوْمَ الْقِيَامَةِ، لاَ يَدْخُلُ مِنْهُ أَحَدٌ غَيْرُهُمْ يُقَالُ أَيْنَ الصَّائِمُونَ فَيَقُومُونَ، لاَ يَدْخُلُ مِنْهُ أَحَدٌ غَيْرُهُمْ، فَإِذَا دَخَلُوا أُغْلِقَ، فَلَمْ يَدْخُلْ مِنْهُ أَحَدٌ"}, {"fr": "« Le jeûne le plus aimé d'Allah est le jeûne de Dâwoud (David) : il jeûnait un jour et rompait un jour. »", "src": "Al-Boukhari n° 3420 (et n° 1131) et Muslim n° 1159, d'après 'Abdallah ibn 'Amr", "ar": "أَحَبُّ الصِّيَامِ إِلَى اللَّهِ صِيَامُ دَاوُدَ، كَانَ يَصُومُ يَوْمًا وَيُفْطِرُ يَوْمًا"}, {"fr": "« Celui qui ne délaisse pas la parole mensongère et le fait d'agir selon elle, Allah n'a aucun besoin qu'il délaisse sa nourriture et sa boisson. »", "src": "Al-Boukhari n° 1903, d'après Abou Hourayra", "ar": "مَنْ لَمْ يَدَعْ قَوْلَ الزُّورِ وَالْعَمَلَ بِهِ فَلَيْسَ لِلَّهِ حَاجَةٌ فِي أَنْ يَدَعَ طَعَامَهُ وَشَرَابَهُ"}, {"fr": "« Prenez le repas de l'aube (sahour), car il y a dans le sahour une bénédiction. »", "src": "Al-Boukhari n° 1923 et Muslim n° 1095, d'après Anas ibn Mâlik", "ar": "تَسَحَّرُوا فَإِنَّ فِي السَّحُورِ بَرَكَةً"}, {"fr": "« Les gens ne cesseront d'être dans le bien tant qu'ils se hâteront de rompre le jeûne. »", "src": "Al-Boukhari n° 1957 et Muslim n° 1098, d'après Sahl ibn Sa'd", "ar": "لاَ يَزَالُ النَّاسُ بِخَيْرٍ مَا عَجَّلُوا الْفِطْرَ"}, {"fr": "« Celui qui donne à un jeûneur de quoi rompre son jeûne aura une récompense semblable à la sienne, sans que cela ne diminue en rien la récompense du jeûneur. »", "src": "At-Tirmidhi n° 807 (et Ibn Mâja n° 1746), d'après Zayd ibn Khâlid Al-Jouhani — jugé authentique (sahih) par Al-Albani", "ar": "مَنْ فَطَّرَ صَائِمًا كَانَ لَهُ مِثْلُ أَجْرِهِ غَيْرَ أَنَّهُ لاَ يَنْقُصُ مِنْ أَجْرِ الصَّائِمِ شَيْئًا"}, {"fr": "« Si [le jeûneur] oublie et mange ou boit, qu'il poursuive son jeûne, car c'est Allah qui l'a nourri et abreuvé. »", "src": "Al-Boukhari n° 1933 et Muslim n° 1155, d'après Abou Hourayra", "ar": "إِذَا نَسِيَ فَأَكَلَ وَشَرِبَ فَلْيُتِمَّ صَوْمَهُ، فَإِنَّمَا أَطْعَمَهُ اللَّهُ وَسَقَاهُ"}, {"fr": "« Si l'un de vous est invité à un repas alors qu'il jeûne, qu'il dise : Je jeûne. »", "src": "Muslim n° 1150, d'après Abou Hourayra (aussi Abou Dawoud n° 2461 et At-Tirmidhi n° 781, sahih selon Al-Albani)", "ar": "إِذَا دُعِيَ أَحَدُكُمْ إِلَى طَعَامٍ وَهُوَ صَائِمٌ فَلْيَقُلْ إِنِّي صَائِمٌ"}, {"fr": "'Âïcha raconte : le Prophète ﷺ entra chez moi un jour et demanda : « Avez-vous quelque chose [à manger] ? » Nous dîmes : non. Il dit : « Alors je jeûne. »", "src": "Muslim n° 1154, d'après 'Âïcha", "ar": "فَإِنِّي إِذًا صَائِمٌ"}];
+function jeunesMois(k){ const p=k.slice(0,7); return Object.entries(S.jours).filter(([x,d])=>x.startsWith(p)&&d&&d.jeuneNafl).length; }
+function hadithJeune(){
+  if(!JEUNE_HADITHS.length) return '';
+  const i=S.jhI??(dayOfYear(S.sel)%JEUNE_HADITHS.length), h=JEUNE_HADITHS[i];
+  return `<div class="coach mt" style="background:color-mix(in srgb,var(--violet) 8%,var(--card));border-color:#c4b5fd">
+    <div style="font-size:.74rem;font-weight:800;color:var(--muted)">📜 HADITH SUR LE JEÛNE</div>
+    <div style="font-weight:700;margin-top:4px">${esc(h.fr)}</div>
+    ${h.ar&&S.jhAr?`<div style="font-family:'Amiri',serif;direction:rtl;text-align:right;font-size:1.3rem;margin-top:8px;line-height:1.9">${esc(h.ar)}</div>`:''}
+    <div style="font-size:.74rem;color:var(--muted);font-weight:700;margin-top:6px">${esc(h.src)}</div>
+    <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">${h.ar?`<button class="btn sm" onclick="S.jhAr=!S.jhAr;render()">${S.jhAr?'Masquer':'Voir'} l'arabe</button>`:''}<button class="btn sm" onclick="S.jhI=((S.jhI??(dayOfYear(S.sel)%JEUNE_HADITHS.length))+1)%JEUNE_HADITHS.length;render()">Un autre ↻</button></div>
+  </div>`;
+}
 function jeunePanel(){
   const k=S.sel, J0=jeunesDuJour(k), d=J();
   if(J0.ramadan){ return ''; }
@@ -2697,8 +2714,11 @@ function jeunePanel(){
     <h2><span class="ico">🍽️</span>Jeûne surérogatoire</h2>
     ${J0.interdit?`<div class="coach">🎉 Aujourd'hui c'est l'<b>${J0.interdit}</b> : jour de fête, on ne jeûne pas.<div style="font-size:.74rem;color:var(--muted);margin-top:6px">📜 Le Prophète ﷺ a interdit de jeûner les deux jours de l'Aïd. <span class="tag">Al-Boukhari n° 1991, d'après Abou Saʿid</span></div></div>`
     : J0.liste.length?`<div class="sub">Aujourd'hui, le jeûne est recommandé :</div>${J0.liste.map(x=>`<div class="coach" style="margin-top:8px;background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0"><b>${esc(x[0])}</b><div style="font-size:.76rem;color:var(--muted);font-weight:600;margin-top:4px">📜 ${esc(x[1])} <span class="tag">${esc(x[2])}</span></div></div>`).join('')}
-      <button class="ck ${d.jeuneNafl?'on':''} mt" onclick="toggle('jeuneNafl')"><span class="box"></span>J'ai jeûné aujourd'hui</button>`
-    : `<div class="sub">Pas de jeûne recommandé particulier aujourd'hui.${prochain?' Prochain : <b>'+esc(prochain)+'</b>.':''}</div>`}
+      <button class="ck ${d.jeuneNafl?'on':''} mt" onclick="toggle('jeuneNafl')"><span class="box"></span>J'ai jeûné aujourd'hui <span class="tag" style="margin-left:auto">+10 points</span></button>`
+    : `<div class="sub">Pas de jeûne recommandé particulier aujourd'hui.${prochain?' Prochain : <b>'+esc(prochain)+'</b>.':''} Tu peux quand même jeûner et le noter.</div>
+      <button class="ck ${d.jeuneNafl?'on':''} mt" onclick="toggle('jeuneNafl')"><span class="box"></span>J'ai jeûné aujourd'hui <span class="tag" style="margin-left:auto">+10 points</span></button>`}
+    ${!J0.interdit?`<div class="kv mt"><span>Jeûnes surérogatoires ce mois-ci</span><b>${jeunesMois(k)}</b></div>`:''}
+    ${hadithJeune()}
     ${dem.liste.length&&!J0.interdit?`<p style="font-size:.8rem;font-weight:700;margin-top:10px">🌙 Demain : jeûne recommandé (${esc(dem.liste.map(x=>x[0]).join(', '))}). Pense au suhur !</p>`:''}
     ${qa?`<div class="row mt" style="flex-wrap:wrap"><span style="font-weight:800;font-size:.86rem">🌙 Jeûnes de Ramadan à rattraper : ${qa}</span><span class="sp"></span><button class="btn sm" onclick="qadaFait()">+1 jour rattrapé</button></div>`:''}
   </div>`;
