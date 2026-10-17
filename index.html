@@ -393,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-120001'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-121224'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1358,16 +1358,21 @@ async function push(){
 async function pull(){
   if(!S.uid || pulling) return; pulling=true;
   try{
-    const r=await rpc('niyya_lire');
+    // Synchro incrémentale : on ne télécharge que ce qui a changé (complète au plus une fois par jour)
+    const kD='nya_der_'+S.uid, kC='nya_full_'+S.uid; let der=null, full=null; try{ der=localStorage.getItem(kD); full=+localStorage.getItem(kC)||0; }catch(e){}
+    let complet=!der || Date.now()-full>864e5, r;
+    if(!complet){ try{ r=await rpc('niyya_lire_depuis',{p_depuis:new Date(new Date(der).getTime()-12e4).toISOString()}); }catch(e){ if(e.invalid) throw e; complet=true; } }
+    if(complet){ try{ r=await rpc('niyya_lire_depuis',{p_depuis:null}); }catch(e){ if(e.invalid) throw e; r=await rpc('niyya_lire'); } }
     let changed=false;
     for(const [k,d] of Object.entries(r.jours||{})){
       const loc=S.jours[k];
       if(!loc || (d.u||0)>(loc.u||0)){ S.jours[k]=d; changed=true; }
       else if((loc.u||0)>(d.u||0)) S.dirty.add(k);
     }
-    for(const k of Object.keys(S.jours)) if(S.jours[k].u && !(r.jours||{})[k]) S.dirty.add(k);
+    if(complet) for(const k of Object.keys(S.jours)) if(S.jours[k].u && !(r.jours||{})[k]) S.dirty.add(k);
     if(r.config && (r.config.u||0)>(S.cfg.u||0)){ S.cfg=merge(DEF_CFG,r.config); changed=true; applyTheme(); }
-    else if((S.cfg.u||0)>((r.config&&r.config.u)||0)) S.cfgDirty=true;
+    else if((complet||r.config) && (S.cfg.u||0)>((r.config&&r.config.u)||0)) S.cfgDirty=true;
+    if(r.maintenant){ try{ localStorage.setItem(kD,r.maintenant); if(complet) localStorage.setItem(kC,String(Date.now())); }catch(e){} }
     saveLocal(); setSync('ok');
     if(S.dirty.size||S.cfgDirty) planPush();
     if(!S.pret){ S.pret=true; render(); compter(S.view||'jour'); }
