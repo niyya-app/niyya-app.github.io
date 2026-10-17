@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-184606'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-185523'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1231,7 +1231,8 @@ const DEF_CFG = {
   fumeur:false,
   tabac:{ debut:'', base:20, prix:12.5, pas:2, premiereBase:'08:00', premierePas:15 },
   poidsObj:null, poidsDepart:null,
-  poids:{ prieres:30, tabac:15, sport:10, coran:10, lecture:10, bonnes:15, famille:5, business:5, fruits:5, eau:5 },
+  poids:{ prieres:30, tabac:15, sport:10, coran:10, lecture:10, bonnes:15, famille:5, business:5, fruits:5, eau:5, essentiels:35 },
+  ess:['sport','coran','lecture','famille','adhM','adhS'], essPerso:{},
   u:0,
 };
 
@@ -1448,17 +1449,14 @@ function scoreOf(k){
   const n=d.cig.length, t=targetOf(k);
   const tv = k<S.cfg.tabac.debut ? 0 : (n<=t?1:Math.max(0,1-(n-t)/5));
   if(S.cfg.fumeur) parts.push({k:'tabac',l:'Tabac',f:tv,txt:`${n}/${t}`});
-  parts.push({k:'sport',l:'Sport',f:(d.sport||d.repos)?1:0,txt:d.sport?'fait':d.repos?'repos':'—'});
-  parts.push({k:'coran',l:'Coran',f:d.coran?1:0,txt:d.coran?'20 min':'—'});
-  parts.push({k:'lecture',l:'Lecture',f:d.lecture?1:0,txt:d.lecture?'20 min':'—'});
+  const ne=essFaits(d); parts.push({k:'essentiels',l:'Mes essentiels',f:ne/6,txt:`${ne}/6`}); // 6 cases au choix, même poids chacune
   const nb=baNb(d);
   parts.push({k:'bonnes',l:'Bonnes actions',f:nb>=1?1:0,txt:nb?`${nb} ✓`:'—'}); // une seule bonne action suffit, les autres sont du bonus
-  parts.push({k:'famille',l:'Famille',f:d.famille?1:0,txt:d.famille?'oui':'—'});
   parts.push({k:'fruits',l:'Fruits',f:Math.min(5,d.fruits||0)/5,txt:`${d.fruits||0}/5`});
   parts.push({k:'eau',l:'Eau',f:Math.min(6,d.eau||0)/6,txt:`${litres(d.eau)} L`});
   const pr=d.prio.filter(p=>p.t.trim()), po=pr.filter(p=>p.ok).length;
   parts.push({k:'business',l:'Business',f:pr.length?po/pr.length:0,txt:`${po}/${pr.length||3}`});
-  let tot=0,max=0; parts.forEach(p=>{ p.max=W[p.k]||0; p.pts=Math.round(p.f*p.max*10)/10; tot+=p.f*p.max; max+=p.max; });
+  let tot=0,max=0; parts.forEach(p=>{ p.max=p.k==='essentiels'?(W.essentiels??((+W.sport||0)+(+W.coran||0)+(+W.lecture||0)+(+W.famille||0))):(W[p.k]||0); p.pts=Math.round(p.f*p.max*10)/10; tot+=p.f*p.max; max+=p.max; });
   let score=max?Math.round(tot/max*100):0;
   // Bonus jeûne : +10 points (jeûne surérogatoire ou jour de Ramadan jeûné), sans pénaliser les jours sans jeûne
   if(d.jeuneNafl||d.jeune==='fait'){ parts.push({k:'jeune',l:'Jeûne',bonus:true,f:1,pts:10,max:0,txt:d.jeune==='fait'?'Ramadan':'surérogatoire'}); score=Math.min(100,score+10); }
@@ -1577,6 +1575,49 @@ function heroTabac(){
     <button class="btn sm" style="margin-top:10px;background:rgba(255,255,255,.22);border:none;color:#fff" onclick="envie()">😤 J'ai une envie — aide-moi à tenir</button>
   </div>`;
 }
+/* ---------- ✅ Mes 6 essentiels (au choix) ---------- */
+const ESS_CAT={
+  sport:{i:'💪',t:'Sport fait',s:'',g:'k-emerald'}, coran:{i:'📖',t:'Coran 20 min',s:'Lecture & méditation',g:'k-teal'},
+  lecture:{i:'📚',t:'Lecture 20 min',s:'Développement perso',g:'k-sky'}, famille:{i:'❤️',t:'Temps famille',s:'Avec mes proches, sans téléphone',g:'k-pink'},
+  adhM:{i:'☀️',t:'Adhkar du matin',s:'Après Fajr',g:'k-sunset'}, adhS:{i:'🌙',t:'Adhkar du soir',s:'Après Asr',g:'k-magenta'},
+  marche:{i:'🚶',t:'Marcher 30 min',s:'',g:'k-emerald'}, coucher:{i:'😴',t:'Coucher avant minuit',s:'',g:'k-violet'},
+  sourate:{i:'🧠',t:'Apprendre une sourate',s:'Quelques versets par jour',g:'k-teal'},
+  rs:{i:'📵',t:'Pas de réseaux sociaux',s:'De toute la journée',g:'k-sky'}, rsMatin:{i:'🌅',t:'Pas de réseaux sociaux au réveil',s:'',g:'k-sunset'},
+  rsSoir:{i:'🌃',t:'Pas de réseaux sociaux le soir',s:'',g:'k-magenta'}
+};
+const ESS_LEGACY=['sport','coran','lecture','famille','adhM','adhS']; // cases historiques, enregistrées comme avant (d.sport, d.coran…)
+const essSlots=()=>{ const L=(S.cfg.ess||ESS_LEGACY).slice(0,6); while(L.length<6) L.push(ESS_LEGACY.find(x=>!L.includes(x))||'marche'); return L; };
+const essInfo=id=>ESS_CAT[id]||(S.cfg.essPerso||{})[id]||{i:'✅',t:'Essentiel',s:''};
+const essFait=(d,id)=>ESS_LEGACY.includes(id)?(id==='sport'?!!(d.sport||d.repos):!!d[id]):!!(d.essX&&d.essX[id]);
+const essFaits=d=>essSlots().filter(id=>essFait(d,id)).length;
+function essTile(id){
+  if(ESS_LEGACY.includes(id)){ const c=ESS_CAT[id]; return tileBtn(id,c.i,c.t,c.s,c.g); }
+  const c=essInfo(id), on=essFait(J(),id);
+  return `<button class="tile ${on?'on '+(c.g||'k-emerald'):''}" onclick="essToggle('${id}')"><span class="t-ico">${esc(c.i||'✅')}</span><b>${esc(c.t)}</b>${c.s?`<small>${esc(c.s)}</small>`:''}</button>`;
+}
+function essToggle(id){ const d=J(); d.essX=d.essX||{}; d.essX[id]=!d.essX[id]; if(!d.essX[id]) delete d.essX[id]; vib(); touch(); render(); if(d.essX&&d.essX[id]) toast('✅ '+essInfo(id).t); }
+function essChoisir(slot){
+  const L=essSlots();
+  if(slot==null){
+    openSheet(`<h2 style="margin:0 0 4px">✅ Mes 6 essentiels</h2><div class="sub">Touche une case pour la remplacer. 6 cases, chacune vaut autant dans le score.</div>
+      <div class="checks" style="margin-top:12px">${L.map((id,i)=>{ const c=essInfo(id); return `<button class="ck" onclick="essChoisir(${i})" style="justify-content:space-between"><span>${esc(c.i||'✅')} <b>${esc(c.t)}</b></span><span class="muted">Changer ›</span></button>`; }).join('')}</div>
+      <button class="btn mt" onclick="closeSheet()">Fermer</button>`); return;
+  }
+  const libres=Object.keys(ESS_CAT).filter(k=>!L.includes(k));
+  const perso=Object.keys(S.cfg.essPerso||{}).filter(k=>!L.includes(k));
+  openSheet(`<h2 style="margin:0 0 4px">Case ${slot+1} · ${esc(essInfo(L[slot]).t)}</h2><div class="sub">Choisis ce qui la remplace, ou écris le tien.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">${[...libres,...perso].map(k=>{ const c=essInfo(k); return `<button class="chip" style="cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)" onclick="essPoser(${slot},'${k}')">${esc(c.i||'✅')} ${esc(c.t)}</button>`; }).join('')}</div>
+    <label class="f" style="margin-top:14px">✍️ Mon propre essentiel</label>
+    <div class="row"><input class="inp" id="essIn" maxlength="40" placeholder="Ex. Pas de sucre, appeler mes parents…" style="flex:1" onkeydown="if(event.key==='Enter')essPerso(${slot})"><button class="btn green" onclick="essPerso(${slot})">OK</button></div>
+    <button class="btn mt" onclick="essChoisir()">‹ Retour</button>`);
+}
+function essPoser(slot,id){ const L=essSlots(); L[slot]=id; S.cfg.ess=L; cfgTouch(); render(); essChoisir(); toast('✅ Essentiel mis à jour'); }
+function essPerso(slot){
+  const t=((document.getElementById('essIn')||{}).value||'').trim().slice(0,40); if(!t) return toast('Écris ton essentiel');
+  const P=S.cfg.essPerso=S.cfg.essPerso||{}; let id=Object.keys(P).find(k=>P[k].t.toLowerCase()===t.toLowerCase());
+  if(!id){ id='p'+Date.now().toString(36); P[id]={i:'⭐',t,s:'',g:'k-violet'}; }
+  essPoser(slot,id);
+}
 function tileBtn(key,ico,title,sub,grad,alt){
   const on=J()[key];
   return `<button class="tile ${on?'on '+grad:''} ${alt?'alt':''}" onclick="${key==='sport'?'openSport()':`toggle('${key}')`}"><span class="t-ico">${ico}</span><b>${title}</b>${sub?`<small>${sub}</small>`:''}</button>`;
@@ -1618,16 +1659,12 @@ function vJour(){
     ${S.cfg.fumeur?heroTabac():''}
     <div class="panel" ${S.cfg.fumeur?'':'style="grid-column:1/-1"'}>
       <button onclick="deroul('ess')" style="all:unset;display:block;width:100%;cursor:pointer">
-      <h2><span class="ico">✅</span>Mes essentiels<span class="cnt">${['sport','coran','lecture','famille','adhM','adhS'].filter(k=>d[k]).length + (d.repos&&!d.sport?1:0)}/6 <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['ess']?180:0}deg)">▾</span></span></h2>
+      <h2><span class="ico">✅</span>Mes essentiels<span class="cnt">${essFaits(d)}/6 <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['ess']?180:0}deg)">▾</span></span></h2>
       <div class="sub" style="margin-bottom:${S.ouv.ess?0:2}px">${S.ouv.ess?'Un clic = c\'est fait.':`🍎 ${d.fruits||0}/5 · 💧 ${litres(d.eau)} L · touche pour ouvrir`}</div></button>
       ${S.ouv.ess?`<div class="tiles">
-        ${tileBtn('sport','💪','Sport fait','','k-emerald')}
-        ${tileBtn('coran','📖','Coran 20 min','Lecture & méditation','k-teal')}
-        ${tileBtn('lecture','📚','Lecture 20 min','Développement perso','k-sky')}
-        ${tileBtn('famille','❤️','Temps famille','Avec mes proches, sans téléphone','k-pink')}
-        ${tileBtn('adhM','☀️','Adhkar du matin','Après Fajr','k-sunset')}
-        ${tileBtn('adhS','🌙','Adhkar du soir','Après Asr','k-magenta')}
+        ${essSlots().map(id=>essTile(id)).join('')}
       </div>
+      <button class="btn sm mt" onclick="essChoisir()">✏️ Choisir mes 6 essentiels</button>
       <div class="fruits ${(d.fruits||0)>=5?'ok':''}"><div><b>🍎 5 fruits & légumes par jour</b><small>${d.fruits||0}/5 aujourd'hui${(d.fruits||0)>=5?' · objectif atteint':''}</small></div>
         <div class="fr">${['🍎','🍌','🍊','🥕','🍇'].map((f,i)=>`<button class="${i<(d.fruits||0)?'on':''}" onclick="fruit(${i+1})" aria-label="${i+1} fruit${i?'s':''}">${f}</button>`).join('')}</div></div>
       <div class="fruits eau ${(d.eau||0)>=6?'ok':''}"><div><b>💧 Boire 1,5 L d'eau</b><small>${litres(d.eau)} L sur 1,5 L · 1 verre = 25 cl${(d.eau||0)>=6?' · objectif atteint':''}</small></div>
@@ -1881,7 +1918,7 @@ function vBilan(){
   const prev=[]; for(let i=2*P-1;i>=P;i--) prev.push(addDays(today(),-i));
   const agg=ks=>{ const f=ks.filter(has); const o={n:f.length,score:0,pr:0,sport:0,coran:0,lecture:0,famille:0,ba:0,cig:0,cigN:0,sad:0,dom:{}};
     const doms={religion:[],sante:[],famille:[],business:[],devperso:[],bonnes:[]};
-    f.forEach(k=>{ const d=J(k), s=scoreOf(k), sp=Object.fromEntries(s.parts.map(p=>[p.k,p.f]));
+    f.forEach(k=>{ const d=J(k), s=scoreOf(k), sp=Object.assign(Object.fromEntries(s.parts.map(p=>[p.k,p.f])),{sport:(d.sport||d.repos)?1:0,coran:d.coran?1:0,lecture:d.lecture?1:0,famille:d.famille?1:0});
       o.score+=s.score; o.pr+=prayCount(k); o.sport+=d.sport?1:0; (d.sports||[]).forEach(x=>{ o.disc=o.disc||{}; o.disc[x]=(o.disc[x]||0)+1; }); o.coran+=d.coran?1:0; o.lecture+=d.lecture?1:0; o.famille+=d.famille?1:0;
       o.ba+=baNb(d); o.fruits=(o.fruits||0)+Math.min(5,d.fruits||0); o.eau=(o.eau||0)+Math.min(6,d.eau||0); o.cig+=d.cig.length; o.cigN++; o.sad+=(d.sadaqa||[]).reduce((a,b)=>a+(+b.m||0),0);
       doms.religion.push((sp.prieres*3+sp.coran+(d.adhM?1:0)*.5+(d.adhS?1:0)*.5+Math.min(1,d.istighfar/100)+naflN(d)/NAFL.length+((d.jeune==='fait'||d.jeuneNafl)?1:0))/(estRamadan(k)?8:7));
@@ -1958,8 +1995,9 @@ function setPer(n){ S.statsPer=n; render(); }
 function openDay(k){ S.sel=k; render(); }
 
 /* ---------- Réglages ---------- */
+const POIDS_UI={prieres:'Prières',tabac:'Tabac',essentiels:'Mes 6 essentiels',bonnes:'Bonnes actions',business:'Business',fruits:'Fruits',eau:'Eau'};
 function vReglages(){
-  const C=S.cfg, T=C.tabac, W=C.poids, totW=Object.values(W).reduce((a,b)=>a+(+b||0),0);
+  const C=S.cfg, T=C.tabac, W=C.poids, totW=Object.keys(POIDS_UI).filter(k=>k!=='tabac'||C.fumeur).reduce((a,k)=>a+(+(W[k]??(k==='essentiels'?35:0))||0),0);
   const num=(path,val,step)=>`<input class="inp" type="number" step="${step||1}" value="${val}" onchange="setCfg('${path}',this.value,true)">`;
   return `
   <div class="grid g2">
@@ -1990,7 +2028,7 @@ function vReglages(){
     <div class="panel">
       <h2><span class="ico">⚖️</span>Calcul du score<span class="cnt">total ${totW}</span></h2>
       <div class="sub">Points attribués à chaque domaine (ramené sur 100).</div>
-      <div class="grid g2" style="gap:8px">${Object.entries({prieres:'Prières',tabac:'Tabac',sport:'Sport',coran:'Coran',lecture:'Lecture',bonnes:'Bonnes actions',famille:'Famille',business:'Business',fruits:'Fruits',eau:'Eau'}).map(([k,l])=>`<div><label class="f">${l}</label>${num('poids.'+k,W[k])}</div>`).join('')}</div>
+      <div class="grid g2" style="gap:8px">${Object.entries(POIDS_UI).map(([k,l])=>`<div><label class="f">${l}</label>${num('poids.'+k,W[k]??(k==='essentiels'?35:0))}</div>`).join('')}</div>
     </div>
     <div class="panel">
       <h2><span class="ico">🔐</span>Mon compte</h2>
@@ -3019,7 +3057,7 @@ async function autotest(){
   const profils=[
     {nom:'Fumeur',onb:true,fumeur:true,tabac:{debut:addDays(today(),-10),base:20,prix:12,pas:2,premiereBase:'08:00',premierePas:15},lieu:{nom:'Caen',lat:49.18,lon:-0.37},priere:{methode:'uoif'}},
     {nom:'NonFumeur',onb:true,fumeur:false,lieu:{nom:'Lyon',lat:45.76,lon:4.83},priere:{methode:'mwl'}},
-    {nom:'Hsc',onb:true,fumeur:false,priere:{methode:'hsc'},poidsObj:80,poidsDepart:{k:today(),v:85}},
+    {nom:'Hsc',onb:true,fumeur:false,priere:{methode:'hsc'},poidsObj:80,poidsDepart:{k:today(),v:85},ess:['coran','rs','rsMatin','marche','p1','adhS'],essPerso:{p1:{i:'⭐',t:'Pas de <sucre>',s:'',g:'k-violet'}}},
   ];
   if(sb) sb.rpc=async()=>({data:{jours:{},config:null},error:null});
   try{ S.uid=null; render(); if(!document.getElementById('app').innerText.includes('Se connecter')) err.push('écran de connexion'); }catch(e){ err.push('connexion: '+e.message); }
