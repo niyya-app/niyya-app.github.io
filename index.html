@@ -330,6 +330,26 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .dua .fr{font-size:.92rem;line-height:1.55;margin-top:8px;font-weight:600}
 .dua .src{font-size:.72rem;color:var(--muted);font-weight:700;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
 @media (max-width:480px){.pill .plbl{display:none}.pill{padding:9px}.gearbtn{width:36px;height:36px;font-size:1rem}.brand h1{font-size:1.2rem}}
+/* Cœur vert (sadaqa / don) */
+.coeur-bg{position:fixed;inset:0;z-index:80;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(16,185,129,.18),transparent 60%);animation:cfond 1.9s ease forwards}
+.coeur-bg .c{font-size:9rem;line-height:1;filter:drop-shadow(0 10px 30px rgba(16,185,129,.55));animation:cbat 1.9s ease forwards}
+.coeur-bg .m{position:absolute;top:62%;left:0;right:0;text-align:center;font-weight:800;font-size:1.05rem;color:#047857;padding:0 24px;animation:cmsg 1.9s ease forwards}
+@keyframes cbat{0%{transform:scale(.2);opacity:0}25%{transform:scale(1.15);opacity:1}40%{transform:scale(.95)}55%{transform:scale(1.08)}80%{opacity:1}100%{transform:scale(1.25);opacity:0}}
+@keyframes cfond{0%{opacity:0}20%{opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes cmsg{0%,20%{opacity:0;transform:translateY(10px)}35%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
+/* Mode Ramadan */
+.ramadan .hero.k-violet{--g:linear-gradient(135deg,#1e1b4b,#4338ca);background:var(--g)}
+.ram{border-radius:var(--r);padding:18px;color:#fff;background:linear-gradient(135deg,#0f172a,#312e81 60%,#4c1d95);box-shadow:0 12px 28px rgba(49,46,129,.35);position:relative;overflow:hidden;margin-bottom:14px}
+.ram .lune{position:absolute;right:14px;top:8px;font-size:3.2rem;opacity:.9}
+.ram .gold{color:#fde68a}
+.ram .seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.ram .seg3 button{border:none;border-radius:12px;padding:10px 4px;font-weight:800;font-size:.76rem;cursor:pointer;background:rgba(255,255,255,.14);color:#fff}
+.ram .seg3 button.on{background:#fde68a;color:#312e81}
+.ram .tg{display:flex;align-items:center;gap:10px;margin-top:8px;background:rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;font-weight:700;font-size:.86rem;cursor:pointer;border:none;color:#fff;width:100%;text-align:left}
+.ram .tg .box{width:22px;height:22px;border-radius:7px;border:2px solid #fde68a;display:grid;place-items:center;flex:none;color:#312e81;font-size:.8rem}
+.ram .tg.on .box{background:#fde68a}
+.ram .tg.on .box::before{content:"✓"}
+.ram .src{font-size:.7rem;opacity:.85;margin-top:10px;line-height:1.4}
 .hide{display:none!important}
 .tag{display:inline-block;border-radius:100px;padding:2px 9px;font-size:.7rem;font-weight:800;background:var(--card2);border:1px solid var(--line)}
 </style>
@@ -354,7 +374,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261016-102851'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-095616'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1224,7 +1244,7 @@ const fmtShort=k=>{ const d=dateOf(k); return `${d.getDate()}/${d.getMonth()+1}`
 const hm=m=>`${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
 const toMin=s=>{ const [h,m]=s.split(':').map(Number); return h*60+m; };
 function hijri(k){
-  try{ return new Intl.DateTimeFormat('fr-FR-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(dateOf(k)).replace(/ (AH|ap\. ?J\.-?C\.|H)$/,'') + ' H'; }
+  try{ const dd=dateOf(k); dd.setDate(dd.getDate()+(+(S.cfg&&S.cfg.hijriDecal)||0)); return new Intl.DateTimeFormat('fr-FR-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(dd).replace(/ (AH|ap\. ?J\.-?C\.|H)$/,'') + ' H'; }
   catch(e){ return ''; }
 }
 function dayOfYear(k){ const d=dateOf(k); return Math.floor((d-new Date(d.getFullYear(),0,0))/864e5); }
@@ -1289,7 +1309,7 @@ function prevPrayer(m,t){ let c=null; for(const p of PRAYERS){ if(t[p.i]<=m) c=p
 /* ---------- Jours ---------- */
 function blank(){ return { p:{}, cig:[], sport:false, repos:false, coran:false, lecture:false, famille:false,
   adhM:false, adhS:false, istighfar:0, ba:Array(9).fill(false), prio:[{t:'',ok:false},{t:'',ok:false},{t:'',ok:false}],
-  sadaqa:[], envies:0, fruits:0, eau:0, aime:false, sports:[], nafl:{}, jumua:false, ghusl:false, reussite:'', ameliorer:'', poids:null, u:0 }; }
+  sadaqa:[], envies:0, fruits:0, eau:0, aime:false, sports:[], nafl:{}, jumua:false, ghusl:false, jeune:'', tarawih:false, juz:0, jeuneNafl:false, reussite:'', ameliorer:'', poids:null, u:0 }; }
 function J(k){ k=k||S.sel; if(!S.jours[k]) S.jours[k]=blank(); else S.jours[k]=Object.assign(blank(),S.jours[k]); return S.jours[k]; }
 function has(k){ const d=S.jours[k]; return !!(d && d.u); }
 function touch(k){ k=k||S.sel; J(k).u=Date.now(); S.dirty.add(k); saveLocal(); planPush(); }
@@ -1445,7 +1465,8 @@ function render(){
   </div>`:''}`;
   const v={jour:vJour,din:vDin,noms:vNoms,voyage:vCitadelleVoyage,citadelle:vCitadelle,coran:vCoran,qibla:vQibla,tabac:vTabac,bilan:vBilan,reglages:vReglages}[S.view]();
   const alerte = S.sync==='invalid' ? `<div class="hero" style="background:linear-gradient(135deg,#ef4444,#be123c);margin-bottom:14px"><div class="h-lbl">⚠️ Ta session a expiré</div><div class="h-sub" style="margin:6px 0 10px">Tes saisies sont gardées sur cet appareil et seront envoyées dès que tu te reconnectes.</div><button class="btn" style="background:#fff;color:#be123c;border:none" onclick="deconnexion(true)">Me reconnecter</button></div>` : '';
-  app.innerHTML=head+alerte+v;
+  document.body.classList.toggle('ramadan',estRamadan(S.sel));
+  app.innerHTML=head+alerte+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
   tick();
 }
 function go(v){ if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
@@ -1584,6 +1605,7 @@ function vJour(){
       <h2><span class="ico">✨</span>Sunnah du jour</h2>
       <div class="sub">Une petite action, beaucoup de récompense.</div>
       <div class="coach" style="background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0">${esc(SUNNAH[di%SUNNAH.length])}</div>
+      ${(()=>{ const j=jeunesDuJour(S.sel), dm=jeunesDuJour(addDays(S.sel,1)); return j.liste.length?`<div class="coach mt">🍽️ <b>Jeûne recommandé aujourd'hui</b> : ${esc(j.liste.map(x=>x[0]).join(', '))}</div>`:dm.liste.length?`<div class="coach mt">🌙 <b>Demain</b>, jeûne recommandé : ${esc(dm.liste.map(x=>x[0]).join(', '))}. Pense au suhur.</div>`:''; })()}
       <div class="coach mt" style="background:color-mix(in srgb,var(--violet) 10%,var(--card));border-color:#c4b5fd">🤍 <b>Allah aime ${esc(ALLAH_AIME[aimeIdx()][0])}</b><br>🎯 ${esc(ALLAH_AIME[aimeIdx()][3])}
         <button class="ck ${d.aime?'on':''}" style="margin-top:8px" onclick="toggle('aime')"><span class="box"></span>Je l'ai appliqué</button></div>
     </div>
@@ -1630,6 +1652,7 @@ function vDin(){
         <div class="seg">${PSTAT.map(s=>`<button class="s-${s.k} ${d.p[p.k]===s.k?'on':''}" onclick="setPrayer('${p.k}','${s.k}')">${s.l}</button>`).join('')}</div>
       </div>`).join('')}
       ${naflPanel()}
+      ${jeunePanel()}
     </div>
     <div>
       <div class="hero k-teal">
@@ -1787,7 +1810,7 @@ function vBilan(){
     f.forEach(k=>{ const d=J(k), s=scoreOf(k), sp=Object.fromEntries(s.parts.map(p=>[p.k,p.f]));
       o.score+=s.score; o.pr+=prayCount(k); o.sport+=d.sport?1:0; (d.sports||[]).forEach(x=>{ o.disc=o.disc||{}; o.disc[x]=(o.disc[x]||0)+1; }); o.coran+=d.coran?1:0; o.lecture+=d.lecture?1:0; o.famille+=d.famille?1:0;
       o.ba+=d.ba.filter(Boolean).length; o.fruits=(o.fruits||0)+Math.min(5,d.fruits||0); o.eau=(o.eau||0)+Math.min(6,d.eau||0); o.cig+=d.cig.length; o.cigN++; o.sad+=(d.sadaqa||[]).reduce((a,b)=>a+(+b.m||0),0);
-      doms.religion.push((sp.prieres*3+sp.coran+(d.adhM?1:0)*.5+(d.adhS?1:0)*.5+Math.min(1,d.istighfar/100)+naflN(d)/NAFL.length)/7);
+      doms.religion.push((sp.prieres*3+sp.coran+(d.adhM?1:0)*.5+(d.adhS?1:0)*.5+Math.min(1,d.istighfar/100)+naflN(d)/NAFL.length+((d.jeune==='fait'||d.jeuneNafl)?1:0))/(estRamadan(k)?8:7));
       doms.sante.push(S.cfg.fumeur?(sp.tabac+sp.sport+sp.fruits+sp.eau)/4:(sp.sport+sp.fruits+sp.eau)/3);
       doms.famille.push((sp.famille+baCat(k,'famille'))/2);
       doms.business.push(sp.business);
@@ -1916,6 +1939,7 @@ function vReglages(){
   <div class="panel mt"><h2><span class="ico">🕌</span>Horaires de prière</h2>
     <div class="sub">${isHsc()?`Calendrier annuel de la mosquée An-Nour d'Hérouville-Saint-Clair (Mawaqit), iqama +${IQAMA} min, Joumouʿa ${JUMUA.join(' et ')}.`:`Calculés pour <b>${esc(C.lieu.nom||'—')}</b>, à l'heure locale (${esc(lieuTz())}).`}</div>
     ${lieuForm()}
+    ${hijriReglage()}
   </div>`;
 }
 
@@ -1984,14 +2008,14 @@ function ouvrirDons(){
       <div class="h-lbl">🤲 Sadaqa à une association</div>
       <div style="font-size:1.05rem;font-weight:800;margin:6px 0 2px">${esc(A.nom||'Association à but non lucratif')}</div>
       <div class="h-sub">${esc(A.desc||'100 % de ton don va à l\'association. Elle peut te délivrer un reçu fiscal si elle y est habilitée.')}</div>
-      ${A.url?`<a class="btn" style="display:inline-block;margin-top:12px;background:#fff;color:#047857;border:none;text-decoration:none" href="${esc(A.url)}" target="_blank" rel="noopener" onclick="apresDon('asso')">Faire un don à l'association →</a>`
+      ${A.url?`<a class="btn" style="display:inline-block;margin-top:12px;background:#fff;color:#047857;border:none;text-decoration:none" href="${esc(A.url)}" target="_blank" rel="noopener" onclick="coeurVert('Qu\'Allah accepte ta sadaqa');apresDon('asso')">Faire un don à l'association →</a>`
         :`<div class="chip" style="display:inline-block;margin-top:12px">Lien bientôt disponible</div>`}
     </div>
     <div class="hero k-violet">
       <div class="h-lbl">☕ Soutenir NIYYA</div>
       <div style="font-size:1.05rem;font-weight:800;margin:6px 0 2px">Faire vivre NIYYA</div>
       <div class="h-sub">Serveur, maintenance et nouvelles fonctions. NIYYA est gratuite et sans publicité. Même 2 € comptent.</div>
-      ${F.url?`<a class="btn" style="display:inline-block;margin-top:12px;background:#fff;color:#6d28d9;border:none;text-decoration:none" href="${esc(F.url)}" target="_blank" rel="noopener">Soutenir NIYYA →</a>`
+      ${F.url?`<a class="btn" style="display:inline-block;margin-top:12px;background:#fff;color:#6d28d9;border:none;text-decoration:none" href="${esc(F.url)}" target="_blank" rel="noopener" onclick="coeurVert('Merci de faire vivre NIYYA')">Soutenir NIYYA →</a>`
         :`<div class="chip" style="display:inline-block;margin-top:12px">Lien bientôt disponible</div>`}
     </div>
     <p class="muted" style="font-size:.72rem;font-weight:600;margin:12px 0">Le soutien à NIYYA n'est pas un don à une association : il ne donne pas droit à une réduction d'impôt.</p>
@@ -2004,10 +2028,10 @@ function apresDon(){
 }
 function noterDon(){
   const m=parseFloat((document.getElementById('donM').value||'').replace(',','.')); if(!(m>0)) return toast('Indique un montant');
-  J(today()).sadaqa.push({m:Math.round(m*100)/100,n:'Don : '+(DONS.asso.nom||'association')}); touch(today()); closeSheet(); render(); toast('💚 Don noté dans ta sadaqa');
+  J(today()).sadaqa.push({m:Math.round(m*100)/100,n:'Don : '+(DONS.asso.nom||'association')}); touch(today()); closeSheet(); render(); coeurVert('Don noté dans ta sadaqa');
 }
 function addSad(){ const m=parseFloat((document.getElementById('sadM').value||'').replace(',','.')); if(!(m>0)) return toast('Indique un montant');
-  J().sadaqa.push({m:Math.round(m*100)/100,n:document.getElementById('sadN').value.trim()}); touch(); render(); toast('💚 Qu\'Allah accepte ta sadaqa'); }
+  J().sadaqa.push({m:Math.round(m*100)/100,n:document.getElementById('sadN').value.trim()}); touch(); render(); coeurVert('Qu\'Allah accepte ta sadaqa'); }
 function delSad(i){ J().sadaqa.splice(i,1); touch(); render(); }
 function setPoids(){ const v=parseFloat((document.getElementById('poidsIn').value||'').replace(',','.')); J().poids=v>0?v:null; touch(); render(); toast('⚖️ Poids enregistré'); }
 function aimeIdx(){ return S.aimeI??(dayOfYear(S.sel)%ALLAH_AIME.length); }
@@ -2025,7 +2049,7 @@ document.getElementById('sheetBg').addEventListener('click',e=>{ if(e.target.id=
 function bilanTexte(P){
   const lines=[`BILAN NIYYA de ${S.cfg.nom} — ${P} derniers jours (au ${fmtLong(today())})`];
   for(let i=P-1;i>=0;i--){ const k=addDays(today(),-i); if(!has(k)) continue; const d=J(k), s=scoreOf(k);
-    lines.push(`${k} | score ${s.score} | prières ${prayCount(k)}/5 (${PRAYERS.map(p=>p.n[0]+':'+(d.p[p.k]||'-')).join(' ')}) | cig ${d.cig.length}/${targetOf(k)}${d.cig.length?' 1re '+hm(new Date(d.cig[0]).getHours()*60+new Date(d.cig[0]).getMinutes()):''} | sport ${d.sport?((d.sports||[]).length?d.sports.map(sportNom).join('+'):'oui'):d.repos?'repos':'non'} | coran ${d.coran?'oui':'non'} | lecture ${d.lecture?'oui':'non'} | famille ${d.famille?'oui':'non'} | fruits ${d.fruits||0}/5 | eau ${litres(d.eau)} L | Allah aime appliqué ${d.aime?'oui':'non'} | bonnes ${d.ba.filter(Boolean).length}/9 | surérogatoires ${naflN(d)}/${NAFL.length}${d.jumua?' | Joumouʿa à la mosquée':''} | istighfar ${d.istighfar} | prio ${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length}${d.sadaqa.length?' | sadaqa '+d.sadaqa.reduce((a,b)=>a+(+b.m||0),0)+'€':''}${d.poids?' | poids '+d.poids:''}${d.reussite?' | réussite: '+d.reussite:''}${d.ameliorer?' | à améliorer: '+d.ameliorer:''}`); }
+    lines.push(`${k} | score ${s.score} | prières ${prayCount(k)}/5 (${PRAYERS.map(p=>p.n[0]+':'+(d.p[p.k]||'-')).join(' ')}) | cig ${d.cig.length}/${targetOf(k)}${d.cig.length?' 1re '+hm(new Date(d.cig[0]).getHours()*60+new Date(d.cig[0]).getMinutes()):''} | sport ${d.sport?((d.sports||[]).length?d.sports.map(sportNom).join('+'):'oui'):d.repos?'repos':'non'} | coran ${d.coran?'oui':'non'} | lecture ${d.lecture?'oui':'non'} | famille ${d.famille?'oui':'non'} | fruits ${d.fruits||0}/5 | eau ${litres(d.eau)} L | Allah aime appliqué ${d.aime?'oui':'non'} | bonnes ${d.ba.filter(Boolean).length}/9 | surérogatoires ${naflN(d)}/${NAFL.length}${d.jeune?' | jeûne Ramadan: '+d.jeune:''}${d.jeuneNafl?' | jeûne surérogatoire':''}${d.tarawih?' | tarawih':''}${d.juz?' | '+d.juz+' juz':''}${d.jumua?' | Joumouʿa à la mosquée':''} | istighfar ${d.istighfar} | prio ${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length}${d.sadaqa.length?' | sadaqa '+d.sadaqa.reduce((a,b)=>a+(+b.m||0),0)+'€':''}${d.poids?' | poids '+d.poids:''}${d.reussite?' | réussite: '+d.reussite:''}${d.ameliorer?' | à améliorer: '+d.ameliorer:''}`); }
   const st=tabacStats(); if(S.cfg.fumeur) lines.push(`Tabac : ${st.evitees} cigarettes évitées, ${vieGagnee(st.evitees)} de vie gagnées, ${Math.round(st.eco)} € économisés, objectif actuel ${targetOf(today())}/jour.`);
   return lines.join('\n');
 }
@@ -2589,9 +2613,100 @@ function naflPanel(){
       ${S.naflOpen?`<div class="checks" style="margin-top:12px">${NAFL.map(([k,l])=>`<button class="ck ${d.nafl&&d.nafl[k]?'on':''}" onclick="toggleNafl('${k}')"><span class="box"></span>${esc(l)}</button>`).join('')}</div>${srcLines(NAFL_SRC)}`:''}
     </div>`;
 }
+
+/* =====================================================================
+   💚 Cœur vert — 🌙 Ramadan — 🍽️ Jeûnes surérogatoires (sources vérifiées)
+   ===================================================================== */
+function coeurVert(msg){
+  try{ navigator.vibrate&&navigator.vibrate([30,60,30]); }catch(e){}
+  const el=document.createElement('div'); el.className='coeur-bg';
+  el.innerHTML=`<div class="c">💚</div><div class="m">${esc(msg||'Qu\'Allah accepte ta sadaqa')}</div>`;
+  document.body.appendChild(el); setTimeout(()=>el.remove(),2000);
+}
+const _fmtH={};
+function hijriParts(k){
+  const d=dateOf(k); d.setDate(d.getDate()+(+S.cfg.hijriDecal||0));
+  try{
+    const f=_fmtH.f||(_fmtH.f=new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn',{day:'numeric',month:'numeric',year:'numeric'}));
+    const p=f.formatToParts(d), g=t=>parseInt((p.find(x=>x.type===t)||{}).value,10);
+    return {j:g('day'), m:g('month'), a:g('year')||g('relatedYear')};
+  }catch(e){ return {j:0,m:0,a:0}; }
+}
+const estRamadan=k=>hijriParts(k).m===9;
+const SRC_RAMADAN=['« Celui qui jeûne le Ramadan avec foi et en espérant la récompense, ses péchés passés lui sont pardonnés ; et celui qui veille la nuit du Destin avec foi et en espérant la récompense, ses péchés passés lui sont pardonnés. »','Al-Boukhari n° 2014, d\'après Abou Hourayra'];
+const DUA_QADR={ar:'اللَّهُمَّ إِنَّكَ عَفُوٌّ كَرِيمٌ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي',phon:'Allâhumma innaka \'afuwwun karîmun tuhibbu-l-\'afwa fa\'fu \'annî',fr:'Ô Allah, Tu es Celui qui pardonne, le Généreux ; Tu aimes le pardon, alors pardonne-moi.',src:'At-Tirmidhi n° 3513, d\'après \'Aïcha — hasan sahih'};
+function ramadanCarte(){
+  const k=S.sel, h=hijriParts(k), d=J(), isT=k===today();
+  const juzTot=Object.keys(S.jours).filter(x=>{ const q=hijriParts(x); return q.m===9&&q.a===h.a; }).reduce((s,x)=>s+(+S.jours[x].juz||0),0);
+  const zf=((S.cfg.zakatFitr||{})[h.a]);
+  return `<div class="ram"><div class="lune">🌙</div>
+    <div style="font-weight:800;font-size:.84rem;opacity:.9">Ramadan moubarak</div>
+    <div style="font-size:1.7rem;font-weight:800;letter-spacing:-.02em" class="gold">Jour ${h.j} / 30</div>
+    ${isT?'<div id="ramCount" style="font-weight:700;font-size:.92rem;margin-top:2px"></div>':''}
+    <div style="font-weight:800;font-size:.8rem;margin-top:12px">Mon jeûne aujourd'hui</div>
+    <div class="seg3">${[['fait','✓ Jeûné'],['non','Pas jeûné'],['excuse','Excusé']].map(([v,l])=>`<button class="${d.jeune===v?'on':''}" onclick="setJeune('${v}')">${l}</button>`).join('')}</div>
+    <button class="tg ${d.tarawih?'on':''}" onclick="toggle('tarawih')"><span class="box"></span>🕌 Tarawih</button>
+    <div class="tg" style="cursor:default"><span>📖 Coran : <b>${+d.juz||0}</b> juz aujourd'hui · <b class="gold">${juzTot}/30</b> ce Ramadan</span><span class="sp"></span>
+      <button class="btn sm" style="background:rgba(255,255,255,.2);border:none;color:#fff" onclick="juz(-1)">−</button><button class="btn sm" style="background:#fde68a;border:none;color:#312e81" onclick="juz(1)">+1</button></div>
+    <button class="tg ${zf?'on':''}" onclick="zakatFitr()"><span class="box"></span>💚 Zakat al-fitr versée (avant la prière de l'Aïd)</button>
+    ${h.j>=20?`<div style="margin-top:12px;background:rgba(253,230,138,.14);border-radius:12px;padding:12px">
+      <div class="gold" style="font-weight:800">✨ Les 10 dernières nuits : cherche Laylat al-Qadr</div>
+      <div style="font-family:'Amiri',serif;direction:rtl;text-align:right;font-size:1.35rem;margin-top:8px">${DUA_QADR.ar}</div>
+      <div style="font-style:italic;font-size:.82rem;opacity:.9">${esc(DUA_QADR.phon)}</div>
+      <div style="font-size:.86rem;font-weight:700;margin-top:4px">${esc(DUA_QADR.fr)}</div>
+      <div class="src">📚 ${esc(DUA_QADR.src)}</div></div>`:''}
+    <div class="src">📜 ${esc(SRC_RAMADAN[0])} — ${esc(SRC_RAMADAN[1])}</div>
+  </div>`;
+}
+function hijriReglage(){ const v=+S.cfg.hijriDecal||0; return `<label class="f">Calendrier hégirien (Ramadan, jeûnes)</label><div class="opt">${[[-1,'−1 jour'],[0,'Calcul standard'],[1,'+1 jour']].map(([x,l])=>`<button class="${v===x?'on':''}" onclick="S.cfg.hijriDecal=${x};cfgTouch();render()">${l}</button>`).join('')}</div><p class="muted" style="font-size:.74rem;font-weight:600;margin-top:6px">Aujourd'hui : ${esc(hijri(today()))}. Décale d'un jour si ta mosquée annonce le début du mois un jour plus tôt ou plus tard.</p>`; }
+function setJeune(v){ const d=J(); d.jeune=d.jeune===v?'':v; vib(); touch(); render(); if(d.jeune==='fait') toast('🌙 Qu\'Allah accepte ton jeûne'); }
+function juz(n){ const d=J(); d.juz=Math.max(0,(+d.juz||0)+n); vib(); touch(); render(); }
+function zakatFitr(){ const a=hijriParts(S.sel).a; S.cfg.zakatFitr=Object.assign({},S.cfg.zakatFitr); S.cfg.zakatFitr[a]=!S.cfg.zakatFitr[a]; cfgTouch(); render(); if(S.cfg.zakatFitr[a]) coeurVert('Qu\'Allah accepte ta zakat al-fitr'); }
+function ramCompte(){
+  const el=document.getElementById('ramCount'); if(!el) return;
+  const t=timesOf(today()), m=nowMin(), f=v=>{ const r=Math.max(0,Math.round((v-m)*60)); const h=Math.floor(r/3600), mi=Math.floor(r%3600/60); return h?`${h} h ${String(mi).padStart(2,'0')}`:`${mi} min`; };
+  el.innerHTML = m<t[0]?`🌅 Fin du suhur (Fajr ${hm(t[0])}) dans <b>${f(t[0])}</b>`
+    : m<t[4]?`🍽️ Iftar (Maghrib ${hm(t[4])}) dans <b>${f(t[4])}</b>`
+    : `✅ Iftar passé · suhur demain avant ${hm(timesOf(addDays(today(),1))[0])}`;
+}
+function qadaRestant(){
+  let dus=0; for(const [k,d] of Object.entries(S.jours)){ if(d&&(d.jeune==='non'||d.jeune==='excuse')&&estRamadan(k)) dus++; }
+  return Math.max(0,dus-(+S.cfg.qadaFaits||0));
+}
+function qadaFait(){ S.cfg.qadaFaits=(+S.cfg.qadaFaits||0)+1; cfgTouch(); render(); toast('🌙 Jour rattrapé noté'); }
+// Jeûnes surérogatoires : raisons du jour (hors Ramadan)
+function jeunesDuJour(k){
+  const h=hijriParts(k), w=dateOf(k).getDay(), out=[];
+  if(h.m===9) return {ramadan:true, liste:[]};
+  if((h.m===10&&h.j===1)||(h.m===12&&h.j===10)) return {interdit:h.m===10?'Aïd al-Fitr':'Aïd al-Adha', liste:[]};
+  if(h.m===12&&h.j===9) out.push(['Jour de ʿArafat','« J\'espère d\'Allah que le jeûne du jour de ʿArafat efface les péchés de l\'année passée et de l\'année à venir. »','Muslim n° 1162, d\'après Abou Qatada']);
+  if(h.m===1&&h.j===10) out.push(['Achoura (10 Mouharram)','« J\'espère d\'Allah que le jeûne de Achoura efface les péchés de l\'année passée. »','Muslim n° 1162, d\'après Abou Qatada']);
+  if(h.m===10&&h.j>=2) out.push(['6 jours de Chawwal','« Celui qui jeûne le Ramadan puis le fait suivre de six jours de Chawwal, c\'est comme s\'il avait jeûné toute l\'année. »','Muslim n° 1164, d\'après Abou Ayyoub']);
+  if(h.j>=13&&h.j<=15) out.push(['Jour blanc ('+h.j+' du mois hégirien)','« Si tu jeûnes trois jours dans le mois, jeûne le 13, le 14 et le 15. »','At-Tirmidhi n° 761, d\'après Abou Dharr — hasan sahih']);
+  if(w===1) out.push(['Lundi','Interrogé sur le jeûne du lundi : « C\'est le jour où je suis né et où la révélation est descendue sur moi. »','Muslim n° 1162, d\'après Abou Qatada']);
+  if(w===1||w===4) out.push([w===1?'Lundi et jeudi':'Jeudi','« Les actions sont présentées le lundi et le jeudi, et j\'aime que mes actions soient présentées alors que je jeûne. »','At-Tirmidhi n° 747, d\'après Abou Hourayra — sahih']);
+  return {liste:out.filter((x,i,a)=>!(x[0]==='Lundi et jeudi'&&a.some(y=>y[0]==='Lundi')))};
+}
+function jeunePanel(){
+  const k=S.sel, J0=jeunesDuJour(k), d=J();
+  if(J0.ramadan){ return ''; }
+  const dem=jeunesDuJour(addDays(k,1));
+  let prochain=''; if(!J0.liste.length){ for(let i=1;i<=10;i++){ const x=jeunesDuJour(addDays(k,i)); if(x.liste.length){ prochain=`${fmtLong(addDays(k,i))} : ${x.liste[0][0]}`; break; } } }
+  const qa=qadaRestant();
+  return `<div class="panel mt">
+    <h2><span class="ico">🍽️</span>Jeûne surérogatoire</h2>
+    ${J0.interdit?`<div class="coach">🎉 Aujourd'hui c'est l'<b>${J0.interdit}</b> : jour de fête, on ne jeûne pas.<div style="font-size:.74rem;color:var(--muted);margin-top:6px">📜 Le Prophète ﷺ a interdit de jeûner les deux jours de l'Aïd. <span class="tag">Al-Boukhari n° 1991, d'après Abou Saʿid</span></div></div>`
+    : J0.liste.length?`<div class="sub">Aujourd'hui, le jeûne est recommandé :</div>${J0.liste.map(x=>`<div class="coach" style="margin-top:8px;background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0"><b>${esc(x[0])}</b><div style="font-size:.76rem;color:var(--muted);font-weight:600;margin-top:4px">📜 ${esc(x[1])} <span class="tag">${esc(x[2])}</span></div></div>`).join('')}
+      <button class="ck ${d.jeuneNafl?'on':''} mt" onclick="toggle('jeuneNafl')"><span class="box"></span>J'ai jeûné aujourd'hui</button>`
+    : `<div class="sub">Pas de jeûne recommandé particulier aujourd'hui.${prochain?' Prochain : <b>'+esc(prochain)+'</b>.':''}</div>`}
+    ${dem.liste.length&&!J0.interdit?`<p style="font-size:.8rem;font-weight:700;margin-top:10px">🌙 Demain : jeûne recommandé (${esc(dem.liste.map(x=>x[0]).join(', '))}). Pense au suhur !</p>`:''}
+    ${qa?`<div class="row mt" style="flex-wrap:wrap"><span style="font-weight:800;font-size:.86rem">🌙 Jeûnes de Ramadan à rattraper : ${qa}</span><span class="sp"></span><button class="btn sm" onclick="qadaFait()">+1 jour rattrapé</button></div>`:''}
+  </div>`;
+}
 /* ---------- Horloge (compte à rebours prière) ---------- */
 let lastDay=today();
 function tick(){
+  try{ ramCompte(); }catch(e){}
   if(today()!==lastDay){ if(S.sel===lastDay) S.sel=today(); lastDay=today(); S.mindIdx=null; S.hadIdx=null; S.aimeI=null; S.nomI=null; render(); return; }
   const el=document.getElementById('npCount'); if(!el) return;
   const np=nextPrayer(), m=nowMin();
@@ -2636,6 +2751,7 @@ async function autotest(){
       S.uid='autotest-'+pr.nom; S.email='test@niyya'; S.cfg=merge(DEF_CFG,pr); S.jours={}; S.dirty=new Set(); S.pret=true; S.sel=today();
       const d=J(today()); d.cig=[Date.now()]; d.sport=true; d.ba[0]=true; d.fruits=3; d.eau=2; d.p.fajr='heure'; d.u=Date.now();
       for(const v of vues){ try{ S.view=v; render(); }catch(e){ err.push(pr.nom+'/'+v+': '+e.message); } }
+      { let dec=0; for(let i=0;i<400;i++){ S.cfg.hijriDecal=i; if(estRamadan(today())){ dec=i; break; } } S.cfg.hijriDecal=dec+21; S.view='jour'; render(); S.view='din'; render(); S.cfg.hijriDecal=0; }
       S.cfg.onb=false; render(); S.cfg.onb=true;
       if(typeof bilanTexte==='function') bilanTexte(7);
       if(pr.lieu&&pr.lieu.nom==='Caen'){ const t=timesOf(today()); if(!(t[2]>=12*60+15&&t[2]<=14*60+30)) err.push('Dhuhr de Caen hors plage ('+hm(t[2])+') — problème de fuseau horaire'); }
