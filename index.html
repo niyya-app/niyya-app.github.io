@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-175730'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-180314'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1239,7 +1239,7 @@ const DEF_CFG = {
    État + stockage
    ===================================================================== */
 const S = {
-  jours:{}, cfg:structuredClone(DEF_CFG), uid:null, email:'', pret:false, authStep:'login', authEmail:'',
+  ouv:{}, jours:{}, cfg:structuredClone(DEF_CFG), uid:null, email:'', pret:false, authStep:'login', authEmail:'',
   view:'jour', sel:null, statsPer:7, sync:'local', dirty:new Set(), cfgDirty:false,
   mindIdx:null, hadIdx:null, hadAr:false, envieFin:0,
 };
@@ -1501,6 +1501,7 @@ function render(){
   app.innerHTML=head+alerte+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
   tick();
 }
+function deroul(k){ S.ouv=S.ouv||{}; S.ouv[k]=!S.ouv[k]; render(); }
 // Ouverture depuis une notification : ?ouvrir=priere|hadith|mindset|recap
 function ouvrir(cible){
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
@@ -1509,7 +1510,7 @@ function ouvrir(cible){
   const id={hadith:'cHadith',mindset:'cMindset'}[cible];
   if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
 }
-function go(v){ S.scoreOpen=false; if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
+function go(v){ S.scoreOpen=false; S.ouv={}; if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
 function setDay(k){ S.sel=k>today()?today():k; render(); }
 function shiftDay(n){ setDay(addDays(S.sel,n)); }
 
@@ -1566,13 +1567,15 @@ function vJour(){
   const h=HADITHS[S.hadIdx??(di%HADITHS.length)];
   const mi=S.mindIdx??((di*7)%MINDSET.length); const m=MINDSET[mi]; const b=BOOKS[m[0]];
   const hr=new Date().getHours();
+  const soirFait=!!((d.reussite||'').trim()||(d.ameliorer||'').trim());
   const soir=`<div class="panel">
-      <h2><span class="ico">🌙</span>Bilan du soir</h2>
-      <div class="sub">Deux questions, trente secondes.</div>
-      <label class="f">Ma plus belle réussite aujourd'hui</label>
+      <button onclick="deroul('soir')" style="all:unset;display:block;width:100%;cursor:pointer">
+      <h2><span class="ico">🌙</span>Bilan du soir<span class="cnt">${soirFait?'✓ ':''}<span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['soir']?180:0}deg)">▾</span></span></h2>
+      <div class="sub" style="margin-bottom:${S.ouv.soir?0:2}px">${S.ouv.soir?'Deux questions, trente secondes.':soirFait?'✓ Rempli · touche pour relire ou modifier':'Deux questions, trente secondes. Touche pour ouvrir.'}</div></button>
+      ${S.ouv.soir?`<label class="f">Ma plus belle réussite aujourd'hui</label>
       <textarea rows="2" oninput="setTxt('reussite',this.value)" placeholder="Ex. J'ai prié Fajr à la mosquée et tenu mon objectif tabac">${esc(d.reussite)}</textarea>
       <label class="f">Ce que je peux améliorer demain</label>
-      <textarea rows="2" oninput="setTxt('ameliorer',this.value)" placeholder="Ex. Ne pas fumer avant le sport">${esc(d.ameliorer)}</textarea>
+      <textarea rows="2" oninput="setTxt('ameliorer',this.value)" placeholder="Ex. Ne pas fumer avant le sport">${esc(d.ameliorer)}</textarea>`:''}
     </div>`;
   return `
   <div class="grid g2">
@@ -1592,9 +1595,10 @@ function vJour(){
   <div class="grid g2 mt">
     ${S.cfg.fumeur?heroTabac():''}
     <div class="panel" ${S.cfg.fumeur?'':'style="grid-column:1/-1"'}>
-      <h2><span class="ico">✅</span>Mes essentiels<span class="cnt">${['sport','coran','lecture','famille','adhM','adhS'].filter(k=>d[k]).length + (d.repos&&!d.sport?1:0)}/6</span></h2>
-      <div class="sub">Un clic = c'est fait.</div>
-      <div class="tiles">
+      <button onclick="deroul('ess')" style="all:unset;display:block;width:100%;cursor:pointer">
+      <h2><span class="ico">✅</span>Mes essentiels<span class="cnt">${['sport','coran','lecture','famille','adhM','adhS'].filter(k=>d[k]).length + (d.repos&&!d.sport?1:0)}/6 <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['ess']?180:0}deg)">▾</span></span></h2>
+      <div class="sub" style="margin-bottom:${S.ouv.ess?0:2}px">${S.ouv.ess?'Un clic = c\'est fait.':`🍎 ${d.fruits||0}/5 · 💧 ${litres(d.eau)} L · touche pour ouvrir`}</div></button>
+      ${S.ouv.ess?`<div class="tiles">
         ${tileBtn('sport','💪','Sport fait','','k-emerald')}
         ${tileBtn('coran','📖','Coran 20 min','Lecture & méditation','k-teal')}
         ${tileBtn('lecture','📚','Lecture 20 min','Développement perso','k-sky')}
@@ -1607,16 +1611,17 @@ function vJour(){
       <div class="fruits eau ${(d.eau||0)>=6?'ok':''}"><div><b>💧 Boire 1,5 L d'eau</b><small>${litres(d.eau)} L sur 1,5 L · 1 verre = 25 cl${(d.eau||0)>=6?' · objectif atteint':''}</small></div>
         <div class="wbar"><div style="width:${Math.min(100,(d.eau||0)/6*100)}%"></div></div>
         <div class="fr">${[1,2,3,4,5,6].map(i=>`<button class="${i<=(d.eau||0)?'on':''}" onclick="eau(${i})" aria-label="${i} verre${i>1?'s':''}">💧</button>`).join('')}</div></div>
-      ${!d.sport?`<button class="btn sm mt" onclick="toggle('repos')">${d.repos?'✓ Jour de repos sportif':'😴 Marquer jour de repos'}</button>`:''}
+      ${!d.sport?`<button class="btn sm mt" onclick="toggle('repos')">${d.repos?'✓ Jour de repos sportif':'😴 Marquer jour de repos'}</button>`:''}`:''}
     </div>
   </div>
   <div class="grid g2 mt">
     <div class="panel">
-      <h2><span class="ico">🎯</span>3 priorités business<span class="cnt">${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length||3}</span></h2>
-      <div class="sub">Les 3 tâches qui feront vraiment avancer ton activité aujourd'hui — à fixer en début de journée (${esc(S.cfg.travail.debut)}).</div>
-      <div class="checks">${d.prio.map((p,i)=>`
+      <button onclick="deroul('prio')" style="all:unset;display:block;width:100%;cursor:pointer">
+      <h2><span class="ico">🎯</span>3 priorités business<span class="cnt">${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length||3} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['prio']?180:0}deg)">▾</span></span></h2>
+      <div class="sub" style="margin-bottom:${S.ouv.prio?0:2}px">${S.ouv.prio?`Les 3 tâches qui feront vraiment avancer ton activité aujourd'hui — à fixer en début de journée (${esc(S.cfg.travail.debut)}).`:d.prio.some(p=>p.t.trim())?esc(d.prio.filter(p=>p.t.trim()).map(p=>(p.ok?'✓ ':'')+p.t.trim()).join(' · ')):'Touche pour fixer tes 3 priorités du jour.'}</div></button>
+      ${S.ouv.prio?`<div class="checks">${d.prio.map((p,i)=>`
         <div class="prio"><button class="ck ${p.ok?'on':''}" onclick="prioOk(${i})" aria-label="Priorité faite"><span class="box"></span></button>
-        <input type="text" value="${esc(p.t)}" placeholder="Priorité ${i+1}" oninput="prioTxt(${i},this.value)"></div>`).join('')}</div>
+        <input type="text" value="${esc(p.t)}" placeholder="Priorité ${i+1}" oninput="prioTxt(${i},this.value)"></div>`).join('')}</div>`:''}
     </div>
     <div class="panel">
       <button onclick="S.baOpen=!S.baOpen;render()" style="all:unset;display:block;width:100%;cursor:pointer">
@@ -3035,7 +3040,7 @@ async function autotest(){
   if(location.hash!=='#autotest'){ swEnregistrer().then(()=>pushMajEtat()); }
   checkUpdate();
   setInterval(()=>{ if(S.uid && document.visibilityState==='visible') pull(); },30000);
-  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible') S.scoreOpen=false; if(document.visibilityState==='visible'){ if(S.uid) pull(); tick(); checkUpdate(); } else if(S.dirty.size||S.cfgDirty) push(); });
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible'){ S.scoreOpen=false; S.ouv={}; } if(document.visibilityState==='visible'){ if(S.uid) pull(); tick(); checkUpdate(); } else if(S.dirty.size||S.cfgDirty) push(); });
 })();
 </script>
 </body>
