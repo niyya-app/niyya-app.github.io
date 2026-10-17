@@ -148,7 +148,10 @@ Deno.serve(async (req) => {
         const cle = `${H.jour}|${k}`;
         if (row.dernier === cle) continue;
         const titre = k === "dhuhr" && H.vendredi ? `🕌 Joumouʿa — ${hm(H.t[i])}` : `🕌 ${nom} — ${hm(H.t[i])}`;
-        const ok = await envoyer(row, { title: titre, body: "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲", tag: "priere-" + k, url: params.url || "./" });
+        // 📖 un verset court (Hamidullah) avec chaque adhan, différent à chaque prière et chaque jour
+        const vs = (await quotidien())?.[H.jour]?.v?.[PRIERES.findIndex((p) => p[0] === k)];
+        const corps = "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲" + (vs ? `\n📖 « ${vs[0]} » — ${vs[1]}` : "");
+        const ok = await envoyer(row, { title: titre, body: corps, tag: "priere-" + k, url: params.url || "./" });
         await sb.from("niyya_push").update({ dernier: cle, envoye_le: new Date().toISOString() }).eq("endpoint", row.endpoint);
         if (ok) envoyes++;
       }
@@ -209,6 +212,11 @@ Deno.serve(async (req) => {
     if (action === "abonnes") return rep((subs || []).map((r: any) => ({ fin: r.endpoint.slice(-12), user_id: r.user_id, maj_le: r.maj_le, tz: r.params?.tz, hsc: r.params?.hsc })));
     const row = (subs || []).find((r: any) => r.endpoint.endsWith(String(body.fin || "\u0000")));
     if (!row) return rep({ erreur: "abonnement introuvable" }, 404);
+    if (body.type === "p") {
+      const H = horaires(row.params || {}, new Date()); const i = Math.max(0, PRIERES.findIndex((q) => H.t[q[2]] > H.min));
+      const vs = (await quotidien())?.[H.jour]?.v?.[i];
+      return rep({ ok: await envoyer(row, { title: `🕌 ${PRIERES[i][1]} — ${hm(H.t[PRIERES[i][2]])} (essai)`, body: "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲" + (vs ? `\n📖 « ${vs[0]} » — ${vs[1]}` : ""), tag: "priere-" + PRIERES[i][0], url: row.params?.url || "./" }) });
+    }
     if (body.type === "s") {
       if (!row.user_id) return rep({ erreur: "abonnement pas encore rattaché à un compte" }, 409);
       const r = await recap(row.user_id, horaires(row.params || {}, new Date()).jour);
