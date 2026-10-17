@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
     if (body.type === "p") {
       const H = horaires(row.params || {}, new Date()); const i = Math.max(0, PRIERES.findIndex((q) => H.t[q[2]] > H.min));
       const vs = (await quotidien())?.[H.jour]?.v?.[i];
-      return rep({ ok: await envoyer(row, { title: `🕌 ${PRIERES[i][1]} — ${hm(H.t[PRIERES[i][2]])} (essai)`, body: "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲" + (vs ? `\n📖 « ${vs[0]} » — ${vs[1]}` : ""), tag: "priere-" + PRIERES[i][0], url: row.params?.url || "./" }) });
+      return rep({ ok: await envoyer(row, { title: `🧪 ESSAI — ${PRIERES[i][1]} à ${hm(H.t[PRIERES[i][2]])}`, body: "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲" + (vs ? `\n📖 « ${vs[0]} » — ${vs[1]}` : ""), tag: "priere-" + PRIERES[i][0], url: row.params?.url || "./" }) });
     }
     if (body.type === "s") {
       if (!row.user_id) return rep({ erreur: "abonnement pas encore rattaché à un compte" }, 409);
