@@ -393,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-114952'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-120001'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1947,8 +1947,8 @@ function vReglages(){
       <button class="btn" onclick="exportJSON()">💾 Exporter (JSON)</button>
       <label class="btn" style="display:inline-block">📂 Importer<input type="file" accept=".json" class="hide" onchange="importJSON(this)"></label>
       <div class="coach mt" style="font-size:.8rem">📱 <b>iPhone</b> : dans Safari → bouton Partager → « Sur l'écran d'accueil ». NIYYA s'ouvre alors comme une vraie appli.</div>
-      <details class="mt"><summary style="font-weight:800;font-size:.85rem;cursor:pointer">Importer depuis l'ancienne NIYYA (lien secret)</summary>
-        <div class="row mt"><input class="inp" id="oldLien" placeholder="https://…niyya.html#k=…"><button class="btn green" onclick="importAncien()">Importer</button></div></details>
+      ${S.email===ADMIN_EMAIL?`<details class="mt"><summary style="font-weight:800;font-size:.85rem;cursor:pointer">Importer depuis l'ancienne NIYYA (lien secret)</summary>
+        <div class="row mt"><input class="inp" id="oldLien" placeholder="https://…niyya.html#k=…"><button class="btn green" onclick="importAncien()">Importer</button></div></details>`:''}
       <div class="row mt" style="flex-wrap:wrap"><button class="btn sm" onclick="deconnexion()">Se déconnecter</button><button class="btn sm" style="color:#be123c" onclick="supprimerCompte()">Supprimer mon compte et mes données</button></div>
     </div>
   </div>
