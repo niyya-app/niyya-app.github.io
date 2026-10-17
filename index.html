@@ -86,6 +86,8 @@ button,input,textarea,select{font-family:inherit;color:inherit}
   color:var(--muted);font-weight:800;font-size:.68rem;display:flex;flex-direction:column;align-items:center;gap:2px}
 .nav button i{font-style:normal;font-size:1.3rem;line-height:1}
 @media (max-width:420px){.nav{gap:1px;padding-left:2px;padding-right:2px}.nav button{font-size:.56rem;padding:7px 0;letter-spacing:-.01em}.nav button i{font-size:1.15rem}}
+.nav{transform:translateZ(0);-webkit-transform:translateZ(0)}
+body.clavier .nav{display:none}
 .nav button.on{color:#fff;background:linear-gradient(135deg,#f59e0b,#fb7185);box-shadow:0 6px 16px rgba(251,113,133,.35)}
 @media (min-width:900px){
   body{padding-bottom:40px}
@@ -393,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-174710'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-175730'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3016,6 +3018,14 @@ async function autotest(){
   { const mi=location.hash.match(/import=([0-9a-f]{32,})/i); if(mi){ try{ localStorage.setItem('nya_import',mi[1]); }catch(e){} history.replaceState(null,'',location.pathname+location.search); } }
   { const mo=new URLSearchParams(location.search).get('ouvrir'); if(mo){ S.ouvrirEnAttente=mo; history.replaceState(null,'',location.pathname+location.hash); } }
   try{ navigator.serviceWorker&&navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.ouvrir) ouvrir(ev.data.ouvrir); }); }catch(e){}
+  // iPhone : après la fermeture du clavier, Safari laisse parfois le menu du bas « flotter » au milieu de l'écran.
+  // On cache le menu pendant la saisie et on recale la page quand le clavier se ferme.
+  try{
+    const vv=window.visualViewport, majClavier=()=>{ const ouvert=!!vv && (window.innerHeight-vv.height)>140 && !!document.activeElement?.matches('input,textarea,select'); document.body.classList.toggle('clavier',ouvert); };
+    if(vv){ vv.addEventListener('resize',majClavier); vv.addEventListener('scroll',majClavier); }
+    document.addEventListener('focusin',e=>{ if(e.target.matches&&e.target.matches('input,textarea')) setTimeout(majClavier,350); });
+    document.addEventListener('focusout',()=>setTimeout(()=>{ document.body.classList.remove('clavier'); window.scrollTo(window.scrollX,window.scrollY); },120));
+  }catch(e){}
   render(); // écran de connexion en attendant la session
   const recup=/type=recovery/.test(location.hash);
   try{ const {data}=await sb.auth.getSession(); if(recup){ S.authStep='newpass'; render(); } else if(data&&data.session) demarrer(data.session.user); }catch(e){}
