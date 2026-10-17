@@ -393,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-111402'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-112648'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2177,7 +2177,13 @@ async function importAncien(){
     const r=await fetch(OLD_URL+'/rest/v1/rpc/niyya_lire',{method:'POST',headers:{apikey:OLD_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_cle:m[1]})});
     if(!r.ok) throw new Error('lien refusé'); const o=await r.json(); let n=0;
     for(const [k,d] of Object.entries(o.jours||{})){ if(!S.jours[k]||(d.u||0)>(S.jours[k].u||0)){ S.jours[k]=d; S.dirty.add(k); n++; } }
-    saveLocal(); planPush(); render(); toast(`📂 ${n} journée${n>1?'s':''} importée${n>1?'s':''}`);
+    // Réglages utiles de l'ancienne version (sans écraser le prénom ni la ville déjà choisis)
+    const c=o.config||{}; let nr=0;
+    if(c.tabac){ S.cfg.tabac=Object.assign({},S.cfg.tabac,c.tabac); S.cfg.fumeur=true; nr++; }
+    for(const k of ['poidsObj','poidsDepart','sportSemaine','sportsPerso','qadaFaits','zakatFitr','hijriDecal','lecture','qz','badgesVus','nivVu','poids']) if(c[k]!=null){ S.cfg[k]=c[k]; nr++; }
+    if(!c.priere||c.priere.methode==='hsc'||!c.lieu){ S.cfg.priere=Object.assign({},S.cfg.priere,{methode:'hsc'}); nr++; } // l'ancienne version utilisait le calendrier de la mosquée An-Nour
+    if(nr) cfgTouch();
+    saveLocal(); planPush(); render(); toast(`📂 ${n} journée${n>1?'s':''} importée${n>1?'s':''}${nr?' + tes réglages (tabac, poids, mosquée An-Nour…)':''}`,4500);
   }catch(e){ toast('Import impossible : '+esc(e.message),4000); }
 }
 function setFumeur(v){
