@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-185523'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-230523'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1382,7 +1382,7 @@ async function pull(){
     if(S.ouvrirEnAttente && S.cfg.onb){ const c=S.ouvrirEnAttente; S.ouvrirEnAttente=null; ouvrir(c); } else lireClicNotif();
     if(!S._aboOk){ S._aboOk=true; pushAbonnement().then(sub=>{ if(sub) pushEnvoyerAbo(sub).catch(()=>{}); }); } // rattache l'abonnement aux notifications à ce compte
     else if(changed && !document.activeElement?.matches('input,textarea')) render();
-    { let ci=null; try{ ci=localStorage.getItem('nya_import'); }catch(e){} if(ci) importAncien(ci); } // lien d'import automatique (#import=…)
+    { let ci=null; try{ ci=localStorage.getItem('nya_import'); }catch(e){} if(ci){ if(S.email===ADMIN_EMAIL) importAncien(ci); else { try{ localStorage.removeItem('nya_import'); }catch(e){} } } } // lien d'import automatique (#import=…) : réservé à l'administrateur
     compterJournee();
   }catch(e){ setSync(e.invalid?'invalid':'off'); if(!S.pret){ S.pret=true; render(); } }
   pulling=false;
@@ -1596,12 +1596,12 @@ function essTile(id){
   return `<button class="tile ${on?'on '+(c.g||'k-emerald'):''}" onclick="essToggle('${id}')"><span class="t-ico">${esc(c.i||'✅')}</span><b>${esc(c.t)}</b>${c.s?`<small>${esc(c.s)}</small>`:''}</button>`;
 }
 function essToggle(id){ const d=J(); d.essX=d.essX||{}; d.essX[id]=!d.essX[id]; if(!d.essX[id]) delete d.essX[id]; vib(); touch(); render(); if(d.essX&&d.essX[id]) toast('✅ '+essInfo(id).t); }
-function essChoisir(slot){
+function essChoisir(slot,accueil){
   const L=essSlots();
   if(slot==null){
-    openSheet(`<h2 style="margin:0 0 4px">✅ Mes 6 essentiels</h2><div class="sub">Touche une case pour la remplacer. 6 cases, chacune vaut autant dans le score.</div>
+    openSheet(`<h2 style="margin:0 0 4px">✅ ${accueil?'Choisis tes 6 essentiels':'Mes 6 essentiels'}</h2><div class="sub">${accueil?'Les 6 habitudes que tu veux tenir chaque jour. Garde celles-ci ou touche une case pour la remplacer (tu pourras changer plus tard).':'Touche une case pour la remplacer. 6 cases, chacune vaut autant dans le score.'}</div>
       <div class="checks" style="margin-top:12px">${L.map((id,i)=>{ const c=essInfo(id); return `<button class="ck" onclick="essChoisir(${i})" style="justify-content:space-between"><span>${esc(c.i||'✅')} <b>${esc(c.t)}</b></span><span class="muted">Changer ›</span></button>`; }).join('')}</div>
-      <button class="btn mt" onclick="closeSheet()">Fermer</button>`); return;
+      <button class="btn ${accueil?'pri':''} mt" onclick="closeSheet()">${accueil?'C\'est bon, on commence':'Fermer'}</button>`); return;
   }
   const libres=Object.keys(ESS_CAT).filter(k=>!L.includes(k));
   const perso=Object.keys(S.cfg.essPerso||{}).filter(k=>!L.includes(k));
@@ -2406,7 +2406,7 @@ function finirOnb(){
   C.fumeur=!!ONB.fumeur;
   if(C.fumeur){ C.tabac.base=Math.max(1,Math.round(num('onbCig')??20)); C.tabac.prix=num('onbPrix')??12.5; C.tabac.debut=today();
     C.tabac.pas=Math.max(1,Math.round(C.tabac.base/10)); }
-  C.consent=new Date().toISOString(); C.onb=true; cfgTouch(); S.view='jour'; render(); window.scrollTo({top:0});
+  C.consent=new Date().toISOString(); C.onb=true; cfgTouch(); S.view='jour'; render(); window.scrollTo({top:0}); setTimeout(()=>essChoisir(null,true),500);
   toast(`Bienvenue ${esc(nom)} 🌙`,2600);
 }
 
