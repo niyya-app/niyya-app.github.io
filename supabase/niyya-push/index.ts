@@ -164,5 +164,23 @@ Deno.serve(async (req) => {
     return rep({ ok: true, abonnes: (subs || []).length, envoyes: ok });
   }
 
+  // Outils administrateur (lien secret du back-office) : lister les abonnements, envoyer un rappel d'essai à UN abonnement
+  if (action === "abonnes" || action === "essai") {
+    const cle = String(body.cle || "");
+    if (cle.length < 32) return rep({ erreur: "lien invalide" }, 403);
+    const { data: acces } = await sb.from("niyya_admin_acces").select("empreinte").eq("empreinte", await sha256hex(cle)).maybeSingle();
+    if (!acces) return rep({ erreur: "lien invalide" }, 403);
+    const { data: subs } = await sb.from("niyya_push").select("endpoint, sub, params, user_id, maj_le").eq("actif", true).order("maj_le", { ascending: false });
+    if (action === "abonnes") return rep((subs || []).map((r: any) => ({ fin: r.endpoint.slice(-12), user_id: r.user_id, maj_le: r.maj_le, tz: r.params?.tz, hsc: r.params?.hsc })));
+    const row = (subs || []).find((r: any) => r.endpoint.endsWith(String(body.fin || "\u0000")));
+    if (!row) return rep({ erreur: "abonnement introuvable" }, 404);
+    const x = (await quotidien())?.[horaires(row.params || {}, new Date()).jour];
+    if (!x) return rep({ erreur: "contenu du jour introuvable" }, 500);
+    const payload = body.type === "h"
+      ? { title: "📜 Hadith du jour", body: `« ${x.h[0]} »\n— ${x.h[1]}`, tag: "hadith", url: row.params?.url || "./" }
+      : { title: "💡 Mindset du jour", body: `« ${x.m[0]} »\n— ${x.m[1]}`, tag: "mindset", url: row.params?.url || "./" };
+    return rep({ ok: await envoyer(row, payload) });
+  }
+
   return rep({ erreur: "action inconnue" }, 400);
 });
