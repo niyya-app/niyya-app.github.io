@@ -393,7 +393,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-133321'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-174710'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1450,7 +1450,7 @@ function scoreOf(k){
   parts.push({k:'coran',l:'Coran',f:d.coran?1:0,txt:d.coran?'20 min':'—'});
   parts.push({k:'lecture',l:'Lecture',f:d.lecture?1:0,txt:d.lecture?'20 min':'—'});
   const nb=baNb(d);
-  parts.push({k:'bonnes',l:'Bonnes actions',f:Math.min(1,nb/9),txt:`${nb}/9`});
+  parts.push({k:'bonnes',l:'Bonnes actions',f:nb>=1?1:0,txt:nb?`${nb} ✓`:'—'}); // une seule bonne action suffit, les autres sont du bonus
   parts.push({k:'famille',l:'Famille',f:d.famille?1:0,txt:d.famille?'oui':'—'});
   parts.push({k:'fruits',l:'Fruits',f:Math.min(5,d.fruits||0)/5,txt:`${d.fruits||0}/5`});
   parts.push({k:'eau',l:'Eau',f:Math.min(6,d.eau||0)/6,txt:`${litres(d.eau)} L`});
@@ -1618,17 +1618,16 @@ function vJour(){
     </div>
     <div class="panel">
       <button onclick="S.baOpen=!S.baOpen;render()" style="all:unset;display:block;width:100%;cursor:pointer">
-        <h2><span class="ico">🤲</span>Bonnes actions<span class="cnt">${nb}/9 <span style="display:inline-block;transition:.2s;transform:rotate(${S.baOpen?180:0}deg)">▾</span></span></h2>
-        <div class="sub" style="margin-bottom:8px">${S.baOpen?'Les actions qu\'Allah aime de Ses serviteurs.':nb===9?'9/9, qu\'Allah accepte 🌟':'Touche pour ouvrir la liste et cocher tes actions.'}</div>
-        <div class="wbar"><div style="width:${nb/9*100}%;background:linear-gradient(90deg,#10b981,#14b8a6)"></div></div>
+        <h2><span class="ico">🤲</span>Bonnes actions<span class="cnt">${nb?nb+' ✓':'0'} <span style="display:inline-block;transition:.2s;transform:rotate(${S.baOpen?180:0}deg)">▾</span></span></h2>
+        <div class="sub" style="margin-bottom:8px">${nb>=1?`✓ Score max atteint${nb>1?` · ${nb} actions, chacune en plus est un bonus 🌟`:' · chaque action en plus est un bonus'}`:'Une seule bonne action suffit pour le score max. Touche pour ouvrir la liste.'}</div>
+        <div class="wbar"><div style="width:${nb>=1?100:0}%;background:linear-gradient(90deg,#10b981,#14b8a6)"></div></div>
       </button>
       ${S.baOpen?`<div class="checks" style="margin-top:12px">${baJour(S.sel).map((id,i)=>{ const a=BA_POOL[id], h=a[1]>=0?HADITHS[a[1]]:null, src=h?`📜 « ${esc(h[0].length>110?h[0].slice(0,108)+'…':h[0])} » — ${esc(h[1])}`:`📖 « ${esc(a[3])} » — Coran, ${esc(SURATES[parseInt(a[4])-1][2])} ${esc(a[4])}`; return `<button class="ck ${d.ba[i]?'on':''}" onclick="ba(${i})" style="align-items:flex-start"><span class="box" style="margin-top:2px"></span><span>${esc(a[0])}<small style="display:block;font-weight:600;color:var(--muted);font-size:.72rem;margin-top:3px;line-height:1.35">${src}</small></span></button>`; }).join('')}
         <p class="muted" style="font-size:.7rem;font-weight:600;margin-top:4px">9 nouvelles actions chaque jour, chacune appuyée par un verset du Coran (trad. Hamidullah) ou un hadith authentique vérifié (Bukhari / Muslim).</p>
         <div style="margin-top:14px;font-weight:800;font-size:.9rem">✍️ Mes bonnes actions</div>
-        <div class="sub" style="margin:2px 0 8px">Tu as fait une bonne action qui n'est pas dans la liste ? Ajoute-la, elle compte dans ton score.</div>
-        ${(d.baPerso||[]).length?`<div class="checks">${d.baPerso.map((x,k)=>`<div class="prio"><button class="ck ${x.ok?'on':''}" onclick="baP(${k})" aria-label="Fait"><span class="box"></span></button><span style="flex:1;font-weight:700;align-self:center">${esc(x.t)}</span><button class="btn sm" onclick="baPSuppr(${k})" aria-label="Retirer" title="Retirer">✕</button></div>`).join('')}</div>`:''}
-        <div class="row mt"><input class="inp" id="baPIn" maxlength="80" placeholder="Ex. Aider un voisin, appeler ma mère…" onkeydown="if(event.key==='Enter')baPAjout()" style="flex:1"><button class="btn green" onclick="baPAjout()">Ajouter</button></div>
-        ${(()=>{ const deja=(d.baPerso||[]).map(x=>x.t.toLowerCase()), L=(S.cfg.baPersoListe||[]).map((t,k)=>[t,k]).filter(([t])=>!deja.includes(t.toLowerCase())); return L.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${L.map(([t,k])=>`<span class="chip" style="background:#ecfdf5;color:#047857;display:inline-flex;gap:6px;align-items:center"><button onclick="baPFav(${k})" style="all:unset;cursor:pointer;font-weight:800">+ ${esc(t)}</button><button onclick="baPOubli(${k})" style="all:unset;cursor:pointer;opacity:.6" aria-label="Oublier">✕</button></span>`).join('')}</div>`:''; })()}</div>`:''}
+        <div class="sub" style="margin:2px 0 8px">Ajoute tes propres bonnes actions : elles restent dans ta liste et tu pourras les cocher chaque jour.</div>
+        ${(()=>{ const L=baPAffiche(d); return L.length?`<div class="checks">${L.map((t,k)=>{ const on=baPFait(d,t); return `<div class="prio"><button class="ck ${on?'on':''}" onclick="baPCoche(${k})" aria-label="Fait"><span class="box"></span></button><button onclick="baPCoche(${k})" style="all:unset;flex:1;font-weight:700;align-self:center;cursor:pointer">${esc(t)}</button><button class="btn sm" onclick="baPOubli(${k})" aria-label="Retirer de ma liste" title="Retirer de ma liste">✕</button></div>`; }).join('')}</div>`:''; })()}
+        <div class="row mt"><input class="inp" id="baPIn" maxlength="80" placeholder="Ex. Aider un voisin, appeler ma mère…" onkeydown="if(event.key==='Enter')baPAjout()" style="flex:1"><button class="btn green" onclick="baPAjout()">Ajouter</button></div></div>`:''}
     </div>
   </div>
   <div class="grid g2 mt">
@@ -2042,18 +2041,27 @@ function eau(n){ const d=J(); d.eau=(d.eau||0)===n?n-1:n; vib(); touch(); render
 const litres=n=>((n||0)*0.25).toFixed(2).replace(/0$/,'').replace('.',',');
 // ✍️ Bonnes actions ajoutées à la main (en plus des 9 du jour)
 const baNb=d=>(d.ba||[]).filter(Boolean).length+(d.baPerso||[]).filter(x=>x.ok).length;
+const bas=t=>String(t).trim().toLowerCase();
+// liste affichée : ma liste permanente + celles cochées ce jour-là qui n'y sont plus
+function baPAffiche(d){ const L=[...(S.cfg.baPersoListe||[])]; for(const x of (d.baPerso||[])) if(x.ok && !L.some(t=>bas(t)===bas(x.t))) L.push(x.t); return L; }
+const baPFait=(d,t)=>(d.baPerso||[]).some(x=>x.ok&&bas(x.t)===bas(t));
 function baPAjout(t){
   const el=document.getElementById('baPIn'); t=String(t??(el?el.value:'')).trim().slice(0,80); if(!t) return toast('Écris ta bonne action');
-  const d=J(); d.baPerso=d.baPerso||[];
-  if(d.baPerso.some(x=>x.t.toLowerCase()===t.toLowerCase())) return toast('Déjà dans ta liste du jour');
-  d.baPerso.push({t,ok:true}); vib();
-  const L=(S.cfg.baPersoListe||[]).filter(x=>x.toLowerCase()!==t.toLowerCase()); S.cfg.baPersoListe=[t,...L].slice(0,12); cfgTouch();
-  touch(); render(); toast('🤲 Ajoutée, qu\'Allah accepte');
+  const L=S.cfg.baPersoListe||[];
+  if(!L.some(x=>bas(x)===bas(t))){ if(L.length>=30) return toast('30 actions maximum dans ta liste'); S.cfg.baPersoListe=[...L,t]; cfgTouch(); }
+  const d=J(); d.baPerso=(d.baPerso||[]).filter(x=>bas(x.t)!==bas(t)); d.baPerso.push({t,ok:true}); vib(); touch(); render();
+  toast('🤲 Ajoutée à ta liste et cochée, qu\'Allah accepte');
 }
-function baPFav(i){ const t=(S.cfg.baPersoListe||[])[i]; if(t) baPAjout(t); }
-function baPOubli(i){ (S.cfg.baPersoListe||[]).splice(i,1); cfgTouch(); render(); }
-function baP(i){ const d=J(); if(!d.baPerso||!d.baPerso[i]) return; d.baPerso[i].ok=!d.baPerso[i].ok; vib(); touch(); render(); }
-function baPSuppr(i){ const d=J(); if(!d.baPerso) return; d.baPerso.splice(i,1); touch(); render(); }
+function baPCoche(k){
+  const d=J(), t=baPAffiche(d)[k]; if(!t) return;
+  const on=baPFait(d,t); d.baPerso=(d.baPerso||[]).filter(x=>bas(x.t)!==bas(t)); if(!on) d.baPerso.push({t,ok:true});
+  vib(); touch(); render();
+}
+function baPOubli(k){
+  const t=baPAffiche(J())[k]; if(!t) return;
+  if(!confirm(`Retirer « ${t} » de ta liste ?\n(Les jours où tu l'as cochée restent comptés.)`)) return;
+  S.cfg.baPersoListe=(S.cfg.baPersoListe||[]).filter(x=>bas(x)!==bas(t)); const d=J(); d.baPerso=(d.baPerso||[]).filter(x=>bas(x.t)!==bas(t)); cfgTouch(); touch(); render();
+}
 function ba(i){ const d=J(); if(!d.baIds) d.baIds=baJour(S.sel); d.ba[i]=!d.ba[i]; vib(); touch(); render(); if(d.ba[i]&&baNb(d)===9) toast('🌟 9/9 bonnes actions, qu\'Allah accepte'); }
 function prioOk(i){ const d=J(); d.prio[i].ok=!d.prio[i].ok; vib(); touch(); render(); }
 function prioTxt(i,v){ J().prio[i].t=v; touch(); }
@@ -2989,7 +2997,7 @@ async function autotest(){
   for(const pr of profils){
     try{
       S.uid='autotest-'+pr.nom; S.email='test@niyya'; S.cfg=merge(DEF_CFG,pr); S.jours={}; S.dirty=new Set(); S.pret=true; S.sel=today();
-      const d=J(today()); d.cig=[Date.now()]; d.sport=true; d.ba[0]=true; d.baPerso=[{t:'Test <b>',ok:true}]; S.cfg.baPersoListe=['Appeler maman']; S.baOpen=true; d.fruits=3; d.eau=2; d.p.fajr='heure'; d.u=Date.now();
+      const d=J(today()); d.cig=[Date.now()]; d.sport=true; d.ba[0]=true; d.baPerso=[{t:'Test <b>',ok:true}]; S.cfg.baPersoListe=['Appeler maman','Test <b>']; S.baOpen=true; d.fruits=3; d.eau=2; d.p.fajr='heure'; d.u=Date.now();
       for(const v of vues){ try{ S.view=v; render(); }catch(e){ err.push(pr.nom+'/'+v+': '+e.message); } }
       { let dec=0; for(let i=0;i<400;i++){ S.cfg.hijriDecal=i; if(estRamadan(today())){ dec=i; break; } } S.cfg.hijriDecal=dec+21; S.view='jour'; render(); S.view='din'; render(); S.cfg.hijriDecal=0; }
       S.cfg.onb=false; render(); S.cfg.onb=true;
