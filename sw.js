@@ -65,10 +65,12 @@ self.addEventListener('notificationclick', e => {
   e.notification.close();
   const cible = cibleDe((e.notification.data && e.notification.data.tag) || e.notification.tag || '');
   const url = new URL('./?ouvrir=' + cible, self.registration.scope).href;
-  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+  // l'iPhone ne transmet pas toujours le message à l'appli déjà ouverte : on note aussi le clic, l'appli le lit en revenant au premier plan
+  const note = caches.open('niyya-clic').then(c => c.put('clic', new Response(JSON.stringify({ cible, t: Date.now() })))).catch(() => null);
+  e.waitUntil(note.then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
     for (const c of cs) {
       if (c.url.startsWith(self.registration.scope) && !/admin\.html/.test(c.url) && 'focus' in c) { c.postMessage({ ouvrir: cible }); return c.focus(); }
     }
     return self.clients.openWindow(url);
-  }));
+  })));
 });
