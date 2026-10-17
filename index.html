@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261017-184529'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261017-184606'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2973,9 +2973,9 @@ function notifPanel(){
     : e==='refus'?`<div class="coach" style="font-size:.84rem;font-weight:600">🔕 Les notifications ont été refusées. Pour les autoriser : <b>Réglages de l'iPhone → Notifications → NIYYA</b> (ou les réglages du site dans ton navigateur), puis reviens ici.</div>`
     : e==='actif'?`<p style="font-weight:800;color:var(--emerald-d)">✅ Activées : tu es prévenu à l'heure exacte de l'adhan.</p>
         <label class="f">Prières à notifier</label><div class="opt">${NOTIF_PRIERES.map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
-        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 9 h'],['recap','📊 Récap de la semaine · dim. 20 h']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
+        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 9 h 30'],['recap','📊 Récap de la semaine · dim. 20 h']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
         <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>`
-    : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, le hadith du jour à 8 h, une phrase mindset à 9 h, ton récap de la semaine le dimanche à 20 h, ainsi que les annonces de NIYYA.</p>
+    : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, le hadith du jour à 8 h, une phrase mindset à 9 h 30, ton récap de la semaine le dimanche à 20 h, ainsi que les annonces de NIYYA.</p>
         <button class="btn pri" onclick="activerNotifs()">🔔 Activer les notifications</button>`;
   return `<div class="panel mt"><h2><span class="ico">🔔</span>Notifications de prière</h2>${corps}</div>`;
 }
