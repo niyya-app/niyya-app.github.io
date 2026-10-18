@@ -56,7 +56,12 @@ self.addEventListener('push', e => {
       body: d.body || '', icon: 'niyya-icon-180.png', badge: 'niyya-icon-180.png', tag: d.tag || 'niyya', renotify: true,
       data: { url: d.url || './', tag: d.tag || '', body: d.body || '' }
     }),
-    caches.open('niyya-clic').then(c => c.put('recue', new Response(JSON.stringify(recue)))).catch(() => null),
+    caches.open('niyya-clic').then(async c => {
+      await c.put('recue', new Response(JSON.stringify(recue)));
+      // historique des 15 dernières notifications reçues (pour retrouver celle qu'on a touchée, même longtemps après)
+      let L = []; try { const r = await c.match('recues'); if (r) L = await r.json(); } catch (x) {}
+      L.unshift(recue); await c.put('recues', new Response(JSON.stringify(L.slice(0, 15))));
+    }).catch(() => null),
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => cs.forEach(c => c.postMessage({ recue }))).catch(() => null)
   ]));
 });
