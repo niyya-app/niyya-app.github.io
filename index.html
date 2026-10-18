@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-085524'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-085557'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1591,39 +1591,39 @@ function bandeauRecue(o){ // l'appli est déjà à l'écran quand la notificatio
 /* ---------- ⚖️ Conseil du jour selon l'objectif de poids ----------
    Conseils GÉNÉRAUX tirés des recommandations officielles (Santé publique France « Manger Bouger » / PNNS,
    OMS, HAS) et de hadiths vérifiés. Ce n'est pas un suivi personnalisé. */
-const MB='Manger Bouger · Santé publique France', OMS='Organisation mondiale de la santé', HAS='Haute Autorité de santé';
+const MB='Manger Bouger · Santé publique France', OMS='Organisation mondiale de la santé', HAS='Haute Autorité de santé', GEN='Repère général de nutrition';
 const CONSEILS_POIDS={
   perdre:[
     ["Remplis la moitié de ton assiette de légumes, puis ajoute les féculents et les protéines.",MB],
     ["Remplace les boissons sucrées (sodas, jus) par de l'eau : c'est souvent le changement le plus efficace.",OMS],
-    ["Mange lentement et pose ta fourchette entre deux bouchées : le corps met environ 20 minutes à sentir la satiété.",MB],
+    ["Mange lentement et pose ta fourchette entre deux bouchées : la sensation de satiété arrive avec un temps de retard.",GEN],
     ["Préfère les féculents complets (pain complet, riz complet, pâtes complètes) : ils calent plus longtemps.",MB],
     ["Les légumineuses (lentilles, pois chiches, haricots) au moins 2 fois par semaine : rassasiantes et riches en fibres.",MB],
     ["Bouge au moins 30 minutes par jour : la marche rapide compte. Moins de temps assis, c'est déjà gagné.",MB],
-    ["Garde les biscuits et les chips hors de vue : ce qu'on ne voit pas, on le grignote moins.",MB],
-    ["Un fruit plutôt qu'un dessert sucré : tu gardes le plaisir avec moins de sucre.",MB],
-    ["Dors suffisamment : le manque de sommeil augmente la faim et l'envie de sucré.",HAS],
-    ["Vise une perte lente (environ 0,5 à 1 kg par semaine) : c'est celle qui tient dans la durée.",HAS],
+    ["Garde les biscuits et les chips hors de vue : ce qu'on ne voit pas, on le grignote moins.",GEN],
+    ["Un fruit plutôt qu'un dessert sucré : tu gardes le plaisir avec moins de sucre.",GEN],
+    ["Dors suffisamment : la fatigue pousse à grignoter et à manger plus sucré.",GEN],
+    ["Vise une perte lente et régulière plutôt qu'un régime express : c'est celle qui tient dans la durée.",GEN],
     ["« Un tiers pour la nourriture, un tiers pour la boisson, un tiers pour la respiration. » Arrête-toi avant d'être plein.","Hadith · Tirmidhi n° 2380 (authentique selon Al-Albani)"],
     ["Mange assis, en disant Bismillah, sans écran : on mange mieux et moins quand on y fait attention.","Hadith · Al-Bukhari n° 5376 et Muslim n° 2022"]
   ],
   prendre:[
-    ["Fais 3 repas et 2 ou 3 collations par jour : manger plus souvent est plus facile que manger plus à la fois.",HAS],
+    ["Fais 3 repas et 1 ou 2 collations par jour : manger plus souvent est plus facile que manger plus à la fois.",HAS],
     ["Enrichis tes plats : un filet d'huile d'olive, du fromage râpé, un œuf ou de la crème ajoutent de l'énergie sans gros volume.",HAS],
-    ["Collations faciles : poignée d'amandes ou de noix, dattes, banane, yaourt, pain avec du fromage.",MB],
-    ["Mets une source de protéines à chaque repas : œufs, poisson, viande, lentilles, produits laitiers.",HAS],
+    ["Collations faciles : poignée d'amandes ou de noix, dattes, banane, yaourt, pain avec du fromage.",GEN],
+    ["Mets une source de protéines à chaque repas : œufs, poisson, viande, lentilles, produits laitiers.",GEN],
     ["Bois plutôt en dehors des repas : boire beaucoup en mangeant coupe l'appétit.",HAS],
-    ["Les fruits secs et oléagineux (dattes, abricots secs, noix) sont petits mais très nourrissants.",MB],
+    ["Les fruits secs et oléagineux (dattes, abricots secs, noix) sont petits mais très nourrissants.",GEN],
     ["Fais du renforcement musculaire 2 fois par semaine : le poids repris devient du muscle, pas seulement du gras.",OMS],
-    ["Choisis des plats que tu aimes et partage tes repas : on mange mieux à plusieurs.",HAS],
-    ["Un laitage à chaque repas (lait, yaourt, fromage) : protéines et calcium à la fois.",MB],
+    ["Choisis des plats que tu aimes et partage tes repas : on mange souvent mieux à plusieurs.",GEN],
+    ["2 produits laitiers par jour (lait, yaourt, fromage) : protéines et calcium à la fois.",MB],
     ["Une perte de poids sans le vouloir (surtout 5 % en un mois) mérite d'en parler à son médecin.",HAS],
     ["« La nourriture d'un seul suffit pour deux » : manger ensemble ouvre l'appétit et apporte la baraka.","Hadith · Muslim n° 2059"],
-    ["Pèse-toi une fois par semaine, le même jour, pour suivre ta progression sans t'inquiéter chaque jour.",HAS]
+    ["Pèse-toi une fois par semaine, le même jour, pour suivre ta progression sans t'inquiéter chaque jour.",GEN]
   ],
   garder:[
-    ["Pèse-toi une fois par semaine, le même jour, à jeun : tu repères vite un écart de plus de 1 kg.",HAS],
-    ["Garde des horaires de repas réguliers : sauter un repas pousse souvent à grignoter ensuite.",MB],
+    ["Pèse-toi une fois par semaine, le même jour, à jeun : tu repères vite un écart de plus de 1 kg.",GEN],
+    ["Garde des horaires de repas réguliers : sauter un repas pousse souvent à grignoter ensuite.",GEN],
     ["Au moins 5 fruits et légumes par jour, frais, surgelés ou en conserve.",MB],
     ["Bouge au moins 30 minutes par jour, et lève-toi régulièrement si tu restes assis longtemps.",MB],
     ["Une poignée de fruits à coque par jour (amandes, noix, noisettes), nature et non salés.",MB],
@@ -1631,7 +1631,7 @@ const CONSEILS_POIDS={
     ["Limite la charcuterie et la viande rouge : on peut se faire plaisir sans en manger tous les jours.",MB],
     ["L'eau est la seule boisson indispensable : garde une bouteille à portée de main.",MB],
     ["Moins de sel : goûte avant de saler, et utilise herbes et épices.",OMS],
-    ["Après un écart (fête, repas copieux), reprends simplement ton rythme normal au repas suivant.",MB],
+    ["Après un écart (fête, repas copieux), reprends simplement ton rythme normal au repas suivant.",GEN],
     ["« Un tiers pour la nourriture, un tiers pour la boisson, un tiers pour la respiration. »","Hadith · Tirmidhi n° 2380 (authentique selon Al-Albani)"],
     ["Mange de ce qui est devant toi, de la main droite, en commençant par Bismillah.","Hadith · Al-Bukhari n° 5376 et Muslim n° 2022"]
   ]
