@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-090558'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-090717'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1891,10 +1891,9 @@ function vJour(){
     <div class="panel">
       <h2><span class="ico">✨</span>Sunnah du jour</h2>
       <div class="sub">Une petite action, beaucoup de récompense.</div>
-      <div class="coach" style="background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0">${esc(SUNNAH[di%SUNNAH.length])}</div>
+      <div class="coach" style="background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0">${esc(SUNNAH[di%SUNNAH.length])}
+        <button class="ck ${d.sunnahOk?'on':''}" style="margin-top:8px" onclick="toggle('sunnahOk')"><span class="box"></span>J'ai fait cette Sunnah</button></div>
       ${(()=>{ const j=jeunesDuJour(S.sel), dm=jeunesDuJour(addDays(S.sel,1)); return j.liste.length?`<div class="coach mt">🍽️ <b>Jeûne recommandé aujourd'hui</b> : ${esc(j.liste.map(x=>x[0]).join(', '))}</div>`:dm.liste.length?`<div class="coach mt">🌙 <b>Demain</b>, jeûne recommandé : ${esc(dm.liste.map(x=>x[0]).join(', '))}. Pense au suhur.</div>`:''; })()}
-      <div class="coach mt" style="background:color-mix(in srgb,var(--violet) 10%,var(--card));border-color:#c4b5fd">🤍 <b>Allah aime ${esc(ALLAH_AIME[aimeIdx()][0])}</b><br>🎯 ${esc(ALLAH_AIME[aimeIdx()][3])}
-        <button class="ck ${d.aime?'on':''}" style="margin-top:8px" onclick="toggle('aime')"><span class="box"></span>Je l'ai appliqué</button></div>
     </div>
     ${hr>=17||S.sel!==today()?soir:`<div class="panel"><h2><span class="ico">🗓️</span>Ma journée type</h2>
       <div class="kv"><span>Fajr · adhkar · Coran</span><b>${hm(timesOf(S.sel)[0])}</b></div>
@@ -1903,6 +1902,12 @@ function vJour(){
       <div class="kv"><span>Dhuhr · Asr</span><b>${hm(timesOf(S.sel)[2])} · ${hm(timesOf(S.sel)[3])}</b></div>
       ${travailMode()==='fixe'?`<div class="kv"><span>Fin de journée pro</span><b>${esc(S.cfg.travail.fin)}</b></div>`:''}
       <div class="kv"><span>Famille · Maghrib · Isha · bilan</span><b>${hm(timesOf(S.sel)[4])} · ${hm(timesOf(S.sel)[5])}</b></div></div>`}
+  </div>
+  <div class="panel mt">
+    <h2><span class="ico">🤍</span>Ce qu'Allah aime</h2>
+    <div class="sub">Un verset par jour, et une façon concrète de l'appliquer.</div>
+    <div class="coach" style="background:color-mix(in srgb,var(--violet) 10%,var(--card));border-color:#c4b5fd"><b>Allah aime ${esc(ALLAH_AIME[aimeIdx()][0])}</b><br>🎯 ${esc(ALLAH_AIME[aimeIdx()][3])}
+      <button class="ck ${d.aime?'on':''}" style="margin-top:8px" onclick="toggle('aime')"><span class="box"></span>Je l'ai appliqué</button></div>
   </div>
   ${hr>=17||S.sel!==today()?'':`<div class="mt">${soir}</div>`}
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
@@ -2246,7 +2251,7 @@ function toast(msg,ms){ const t=document.getElementById('toast'); t.innerHTML=ms
 function vib(){ try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){} }
 function toggle(k){
   const d=J(); d[k]=!d[k]; if(k==='sport'&&d.sport) d.repos=false; vib(); touch(); render();
-  if(d[k]) toast({sport:'💪 Séance validée !',coran:'📖 BarakAllahu fik',lecture:'📚 +20 min pour ton cerveau',famille:'❤️ Le meilleur investissement',adhM:'☀️ Protégé pour la journée',adhS:'🌙 Protégé pour la nuit',repos:'😴 Repos noté',jeuneNafl:'🍽️ Qu\'Allah accepte ton jeûne · +10 points',aime:'🤍 Qu\'Allah t\'aime et t\'accepte'}[k]||'✓');
+  if(d[k]) toast({sport:'💪 Séance validée !',coran:'📖 BarakAllahu fik',lecture:'📚 +20 min pour ton cerveau',famille:'❤️ Le meilleur investissement',adhM:'☀️ Protégé pour la journée',adhS:'🌙 Protégé pour la nuit',sunnahOk:'✨ Sunnah accomplie, qu\'Allah l\'accepte',repos:'😴 Repos noté',jeuneNafl:'🍽️ Qu\'Allah accepte ton jeûne · +10 points',aime:'🤍 Qu\'Allah t\'aime et t\'accepte'}[k]||'✓');
 }
 function cyclePrayer(p){ const order=[undefined,'heure','retard','manquee']; const d=J(); const i=order.indexOf(d.p[p]); setPrayer(p,order[(i+1)%order.length]||null,true); }
 function setPrayer(p,s,cyc){ const d=J(); d.p[p]=(!cyc&&d.p[p]===s)?null:s; if(!d.p[p]) delete d.p[p]; vib(); touch(); render();
