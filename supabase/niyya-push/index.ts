@@ -250,19 +250,19 @@ Deno.serve(async (req) => {
     if (body.type === "p") {
       const H = horaires(row.params || {}, new Date()); const i = Math.max(0, PRIERES.findIndex((q) => H.t[q[2]] > H.min));
       const vs = (await quotidien())?.[H.jour]?.v?.[i];
-      return rep({ ok: await envoyer(row, { title: `🧪 ESSAI — ${PRIERES[i][1]} à ${hm(H.t[PRIERES[i][2]])}`, body: "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲" + (vs ? `\n📖 « ${vs[0]} » — ${vs[1]}` : ""), tag: "priere-" + PRIERES[i][0], url: row.params?.url || "./" }) });
+      return rep({ ok: await envoyer(row, { title: `🧪 ESSAI — ${PRIERES[i][1]} à ${hm(H.t[PRIERES[i][2]])}`, body: "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲" + (vs ? `\n📖 « ${vs[0]} » — ${vs[1]}` : ""), tag: "priere-" + PRIERES[i][0], url: row.params?.url || "./", essai: true }) });
     }
     if (body.type === "s") {
       if (!row.user_id) return rep({ erreur: "abonnement pas encore rattaché à un compte" }, 409);
       const r = await recap(row.user_id, horaires(row.params || {}, new Date()).jour);
-      return rep(r ? { ok: await envoyer(row, { ...r, url: row.params?.url || "./" }) } : { erreur: "aucune journée cette semaine" });
+      return rep(r ? { ok: await envoyer(row, { ...r, url: row.params?.url || "./", essai: true }) } : { erreur: "aucune journée cette semaine" });
     }
     const x = (await quotidien())?.[horaires(row.params || {}, new Date()).jour];
     if (!x) return rep({ erreur: "contenu du jour introuvable" }, 500);
     const payload = body.type === "h"
       ? { title: "📜 Hadith du jour", body: `« ${x.h[0]} »\n— ${x.h[1]}`, tag: "hadith", url: row.params?.url || "./" }
       : { title: "💡 Mindset du jour", body: `« ${x.m[0]} »\n— ${x.m[1]}`, tag: "mindset", url: row.params?.url || "./" };
-    return rep({ ok: await envoyer(row, payload) });
+    return rep({ ok: await envoyer(row, { ...payload, essai: true }) }); // « essai » : l'ouverture ne sera pas comptée dans les statistiques
   }
 
   return rep({ erreur: "action inconnue" }, 400);

@@ -400,7 +400,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-200114'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-200803'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1515,7 +1515,7 @@ async function lireClicNotif(){
   try{ if(!('caches' in window)) return; const c=await caches.open('niyya-clic'); const r=await c.match('clic'); if(!r) return;
     const o=await r.json(); await c.delete('clic');
     diagNotif('note lue : '+o.cible+(o.t<=_clicVu?' (déjà traitée)':Date.now()-o.t>=5*60e3?' (trop ancienne)':''));
-    if(o && o.cible && o.t>_clicVu && Date.now()-o.t<5*60e3){ _clicVu=o.t; S.diagClic='notif_cache'; S.clicCorps=o.corps||''; ouvrir(o.cible); } }catch(e){ diagNotif('erreur note : '+e.message); }
+    if(o && o.cible && o.t>_clicVu && Date.now()-o.t<5*60e3){ _clicVu=o.t; S.diagClic='notif_cache'; S.clicCorps=o.corps||''; S.clicEssai=!!o.essai; ouvrir(o.cible); } }catch(e){ diagNotif('erreur note : '+e.message); }
 }
 // Journal des derniers clics de notification (sur ce téléphone seulement, pour comprendre une panne)
 function diagNotif(t){ try{ const L=JSON.parse(localStorage.getItem('nya_diag')||'[]'); const d=new Date(); L.unshift(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')} ${t}`); localStorage.setItem('nya_diag',JSON.stringify(L.slice(0,12))); }catch(e){} }
@@ -1594,7 +1594,7 @@ async function lireRecue(){
     if(!o) return;
     const cible=cibleDeTag(o.tag||''); if(!cible) return;
     if(!S.uid||!S.pret||!S.cfg.onb) return;
-    marquerRecue(o.t); diagNotif('notification reçue affichée : '+cible); S.diagClic=S.diagClic||'notif_cache'; S.clicCorps=o.body||''; ouvrir(cible);
+    marquerRecue(o.t); diagNotif('notification reçue affichée : '+cible); S.diagClic=S.diagClic||'notif_cache'; S.clicCorps=o.body||''; S.clicEssai=!!o.essai; ouvrir(cible);
   }catch(e){}
 }
 function bandeauRecue(o){ // l'appli est déjà à l'écran quand la notification arrive : petit bandeau à toucher
@@ -1602,7 +1602,7 @@ function bandeauRecue(o){ // l'appli est déjà à l'écran quand la notificatio
   marquerRecue(o.t);
   const b=document.createElement('button'); b.className='toast on'; b.style.cssText='bottom:auto;top:calc(12px + env(safe-area-inset-top));cursor:pointer;border:none;max-width:92vw;text-align:left';
   b.innerHTML=`<b>${esc(o.title)}</b><br><span style="font-weight:600;opacity:.9">Touche pour lire en entier</span>`;
-  b.onclick=()=>{ b.remove(); S.diagClic='notif_msg'; S.clicCorps=o.body||''; ouvrir(cible); };
+  b.onclick=()=>{ b.remove(); S.diagClic='notif_msg'; S.clicCorps=o.body||''; S.clicEssai=!!o.essai; ouvrir(cible); };
   document.body.appendChild(b); setTimeout(()=>b.remove(),12000);
 }
 /* ---------- ⚖️ Conseil du jour selon l'objectif de poids ----------
@@ -1704,7 +1704,7 @@ function ouvrir(cible){
     openSheet(`<h2 style="margin:0 0 4px">📊 Ta semaine NIYYA</h2><div class="sub">Les 7 derniers jours</div>
       <div class="checks" style="margin-top:12px;gap:8px;font-size:1rem;font-weight:700">${L.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
       <button class="btn pri mt" onclick="closeSheet()">Voir mon bilan détaillé</button>`); }); }
-  if(S.diagClic){ compter(S.diagClic); compter('ouvert_'+(/^priere-/.test(cible)?'priere':['hadith','mindset','recap','soir'].includes(cible)?cible:'annonce')); S.diagClic=null; } // taux d'ouverture anonyme
+  if(S.diagClic){ compter(S.diagClic); if(!S.clicEssai) compter('ouvert_'+(/^priere-/.test(cible)?'priere':['hadith','mindset','recap','soir'].includes(cible)?cible:'annonce')); S.diagClic=null; S.clicEssai=false; } // taux d'ouverture anonyme (les notifications d'essai ne comptent pas)
   const id={hadith:'cHadith',mindset:'cMindset'}[cible];
   if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
 }
@@ -3323,7 +3323,7 @@ async function autotest(){
   // l'appli vient de se recharger pour une mise à jour juste après l'ouverture d'une notification : on la rouvre
   try{ const o=JSON.parse(sessionStorage.getItem('nya_ouvrir')||'null'); sessionStorage.removeItem('nya_ouvrir');
     if(o && !S.ouvrirEnAttente && Date.now()-o.t<30e3 && /[?&]v=/.test(location.search)){ S.ouvrirEnAttente=o.cible; S.clicCorps=o.corps||''; diagNotif('rouvert après mise à jour : '+o.cible); } }catch(e){}
-  try{ if(navigator.serviceWorker){ navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.recue){ const o=ev.data.recue, revenu=Date.now()-(window._visibleDepuis||0)<4000; diagNotif('notification reçue ('+(revenu?'au retour':'appli ouverte')+') : '+o.tag); if(document.visibilityState!=='visible') return; if(revenu){ const c=cibleDeTag(o.tag||''); if(c&&!recueVue(o.t)){ marquerRecue(o.t); S.diagClic='notif_msg'; S.clicCorps=o.body||''; ouvrir(c); } } else bandeauRecue(o); return; } if(ev.data&&ev.data.ouvrir){ diagNotif('message reçu : '+ev.data.ouvrir); S.clicCorps=ev.data.corps||''; _clicVu=Date.now(); caches.open('niyya-clic').then(c=>c.delete('clic')).catch(()=>{}); S.diagClic='notif_msg'; ouvrir(ev.data.ouvrir); } }); navigator.serviceWorker.startMessages&&navigator.serviceWorker.startMessages(); } }catch(e){} // Safari ne livre les messages qu'après startMessages()
+  try{ if(navigator.serviceWorker){ navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.recue){ const o=ev.data.recue, revenu=Date.now()-(window._visibleDepuis||0)<4000; diagNotif('notification reçue ('+(revenu?'au retour':'appli ouverte')+') : '+o.tag); if(document.visibilityState!=='visible') return; if(revenu){ const c=cibleDeTag(o.tag||''); if(c&&!recueVue(o.t)){ marquerRecue(o.t); S.diagClic='notif_msg'; S.clicCorps=o.body||''; S.clicEssai=!!o.essai; ouvrir(c); } } else bandeauRecue(o); return; } if(ev.data&&ev.data.ouvrir){ diagNotif('message reçu : '+ev.data.ouvrir); S.clicCorps=ev.data.corps||''; S.clicEssai=!!ev.data.essai; _clicVu=Date.now(); caches.open('niyya-clic').then(c=>c.delete('clic')).catch(()=>{}); S.diagClic='notif_msg'; ouvrir(ev.data.ouvrir); } }); navigator.serviceWorker.startMessages&&navigator.serviceWorker.startMessages(); } }catch(e){} // Safari ne livre les messages qu'après startMessages()
   window.addEventListener('focus',()=>[300,1200].forEach(t=>setTimeout(lireClicNotif,t)));
   // iPhone : après la fermeture du clavier, Safari laisse parfois le menu du bas « flotter » au milieu de l'écran.
   // On cache le menu pendant la saisie et on recale la page quand le clavier se ferme.

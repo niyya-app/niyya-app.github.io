@@ -50,11 +50,11 @@ async function copieDabord(req, cle) {
 self.addEventListener('push', e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch (x) { d = { title: 'NIYYA', body: e.data ? e.data.text() : '' }; }
   // on garde aussi la notification REÇUE : l'appli peut l'afficher en entier même si l'iPhone ne signale pas le toucher
-  const recue = { tag: d.tag || '', title: d.title || 'NIYYA', body: d.body || '', t: Date.now() };
+  const recue = { tag: d.tag || '', title: d.title || 'NIYYA', body: d.body || '', t: Date.now(), essai: !!d.essai };
   e.waitUntil(Promise.all([
     self.registration.showNotification(d.title || 'NIYYA', {
       body: d.body || '', icon: 'niyya-icon-180.png', badge: 'niyya-icon-180.png', tag: d.tag || 'niyya', renotify: true,
-      data: { url: d.url || './', tag: d.tag || '', body: d.body || '' }
+      data: { url: d.url || './', tag: d.tag || '', body: d.body || '', essai: !!d.essai }
     }),
     caches.open('niyya-clic').then(async c => {
       await c.put('recue', new Response(JSON.stringify(recue)));
@@ -78,13 +78,14 @@ self.addEventListener('notificationclick', e => {
   const url = new URL('./?ouvrir=' + cible, self.registration.scope).href;
   // l'iPhone ne transmet pas toujours le message à l'appli déjà ouverte : on note aussi le clic, l'appli le lit en revenant au premier plan
   const corps = (e.notification.data && e.notification.data.body) || e.notification.body || ''; // le texte complet voyage avec le clic (pas besoin de réseau)
+  const essai = !!(e.notification.data && e.notification.data.essai);
   const note = caches.open('niyya-clic').then(c => Promise.all([
-    c.put('clic', new Response(JSON.stringify({ cible, t: Date.now(), corps }))),
+    c.put('clic', new Response(JSON.stringify({ cible, t: Date.now(), corps, essai }))),
     c.put('dernier', new Response(JSON.stringify({ cible, t: Date.now() }))) // gardé pour le diagnostic (jamais effacé par l'appli)
   ])).catch(() => null);
   e.waitUntil(note.then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
     for (const c of cs) {
-      if (c.url.startsWith(self.registration.scope) && !/admin\.html/.test(c.url) && 'focus' in c) { c.postMessage({ ouvrir: cible, corps }); return c.focus(); }
+      if (c.url.startsWith(self.registration.scope) && !/admin\.html/.test(c.url) && 'focus' in c) { c.postMessage({ ouvrir: cible, corps, essai }); return c.focus(); }
     }
     return self.clients.openWindow(url);
   })));
