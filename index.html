@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-083722'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-083947'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1560,6 +1560,14 @@ async function inviter(){
   try{ await navigator.clipboard.writeText(texte); toast('📋 Message copié : colle-le dans WhatsApp ou par SMS',4000); compter('inviter'); }
   catch(e){ openSheet(`<h2 style="margin:0 0 6px">💌 Inviter un proche</h2><div class="sub">Copie ce message :</div><textarea class="inp" rows="4" readonly>${esc(texte)}</textarea><button class="btn mt" onclick="closeSheet()">Fermer</button>`); }
 }
+// Texte complet d'une notification récente : celui transmis, sinon celui gardé par le service worker (appli lancée par la notification)
+async function corpsRecent(tag,deja){
+  if(deja) return deja;
+  try{ const c=await caches.open('niyya-clic');
+    for(const k of ['recue','clic']){ const r=await c.match(k); if(!r) continue; const o=await r.clone().json();
+      const t=o.tag||o.cible||''; if(t===tag && (o.body||o.corps) && Date.now()-o.t<20*60e3) return o.body||o.corps; } }catch(e){}
+  return '';
+}
 // Notification REÇUE (le service worker la garde) : si on ouvre / revient sur l'appli peu après, on l'affiche en entier.
 // Ne dépend pas du « toucher », que certains iPhone ne transmettent pas.
 const cibleDeTag=t=>/^priere-/.test(t)?t:['hadith','mindset','recap','soir'].includes(t)?t:'';
@@ -1588,11 +1596,11 @@ function ouvrir(cible){
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
   S.sel=today(); S.mindIdx=null; S.hadIdx=null;
   go(cible==='recap'?'bilan':'jour');
-  if(/^priere-/.test(cible)){ const c=S.clicCorps; S.clicCorps=''; versetPriere(cible.slice(7),c); }
-  else if(cible==='recap' && S.clicCorps){ const L=S.clicCorps.split('\n').filter(Boolean); S.clicCorps='';
-    setTimeout(()=>openSheet(`<h2 style="margin:0 0 4px">📊 Ta semaine NIYYA</h2><div class="sub">Les 7 derniers jours</div>
+  if(/^priere-/.test(cible)){ const c0=S.clicCorps, k=cible; S.clicCorps=''; corpsRecent(k,c0).then(c=>versetPriere(k.slice(7),c)); }
+  else if(cible==='recap'){ const c0=S.clicCorps; S.clicCorps=''; corpsRecent('recap',c0).then(corps=>{ if(!corps) return; const L=corps.split('\n').filter(Boolean);
+    openSheet(`<h2 style="margin:0 0 4px">📊 Ta semaine NIYYA</h2><div class="sub">Les 7 derniers jours</div>
       <div class="checks" style="margin-top:12px;gap:8px;font-size:1rem;font-weight:700">${L.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
-      <button class="btn pri mt" onclick="closeSheet()">Voir mon bilan détaillé</button>`),300); }
+      <button class="btn pri mt" onclick="closeSheet()">Voir mon bilan détaillé</button>`); }); }
   if(S.diagClic){ compter(S.diagClic); compter('ouvert_'+(/^priere-/.test(cible)?'priere':['hadith','mindset','recap','soir'].includes(cible)?cible:'annonce')); S.diagClic=null; } // taux d'ouverture anonyme
   const id={hadith:'cHadith',mindset:'cMindset'}[cible];
   if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
