@@ -400,7 +400,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-162929'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-163153'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1736,7 +1736,7 @@ function heroPriere(){
     ${isT?`<div class="h-big tnum"><span id="npName">${np.p.n}</span> <span id="npCount" style="font-size:1.25rem;font-weight:700;opacity:.95"></span></div>
     <div class="h-sub">Adhan ${hm(np.at%1440)}${isHsc()?` · Iqama ${hm((np.at+IQAMA)%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${JUMUA.join(' / ')}`:''}</div>`
     :`<div class="h-big">${PRAYERS.filter(p=>d.p[p.k]&&d.p[p.k]!=='manquee').length}/5</div><div class="h-sub">Touche une prière pour changer son statut</div>`}
-    <div class="prow${S.email===ADMIN_EMAIL?' big':''}">${minis}</div>
+    <div class="prow big">${minis}</div>
   </div>`;
 }
 function prieresGrandes(d,t,np){
@@ -1764,12 +1764,12 @@ function heroTabac(){
   const last=d.cig.length?d.cig[d.cig.length-1]:null;
   const lim=firstCigLimit(S.sel);
   const before=S.sel>=S.cfg.tabac.debut;
-  if(S.email===ADMIN_EMAIL && !S.ouv.cig) return `<div class="hero k-sunset" onclick="if(!event.target.closest('.cbtn'))deroul('cig')" style="cursor:pointer">
+  if(!S.ouv.cig) return `<div class="hero k-sunset" onclick="if(!event.target.closest('.cbtn'))deroul('cig')" style="cursor:pointer">
     <div class="row" style="align-items:center;gap:10px"><div><div class="h-lbl">🚭 Cigarettes ${S.sel===today()?'aujourd\'hui':'ce jour-là'}</div>
       <div class="h-sub" style="margin-top:2px"><b class="tnum" style="font-size:1.3rem">${n}</b> / ${t} · ${n<t?'il en reste '+(t-n):n===t?'maximum atteint':(n-t)+' au-dessus'}</div></div>
       <div class="sp"></div><button class="cbtn plus" style="width:46px;height:46px;font-size:1.5rem" onclick="cig(1)" aria-label="Ajouter une cigarette">+</button><span style="font-size:1.3rem;font-weight:800">▾</span></div>
   </div>`;
-  return `<div class="hero k-sunset">${S.email===ADMIN_EMAIL?`<button onclick="deroul('cig')" style="all:unset;cursor:pointer;float:right;font-size:1.3rem;font-weight:800;margin-left:8px" aria-label="Replier">▴</button>`:''}
+  return `<div class="hero k-sunset">${true?`<button onclick="deroul('cig')" style="all:unset;cursor:pointer;float:right;font-size:1.3rem;font-weight:800;margin-left:8px" aria-label="Replier">▴</button>`:''}
     <div class="row"><div class="h-lbl">🚭 Cigarettes ${S.sel===today()?'aujourd\'hui':'ce jour-là'}</div><div class="sp"></div><span class="chip" title="Estimation : ${MIN_PAR_CIG} min de vie par cigarette évitée">⏳ ${vieGagnee(st.evitees)} de vie gagnées</span></div>
     <div class="cig">
       <button class="cbtn minus" onclick="cig(-1)" aria-label="Retirer une cigarette">−</button>
@@ -1926,7 +1926,7 @@ function vJour(){
         <button class="ck ${d.sunnahOk?'on':''}" style="margin-top:8px" onclick="toggle('sunnahOk')"><span class="box"></span>J'ai fait cette Sunnah <small class="muted" style="font-weight:600">· compte comme une bonne action</small></button></div>
       ${(()=>{ const j=jeunesDuJour(S.sel), dm=jeunesDuJour(addDays(S.sel,1)); return j.liste.length?`<div class="coach mt">🍽️ <b>Jeûne recommandé aujourd'hui</b> : ${esc(j.liste.map(x=>x[0]).join(', '))}</div>`:dm.liste.length?`<div class="coach mt">🌙 <b>Demain</b>, jeûne recommandé : ${esc(dm.liste.map(x=>x[0]).join(', '))}. Pense au suhur.</div>`:''; })()}
     </div>
-    ${hr>=17||S.sel!==today()?soir:S.email===ADMIN_EMAIL&&!S.ouv.jt?`<div class="panel"><button onclick="deroul('jt')" style="all:unset;display:block;width:100%;cursor:pointer"><h2><span class="ico">🗓️</span>Ma journée type<span class="cnt">▾</span></h2><div class="sub" style="margin-bottom:2px">Prochaine étape : ${esc(nextPrayer().p.n)} à ${hm(nextPrayer().at%1440)} · touche pour ouvrir</div></button></div>`:`<div class="panel">${S.email===ADMIN_EMAIL?`<button onclick="deroul('jt')" style="all:unset;float:right;cursor:pointer;font-weight:800" aria-label="Replier">▴</button>`:''}<h2><span class="ico">🗓️</span>Ma journée type</h2>
+    ${hr>=17||S.sel!==today()?soir:!S.ouv.jt?`<div class="panel"><button onclick="deroul('jt')" style="all:unset;display:block;width:100%;cursor:pointer"><h2><span class="ico">🗓️</span>Ma journée type<span class="cnt">▾</span></h2><div class="sub" style="margin-bottom:2px">Prochaine étape : ${esc(nextPrayer().p.n)} à ${hm(nextPrayer().at%1440)} · touche pour ouvrir</div></button></div>`:`<div class="panel">${true?`<button onclick="deroul('jt')" style="all:unset;float:right;cursor:pointer;font-weight:800" aria-label="Replier">▴</button>`:''}<h2><span class="ico">🗓️</span>Ma journée type</h2>
       <div class="kv"><span>Fajr · adhkar · Coran</span><b>${hm(timesOf(S.sel)[0])}</b></div>
       <div class="kv"><span>Sport · préparation</span><b>matin</b></div>
       ${travailMode()==='fixe'?`<div class="kv"><span>Début de journée pro · 3 priorités</span><b>${esc(S.cfg.travail.debut)}</b></div>`:`<div class="kv"><span>${travailMode()==='aucun'?'Mes 3 priorités du jour':'Journée pro · 3 priorités'}</span><b>matin</b></div>`}
