@@ -340,6 +340,10 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 /* Cœur vert (sadaqa / don) */
 .coeur-bg{position:fixed;inset:0;z-index:80;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(16,185,129,.18),transparent 60%);animation:cfond 1.9s ease forwards}
 .coeur-bg .c{font-size:9rem;line-height:1;filter:drop-shadow(0 10px 30px rgba(16,185,129,.55));animation:cbat 1.9s ease forwards}
+.etoile-bg{background:radial-gradient(circle,rgba(250,204,21,.32),transparent 62%);animation-duration:2.8s}
+.etoile-bg .c{filter:drop-shadow(0 10px 34px rgba(234,179,8,.75));animation-duration:2.8s;font-size:10rem}
+.etoile-bg .m{color:#a16207;font-size:1.3rem;animation-duration:2.8s}
+.etoile-bg .m small{display:block;font-size:.95rem;font-weight:700;margin-top:4px;color:#854d0e}
 .coeur-bg .m{position:absolute;top:62%;left:0;right:0;text-align:center;font-weight:800;font-size:1.05rem;color:#047857;padding:0 24px;animation:cmsg 1.9s ease forwards}
 @keyframes cbat{0%{transform:scale(.2);opacity:0}25%{transform:scale(1.15);opacity:1}40%{transform:scale(.95)}55%{transform:scale(1.08)}80%{opacity:1}100%{transform:scale(1.25);opacity:0}}
 @keyframes cfond{0%{opacity:0}20%{opacity:1}80%{opacity:1}100%{opacity:0}}
@@ -400,7 +404,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-201742'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-211852'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2294,8 +2298,16 @@ function toggle(k){
   if(d[k]) toast({sport:'💪 Séance validée !',coran:'📖 BarakAllahu fik',lecture:'📚 +20 min pour ton cerveau',famille:'❤️ Le meilleur investissement',adhM:'☀️ Protégé pour la journée',adhS:'🌙 Protégé pour la nuit',sunnahOk:'✨ Sunnah accomplie · comptée dans tes bonnes actions',repos:'😴 Repos noté',jeuneNafl:'🍽️ Qu\'Allah accepte ton jeûne · +10 points',aime:'🤍 Qu\'Allah t\'aime et t\'accepte'}[k]||'✓');
 }
 function cyclePrayer(p){ const order=[undefined,'heure','retard','manquee']; const d=J(); const i=order.indexOf(d.p[p]); setPrayer(p,order[(i+1)%order.length]||null,true); }
-function setPrayer(p,s,cyc){ const d=J(); d.p[p]=(!cyc&&d.p[p]===s)?null:s; if(!d.p[p]) delete d.p[p]; vib(); touch(); render();
+function setPrayer(p,s,cyc){ const d=J(), avant=cinqALheure(d); d.p[p]=(!cyc&&d.p[p]===s)?null:s; if(!d.p[p]) delete d.p[p]; vib(); touch(); render();
+  if(!avant && cinqALheure(d)) return etoileCinq(); // la 5e prière à l'heure : grande étoile
   if(d.p[p]==='heure'||d.p[p]==='mosquee') toast(prayCount(S.sel)===5?'🌟 5/5 prières, mashaAllah !':'🕌 Prière notée'); }
+const cinqALheure=d=>PRAYERS.every(p=>d.p[p.k]==='heure'||d.p[p.k]==='mosquee'); // à l'heure ou à la mosquée
+function etoileCinq(){
+  try{ navigator.vibrate&&navigator.vibrate([40,60,40,60,120]); }catch(e){}
+  const el=document.createElement('div'); el.className='coeur-bg etoile-bg';
+  el.innerHTML=`<div class="c">⭐</div><div class="m">MachAllah !<small>5 prières à l'heure aujourd'hui 🤲</small></div>`;
+  document.body.appendChild(el); setTimeout(()=>el.remove(),2900);
+}
 function cig(n){
   const d=J();
   if(n>0){
