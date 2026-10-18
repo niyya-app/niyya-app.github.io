@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-090717'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-090834'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1892,7 +1892,7 @@ function vJour(){
       <h2><span class="ico">✨</span>Sunnah du jour</h2>
       <div class="sub">Une petite action, beaucoup de récompense.</div>
       <div class="coach" style="background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0">${esc(SUNNAH[di%SUNNAH.length])}
-        <button class="ck ${d.sunnahOk?'on':''}" style="margin-top:8px" onclick="toggle('sunnahOk')"><span class="box"></span>J'ai fait cette Sunnah</button></div>
+        <button class="ck ${d.sunnahOk?'on':''}" style="margin-top:8px" onclick="toggle('sunnahOk')"><span class="box"></span>J'ai fait cette Sunnah <small class="muted" style="font-weight:600">· compte comme une bonne action</small></button></div>
       ${(()=>{ const j=jeunesDuJour(S.sel), dm=jeunesDuJour(addDays(S.sel,1)); return j.liste.length?`<div class="coach mt">🍽️ <b>Jeûne recommandé aujourd'hui</b> : ${esc(j.liste.map(x=>x[0]).join(', '))}</div>`:dm.liste.length?`<div class="coach mt">🌙 <b>Demain</b>, jeûne recommandé : ${esc(dm.liste.map(x=>x[0]).join(', '))}. Pense au suhur.</div>`:''; })()}
     </div>
     ${hr>=17||S.sel!==today()?soir:`<div class="panel"><h2><span class="ico">🗓️</span>Ma journée type</h2>
@@ -2251,7 +2251,7 @@ function toast(msg,ms){ const t=document.getElementById('toast'); t.innerHTML=ms
 function vib(){ try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){} }
 function toggle(k){
   const d=J(); d[k]=!d[k]; if(k==='sport'&&d.sport) d.repos=false; vib(); touch(); render();
-  if(d[k]) toast({sport:'💪 Séance validée !',coran:'📖 BarakAllahu fik',lecture:'📚 +20 min pour ton cerveau',famille:'❤️ Le meilleur investissement',adhM:'☀️ Protégé pour la journée',adhS:'🌙 Protégé pour la nuit',sunnahOk:'✨ Sunnah accomplie, qu\'Allah l\'accepte',repos:'😴 Repos noté',jeuneNafl:'🍽️ Qu\'Allah accepte ton jeûne · +10 points',aime:'🤍 Qu\'Allah t\'aime et t\'accepte'}[k]||'✓');
+  if(d[k]) toast({sport:'💪 Séance validée !',coran:'📖 BarakAllahu fik',lecture:'📚 +20 min pour ton cerveau',famille:'❤️ Le meilleur investissement',adhM:'☀️ Protégé pour la journée',adhS:'🌙 Protégé pour la nuit',sunnahOk:'✨ Sunnah accomplie · comptée dans tes bonnes actions',repos:'😴 Repos noté',jeuneNafl:'🍽️ Qu\'Allah accepte ton jeûne · +10 points',aime:'🤍 Qu\'Allah t\'aime et t\'accepte'}[k]||'✓');
 }
 function cyclePrayer(p){ const order=[undefined,'heure','retard','manquee']; const d=J(); const i=order.indexOf(d.p[p]); setPrayer(p,order[(i+1)%order.length]||null,true); }
 function setPrayer(p,s,cyc){ const d=J(); d.p[p]=(!cyc&&d.p[p]===s)?null:s; if(!d.p[p]) delete d.p[p]; vib(); touch(); render();
@@ -2295,7 +2295,7 @@ function fruit(n){ const d=J(); d.fruits=(d.fruits||0)===n?n-1:n; vib(); touch()
 function eau(n){ const d=J(); d.eau=(d.eau||0)===n?n-1:n; vib(); touch(); render(); if(d.eau===6) toast('💧 1,5 L bu, bravo !'); }
 const litres=n=>((n||0)*0.25).toFixed(2).replace(/0$/,'').replace('.',',');
 // ✍️ Bonnes actions ajoutées à la main (en plus des 9 du jour)
-const baNb=d=>(d.ba||[]).filter(Boolean).length+(d.baPerso||[]).filter(x=>x.ok).length;
+const baNb=d=>(d.ba||[]).filter(Boolean).length+(d.baPerso||[]).filter(x=>x.ok).length+(d.sunnahOk?1:0); // la Sunnah du jour compte comme une bonne action
 const bas=t=>String(t).trim().toLowerCase();
 // liste affichée : ma liste permanente + celles cochées ce jour-là qui n'y sont plus
 function baPAffiche(d){ const L=[...(S.cfg.baPersoListe||[])]; for(const x of (d.baPerso||[])) if(x.ok && !L.some(t=>bas(t)===bas(x.t))) L.push(x.t); return L; }
