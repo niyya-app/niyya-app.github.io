@@ -400,7 +400,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-195254'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-200114'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1387,7 +1387,7 @@ async function pull(){
     if(S.dirty.size||S.cfgDirty) planPush();
     if(!S.pret){ S.pret=true; render(); compter(S.view||'jour'); }
     if(S.cfg.onb && !S.cfg.methodeAutoFaite && METHODE_PAYS[(S.cfg.lieu||{}).tz]){ S.cfg.methodeAutoFaite=true; if(methodeAuto()){ cfgTouch(); pushMajParams(); render(); toast('🕌 Horaires : méthode Umm al-Qura (Arabie saoudite)',4000); } else cfgTouch(); }
-    if(S.ouvrirEnAttente && S.cfg.onb){ const c=S.ouvrirEnAttente; S.ouvrirEnAttente=null; ouvrir(c); } else if(!S._clicDemarrage){ S._clicDemarrage=true; [0,700,1500,3000,5000,8000].forEach(t=>setTimeout(lireClicNotif,t)); setTimeout(lireRecue,8500); } else lireClicNotif();
+    if(S.ouvrirEnAttente && S.cfg.onb){ const c=S.ouvrirEnAttente; S.ouvrirEnAttente=null; ouvrir(c); } else if(!S._clicDemarrage){ S._clicDemarrage=true; [0,700,1500,3000,5000,8000].forEach(t=>setTimeout(lireClicNotif,t)); [400,1500,4000].forEach(t=>setTimeout(lireRecue,t)); } // au lancement : on regarde tout de suite quelle notification a été touchée else lireClicNotif();
     if(S.cfg.onb && !S._rappelVu && location.hash!=='#autotest'){ S._rappelVu=true; setTimeout(()=>{ if(!document.getElementById('sheetBg').classList.contains('on')) proposerRappels(false); },2500); }
     if(!S._aboOk){ S._aboOk=true; pushAbonnement().then(sub=>{ if(sub) pushEnvoyerAbo(sub).catch(()=>{}); }); } // rattache l'abonnement aux notifications à ce compte
     else if(changed && !document.activeElement?.matches('input,textarea')) render();
