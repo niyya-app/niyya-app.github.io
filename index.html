@@ -135,6 +135,7 @@ body.clavier .nav{display:none}
 .plig b{font-size:1.02rem;min-width:84px}.plig .ph{font-weight:700;opacity:.95;flex:1}.plig .pst{font-size:.78rem;font-weight:800;border-radius:999px;padding:4px 10px;background:rgba(255,255,255,.22);white-space:nowrap}
 .plig.done{background:#fff;color:var(--emerald-d)}.plig.done .pst{background:#d1fae5}.plig.late{background:#fde68a;color:#92400e}.plig.late .pst{background:#fef3c7}
 .plig.miss{background:rgba(0,0,0,.18)}.plig.next{outline:3px solid #facc15}.plig.sun{background:transparent;padding:2px 12px;margin-top:4px;cursor:default;font-size:.8rem;opacity:.85}
+.prow.big .pmini{padding:11px 2px;font-size:.82rem;border-radius:14px}.prow.big .pmini small{font-size:.74rem;margin-top:2px}
 .pmini{flex:1;border-radius:12px;padding:7px 2px;text-align:center;background:rgba(255,255,255,.18);font-size:.68rem;font-weight:800;border:none;color:#fff;cursor:pointer}
 .pmini small{display:block;font-weight:600;opacity:.9}
 .pmini.done{background:#fff;color:var(--emerald-d)}
@@ -399,7 +400,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-091503'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-091809'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1732,7 +1733,7 @@ function heroPriere(){
     ${isT?`<div class="h-big tnum"><span id="npName">${np.p.n}</span> <span id="npCount" style="font-size:1.25rem;font-weight:700;opacity:.95"></span></div>
     <div class="h-sub">Adhan ${hm(np.at%1440)}${isHsc()?` · Iqama ${hm((np.at+IQAMA)%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${JUMUA.join(' / ')}`:''}</div>`
     :`<div class="h-big">${PRAYERS.filter(p=>d.p[p.k]&&d.p[p.k]!=='manquee').length}/5</div><div class="h-sub">Touche une prière pour changer son statut</div>`}
-    ${S.email===ADMIN_EMAIL?prieresGrandes(d,t,np):`<div class="prow">${minis}</div>`}
+    <div class="prow${S.email===ADMIN_EMAIL?' big':''}">${minis}</div>
   </div>`;
 }
 function prieresGrandes(d,t,np){
