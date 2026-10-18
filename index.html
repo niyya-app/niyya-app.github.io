@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-083545'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-083722'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2263,7 +2263,7 @@ function setCfg(path,v,isNum){
 }
 function applyTheme(){ const t=S.cfg.theme; if(t==='light'||t==='dark') document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
 function openSheet(h){ document.getElementById('sheet').innerHTML=h; document.getElementById('sheetBg').classList.add('on'); }
-function closeSheet(){ document.getElementById('sheetBg').classList.remove('on'); stopCompass(); }
+function closeSheet(){ document.getElementById('sheetBg').classList.remove('on'); stopCompass(); if(S.majEnAttente){ S.majEnAttente=false; setTimeout(checkUpdate,400); } }
 document.getElementById('sheetBg').addEventListener('click',e=>{ if(e.target.id==='sheetBg') closeSheet(); });
 
 function bilanTexte(P){
@@ -3127,6 +3127,8 @@ async function checkUpdate(){
     let m=null; try{ const rv=await fetch('version.json?t='+Date.now(),{cache:'no-store'}); if(rv.ok){ const o=await rv.json(); if(o&&o.v) m=[null,o.v]; } }catch(e){}
     if(!m){ const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}); const t=await r.text(); m=t.match(new RegExp('^const '+'VERSION=\'([^\']+)\'','m')); }
     if(m && m[1]!==VERSION && sessionStorage.getItem('niyya_maj')!==m[1]){
+      // pas de rechargement pendant qu'une fenêtre est ouverte (verset, récap…) : on attend qu'elle soit fermée
+      const bg=document.getElementById('sheetBg'); if(bg&&bg.classList.contains('on')){ S.majEnAttente=true; return; }
       sessionStorage.setItem('niyya_maj',m[1]);
       if(S.dirty.size||S.cfgDirty) await push();
       toast('✨ Nouvelle version de NIYYA…');
