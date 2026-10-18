@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-084925'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-085524'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1588,6 +1588,55 @@ function bandeauRecue(o){ // l'appli est déjà à l'écran quand la notificatio
   b.onclick=()=>{ b.remove(); S.diagClic='notif_msg'; S.clicCorps=o.body||''; ouvrir(cible); };
   document.body.appendChild(b); setTimeout(()=>b.remove(),12000);
 }
+/* ---------- ⚖️ Conseil du jour selon l'objectif de poids ----------
+   Conseils GÉNÉRAUX tirés des recommandations officielles (Santé publique France « Manger Bouger » / PNNS,
+   OMS, HAS) et de hadiths vérifiés. Ce n'est pas un suivi personnalisé. */
+const MB='Manger Bouger · Santé publique France', OMS='Organisation mondiale de la santé', HAS='Haute Autorité de santé';
+const CONSEILS_POIDS={
+  perdre:[
+    ["Remplis la moitié de ton assiette de légumes, puis ajoute les féculents et les protéines.",MB],
+    ["Remplace les boissons sucrées (sodas, jus) par de l'eau : c'est souvent le changement le plus efficace.",OMS],
+    ["Mange lentement et pose ta fourchette entre deux bouchées : le corps met environ 20 minutes à sentir la satiété.",MB],
+    ["Préfère les féculents complets (pain complet, riz complet, pâtes complètes) : ils calent plus longtemps.",MB],
+    ["Les légumineuses (lentilles, pois chiches, haricots) au moins 2 fois par semaine : rassasiantes et riches en fibres.",MB],
+    ["Bouge au moins 30 minutes par jour : la marche rapide compte. Moins de temps assis, c'est déjà gagné.",MB],
+    ["Garde les biscuits et les chips hors de vue : ce qu'on ne voit pas, on le grignote moins.",MB],
+    ["Un fruit plutôt qu'un dessert sucré : tu gardes le plaisir avec moins de sucre.",MB],
+    ["Dors suffisamment : le manque de sommeil augmente la faim et l'envie de sucré.",HAS],
+    ["Vise une perte lente (environ 0,5 à 1 kg par semaine) : c'est celle qui tient dans la durée.",HAS],
+    ["« Un tiers pour la nourriture, un tiers pour la boisson, un tiers pour la respiration. » Arrête-toi avant d'être plein.","Hadith · Tirmidhi n° 2380 (authentique selon Al-Albani)"],
+    ["Mange assis, en disant Bismillah, sans écran : on mange mieux et moins quand on y fait attention.","Hadith · Al-Bukhari n° 5376 et Muslim n° 2022"]
+  ],
+  prendre:[
+    ["Fais 3 repas et 2 ou 3 collations par jour : manger plus souvent est plus facile que manger plus à la fois.",HAS],
+    ["Enrichis tes plats : un filet d'huile d'olive, du fromage râpé, un œuf ou de la crème ajoutent de l'énergie sans gros volume.",HAS],
+    ["Collations faciles : poignée d'amandes ou de noix, dattes, banane, yaourt, pain avec du fromage.",MB],
+    ["Mets une source de protéines à chaque repas : œufs, poisson, viande, lentilles, produits laitiers.",HAS],
+    ["Bois plutôt en dehors des repas : boire beaucoup en mangeant coupe l'appétit.",HAS],
+    ["Les fruits secs et oléagineux (dattes, abricots secs, noix) sont petits mais très nourrissants.",MB],
+    ["Fais du renforcement musculaire 2 fois par semaine : le poids repris devient du muscle, pas seulement du gras.",OMS],
+    ["Choisis des plats que tu aimes et partage tes repas : on mange mieux à plusieurs.",HAS],
+    ["Un laitage à chaque repas (lait, yaourt, fromage) : protéines et calcium à la fois.",MB],
+    ["Une perte de poids sans le vouloir (surtout 5 % en un mois) mérite d'en parler à son médecin.",HAS],
+    ["« La nourriture d'un seul suffit pour deux » : manger ensemble ouvre l'appétit et apporte la baraka.","Hadith · Muslim n° 2059"],
+    ["Pèse-toi une fois par semaine, le même jour, pour suivre ta progression sans t'inquiéter chaque jour.",HAS]
+  ],
+  garder:[
+    ["Pèse-toi une fois par semaine, le même jour, à jeun : tu repères vite un écart de plus de 1 kg.",HAS],
+    ["Garde des horaires de repas réguliers : sauter un repas pousse souvent à grignoter ensuite.",MB],
+    ["Au moins 5 fruits et légumes par jour, frais, surgelés ou en conserve.",MB],
+    ["Bouge au moins 30 minutes par jour, et lève-toi régulièrement si tu restes assis longtemps.",MB],
+    ["Une poignée de fruits à coque par jour (amandes, noix, noisettes), nature et non salés.",MB],
+    ["Du poisson 2 fois par semaine, dont un poisson gras (sardine, maquereau, saumon).",MB],
+    ["Limite la charcuterie et la viande rouge : on peut se faire plaisir sans en manger tous les jours.",MB],
+    ["L'eau est la seule boisson indispensable : garde une bouteille à portée de main.",MB],
+    ["Moins de sel : goûte avant de saler, et utilise herbes et épices.",OMS],
+    ["Après un écart (fête, repas copieux), reprends simplement ton rythme normal au repas suivant.",MB],
+    ["« Un tiers pour la nourriture, un tiers pour la boisson, un tiers pour la respiration. »","Hadith · Tirmidhi n° 2380 (authentique selon Al-Albani)"],
+    ["Mange de ce qui est devant toi, de la main droite, en commençant par Bismillah.","Hadith · Al-Bukhari n° 5376 et Muslim n° 2022"]
+  ]
+};
+function conseilPoids(k){ const L=CONSEILS_POIDS[poidsBut()]||CONSEILS_POIDS.perdre; return L[dayOfYear(k||today())%L.length]; }
 /* ---------- Travail (fixe / variable / aucun) et objectif de poids (perdre / prendre / garder) ---------- */
 const travailMode=()=>(S.cfg.travail&&S.cfg.travail.mode)||'fixe';
 const prioTitre=()=>travailMode()==='aucun'?'3 priorités du jour':'3 priorités business';
@@ -2084,6 +2133,8 @@ function vBilan(){
       <h2><span class="ico">⚖️</span>Poids${S.cfg.poidsObj?' · '+({perdre:'⬇️ objectif ',prendre:'⬆️ objectif ',garder:'⚖️ garder '})[poidsBut()]+S.cfg.poidsObj+' kg':''}</h2>
       <div class="sub">${!pLast?'Enregistre ta première pesée ci-dessous.':`Dernière pesée : ${pLast[1]} kg le ${fmtShort(pLast[0])}${poidsTexte(pLast[1])?' · '+poidsTexte(pLast[1]):''}`}</div>
       <div class="row"><input class="inp" id="poidsIn" type="number" step="0.1" inputmode="decimal" placeholder="Poids du ${fmtShort(sel)} (kg)" value="${dsel.poids??''}"><button class="btn green" onclick="setPoids()">Enregistrer</button></div>
+      ${S.email===ADMIN_EMAIL?(()=>{ const c=conseilPoids(today()); return `<div class="coach mt" style="font-size:.86rem;line-height:1.5"><b>${({perdre:'⬇️',prendre:'⬆️',garder:'⚖️'})[poidsBut()]} Conseil du jour</b><br>${esc(c[0])}<div class="muted" style="font-size:.7rem;margin-top:4px">Source : ${esc(c[1])}</div></div>
+        <p class="muted" style="font-size:.68rem;margin-top:6px">Conseils généraux, ils ne remplacent pas l'avis d'un médecin ou d'un diététicien.</p>`; })():''}
       ${poids.length>1?`<div class="chart" style="height:110px">${(()=>{ const v=poids.slice(-20), lo=Math.min(...v.map(x=>x[1]),S.cfg.poidsObj||999)-1, hi=Math.max(...v.map(x=>x[1]))+.5;
         return v.map(([k,p])=>`<div class="col" title="${fmtShort(k)} : ${p} kg"><div class="b" style="height:${(p-lo)/(hi-lo)*100}%;background:linear-gradient(180deg,#0ea5e9,#2563eb)"></div><div class="x">${fmtShort(k)}</div></div>`).join(''); })()}</div>`:''}
     </div>
