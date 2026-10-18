@@ -67,7 +67,10 @@ self.addEventListener('notificationclick', e => {
   const url = new URL('./?ouvrir=' + cible, self.registration.scope).href;
   // l'iPhone ne transmet pas toujours le message à l'appli déjà ouverte : on note aussi le clic, l'appli le lit en revenant au premier plan
   const corps = (e.notification.data && e.notification.data.body) || e.notification.body || ''; // le texte complet voyage avec le clic (pas besoin de réseau)
-  const note = caches.open('niyya-clic').then(c => c.put('clic', new Response(JSON.stringify({ cible, t: Date.now(), corps })))).catch(() => null);
+  const note = caches.open('niyya-clic').then(c => Promise.all([
+    c.put('clic', new Response(JSON.stringify({ cible, t: Date.now(), corps }))),
+    c.put('dernier', new Response(JSON.stringify({ cible, t: Date.now() }))) // gardé pour le diagnostic (jamais effacé par l'appli)
+  ])).catch(() => null);
   e.waitUntil(note.then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
     for (const c of cs) {
       if (c.url.startsWith(self.registration.scope) && !/admin\.html/.test(c.url) && 'focus' in c) { c.postMessage({ ouvrir: cible, corps }); return c.focus(); }
