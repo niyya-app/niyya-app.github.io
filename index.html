@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-085557'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-090558'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1604,6 +1604,14 @@ const CONSEILS_POIDS={
     ["Un fruit plutôt qu'un dessert sucré : tu gardes le plaisir avec moins de sucre.",GEN],
     ["Dors suffisamment : la fatigue pousse à grignoter et à manger plus sucré.",GEN],
     ["Vise une perte lente et régulière plutôt qu'un régime express : c'est celle qui tient dans la durée.",GEN],
+    ["Cuisine maison le plus souvent possible : tu maîtrises le gras, le sucre et le sel.",MB],
+    ["Limite les produits ultra-transformés (plats préparés, gâteaux et biscuits industriels).",MB],
+    ["Prends l'escalier plutôt que l'ascenseur et descends un arrêt plus tôt : chaque pas compte.",MB],
+    ["Une soupe ou des crudités en entrée calent avant le plat principal.",GEN],
+    ["Sers-toi une fois, dans une assiette pas trop grande, et range le plat avant de manger.",GEN],
+    ["Fais tes courses après avoir mangé et avec une liste : moins d'achats impulsifs.",GEN],
+    ["Ne te prive pas de tout : un petit plaisir de temps en temps aide à tenir sur la durée.",GEN],
+    ["Le soir, un repas plus léger que le midi t'aide à mieux dormir et à mieux gérer ta faim.",GEN],
     ["« Un tiers pour la nourriture, un tiers pour la boisson, un tiers pour la respiration. » Arrête-toi avant d'être plein.","Hadith · Tirmidhi n° 2380 (authentique selon Al-Albani)"],
     ["Mange assis, en disant Bismillah, sans écran : on mange mieux et moins quand on y fait attention.","Hadith · Al-Bukhari n° 5376 et Muslim n° 2022"]
   ],
@@ -1618,6 +1626,14 @@ const CONSEILS_POIDS={
     ["Choisis des plats que tu aimes et partage tes repas : on mange souvent mieux à plusieurs.",GEN],
     ["2 produits laitiers par jour (lait, yaourt, fromage) : protéines et calcium à la fois.",MB],
     ["Une perte de poids sans le vouloir (surtout 5 % en un mois) mérite d'en parler à son médecin.",HAS],
+    ["Mets des féculents à chaque repas : pain, riz, pâtes, semoule ou pommes de terre.",MB],
+    ["Commence la journée par un vrai petit-déjeuner : pain, laitage, fruit, et un œuf si tu peux.",GEN],
+    ["Tartine ton pain de beurre de cacahuète ou de purée d'amandes : beaucoup d'énergie en peu de volume.",GEN],
+    ["Un smoothie maison (lait ou yaourt, banane, flocons d'avoine) fait une collation complète.",GEN],
+    ["Garde toujours une collation dans ton sac : dattes, fruits secs, barre de céréales.",GEN],
+    ["Ne saute pas de repas, même si tu n'as pas très faim : mange au moins un peu.",GEN],
+    ["Mange dans un endroit calme, sans te presser : l'appétit vient en mangeant.",GEN],
+    ["Une petite marche avant le repas peut aider à ouvrir l'appétit.",GEN],
     ["« La nourriture d'un seul suffit pour deux » : manger ensemble ouvre l'appétit et apporte la baraka.","Hadith · Muslim n° 2059"],
     ["Pèse-toi une fois par semaine, le même jour, pour suivre ta progression sans t'inquiéter chaque jour.",GEN]
   ],
@@ -1632,6 +1648,14 @@ const CONSEILS_POIDS={
     ["L'eau est la seule boisson indispensable : garde une bouteille à portée de main.",MB],
     ["Moins de sel : goûte avant de saler, et utilise herbes et épices.",OMS],
     ["Après un écart (fête, repas copieux), reprends simplement ton rythme normal au repas suivant.",GEN],
+    ["Cuisine maison le plus souvent possible : c'est la meilleure façon de garder l'équilibre.",MB],
+    ["Limite les produits ultra-transformés (plats préparés, gâteaux et biscuits industriels).",MB],
+    ["Les légumineuses (lentilles, pois chiches, haricots) au moins 2 fois par semaine.",MB],
+    ["Préfère les féculents complets : pain complet, riz complet, pâtes complètes.",MB],
+    ["Prends l'escalier plutôt que l'ascenseur : l'activité du quotidien compte aussi.",MB],
+    ["Remplace les boissons sucrées par de l'eau, nature ou aromatisée avec du citron ou de la menthe.",OMS],
+    ["Écoute ta faim : mange quand tu as faim, arrête-toi quand tu n'as plus faim.",GEN],
+    ["Garde du plaisir à table : un repas qu'on aime et qu'on partage est un repas réussi.",GEN],
     ["« Un tiers pour la nourriture, un tiers pour la boisson, un tiers pour la respiration. »","Hadith · Tirmidhi n° 2380 (authentique selon Al-Albani)"],
     ["Mange de ce qui est devant toi, de la main droite, en commençant par Bismillah.","Hadith · Al-Bukhari n° 5376 et Muslim n° 2022"]
   ]
@@ -2133,8 +2157,8 @@ function vBilan(){
       <h2><span class="ico">⚖️</span>Poids${S.cfg.poidsObj?' · '+({perdre:'⬇️ objectif ',prendre:'⬆️ objectif ',garder:'⚖️ garder '})[poidsBut()]+S.cfg.poidsObj+' kg':''}</h2>
       <div class="sub">${!pLast?'Enregistre ta première pesée ci-dessous.':`Dernière pesée : ${pLast[1]} kg le ${fmtShort(pLast[0])}${poidsTexte(pLast[1])?' · '+poidsTexte(pLast[1]):''}`}</div>
       <div class="row"><input class="inp" id="poidsIn" type="number" step="0.1" inputmode="decimal" placeholder="Poids du ${fmtShort(sel)} (kg)" value="${dsel.poids??''}"><button class="btn green" onclick="setPoids()">Enregistrer</button></div>
-      ${S.email===ADMIN_EMAIL?(()=>{ const c=conseilPoids(today()); return `<div class="coach mt" style="font-size:.86rem;line-height:1.5"><b>${({perdre:'⬇️',prendre:'⬆️',garder:'⚖️'})[poidsBut()]} Conseil du jour</b><br>${esc(c[0])}<div class="muted" style="font-size:.7rem;margin-top:4px">Source : ${esc(c[1])}</div></div>
-        <p class="muted" style="font-size:.68rem;margin-top:6px">Conseils généraux, ils ne remplacent pas l'avis d'un médecin ou d'un diététicien.</p>`; })():''}
+      ${(()=>{ const c=conseilPoids(today()); return `<div class="coach mt" style="font-size:.86rem;line-height:1.5"><b>${({perdre:'⬇️',prendre:'⬆️',garder:'⚖️'})[poidsBut()]} Conseil du jour</b><br>${esc(c[0])}<div class="muted" style="font-size:.7rem;margin-top:4px">Source : ${esc(c[1])}</div></div>
+        <p class="muted" style="font-size:.68rem;margin-top:6px">Conseils généraux, ils ne remplacent pas l'avis d'un médecin ou d'un diététicien.</p>`; })()}
       ${poids.length>1?`<div class="chart" style="height:110px">${(()=>{ const v=poids.slice(-20), lo=Math.min(...v.map(x=>x[1]),S.cfg.poidsObj||999)-1, hi=Math.max(...v.map(x=>x[1]))+.5;
         return v.map(([k,p])=>`<div class="col" title="${fmtShort(k)} : ${p} kg"><div class="b" style="height:${(p-lo)/(hi-lo)*100}%;background:linear-gradient(180deg,#0ea5e9,#2563eb)"></div><div class="x">${fmtShort(k)}</div></div>`).join(''); })()}</div>`:''}
     </div>
