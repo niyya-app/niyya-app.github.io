@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-083351'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-083545'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1584,6 +1584,7 @@ function deroul(k){ S.ouv=S.ouv||{}; S.ouv[k]=!S.ouv[k]; render(); }
 // Ouverture depuis une notification : ?ouvrir=priere|hadith|mindset|recap
 function ouvrir(cible){
   diagNotif('ouvrir '+cible+(!S.uid||!S.pret?' (en attente du chargement)':'')); marquerRecue(Date.now());
+  try{ sessionStorage.setItem('nya_ouvrir',JSON.stringify({cible,corps:S.clicCorps||'',t:Date.now()})); }catch(e){}
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
   S.sel=today(); S.mindIdx=null; S.hadIdx=null;
   go(cible==='recap'?'bilan':'jour');
@@ -3168,6 +3169,9 @@ async function autotest(){
   if(location.hash==='#autotest'){ await autotest(); document.documentElement.dataset.ok='1'; return; }
   { const mi=location.hash.match(/import=([0-9a-f]{32,})/i); if(mi){ try{ localStorage.setItem('nya_import',mi[1]); }catch(e){} history.replaceState(null,'',location.pathname+location.search); } }
   { const mo=new URLSearchParams(location.search).get('ouvrir'); if(mo){ S.ouvrirEnAttente=mo; S.diagClic='notif_url'; history.replaceState(null,'',location.pathname+location.hash); } }
+  // l'appli vient de se recharger pour une mise à jour juste après l'ouverture d'une notification : on la rouvre
+  try{ const o=JSON.parse(sessionStorage.getItem('nya_ouvrir')||'null'); sessionStorage.removeItem('nya_ouvrir');
+    if(o && !S.ouvrirEnAttente && Date.now()-o.t<30e3 && /[?&]v=/.test(location.search)){ S.ouvrirEnAttente=o.cible; S.clicCorps=o.corps||''; diagNotif('rouvert après mise à jour : '+o.cible); } }catch(e){}
   try{ if(navigator.serviceWorker){ navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.recue){ const o=ev.data.recue, revenu=Date.now()-(window._visibleDepuis||0)<4000; diagNotif('notification reçue ('+(revenu?'au retour':'appli ouverte')+') : '+o.tag); if(document.visibilityState!=='visible') return; if(revenu){ const c=cibleDeTag(o.tag||''); if(c&&!recueVue(o.t)){ marquerRecue(o.t); S.diagClic='notif_msg'; S.clicCorps=o.body||''; ouvrir(c); } } else bandeauRecue(o); return; } if(ev.data&&ev.data.ouvrir){ diagNotif('message reçu : '+ev.data.ouvrir); S.clicCorps=ev.data.corps||''; _clicVu=Date.now(); caches.open('niyya-clic').then(c=>c.delete('clic')).catch(()=>{}); S.diagClic='notif_msg'; ouvrir(ev.data.ouvrir); } }); navigator.serviceWorker.startMessages&&navigator.serviceWorker.startMessages(); } }catch(e){} // Safari ne livre les messages qu'après startMessages()
   window.addEventListener('focus',()=>[300,1200].forEach(t=>setTimeout(lireClicNotif,t)));
   // iPhone : après la fermeture du clavier, Safari laisse parfois le menu du bas « flotter » au milieu de l'écran.
