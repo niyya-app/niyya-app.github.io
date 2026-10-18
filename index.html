@@ -400,7 +400,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-091809'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-162929'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -412,6 +412,7 @@ const METHODES = {
   uoif:{l:'UOIF (12°) — la plus utilisée en France', f:12, i:12},
   isna:{l:'15° (ISNA)', f:15, i:15},
   mwl:{l:'Ligue islamique mondiale (18° / 17°)', f:18, i:17},
+  umq:{l:'Umm al-Qura — Arabie saoudite (La Mecque, Médine…)', f:18.5, i:0, iv:90}, // Isha = Maghrib + 90 min (+30 pendant le Ramadan)
   hsc:{l:'Mosquée An-Nour, Hérouville-Saint-Clair (calendrier)'},
 };
 const PRAYERS = [
@@ -1314,6 +1315,7 @@ function timesOf(k){
     try{
       const M=METHODES[P.methode]||METHODES.uoif, c=new adhan.Coordinates(L.lat,L.lon);
       const pr=new adhan.CalculationParameters('Other',M.f,M.i); pr.madhab=adhan.Madhab.Shafi; pr.highLatitudeRule=adhan.HighLatitudeRule.recommended(c);
+      if(M.iv){ pr.ishaInterval=M.iv+(typeof estRamadan==='function'&&estRamadan(k)?30:0); }
       const t=new adhan.PrayerTimes(c,dateOf(k),pr), mn=x=>Math.floor(minIn(x,tz)+1e-6);
       return _tcache[ck]=[mn(t.fajr),mn(t.sunrise),mn(t.dhuhr),mn(t.asr),mn(t.maghrib),mn(t.isha)];
     }catch(e){}
@@ -1384,6 +1386,7 @@ async function pull(){
     saveLocal(); setSync('ok');
     if(S.dirty.size||S.cfgDirty) planPush();
     if(!S.pret){ S.pret=true; render(); compter(S.view||'jour'); }
+    if(S.cfg.onb && !S.cfg.methodeAutoFaite && METHODE_PAYS[(S.cfg.lieu||{}).tz]){ S.cfg.methodeAutoFaite=true; if(methodeAuto()){ cfgTouch(); pushMajParams(); render(); toast('🕌 Horaires : méthode Umm al-Qura (Arabie saoudite)',4000); } else cfgTouch(); }
     if(S.ouvrirEnAttente && S.cfg.onb){ const c=S.ouvrirEnAttente; S.ouvrirEnAttente=null; ouvrir(c); } else if(!S._clicDemarrage){ S._clicDemarrage=true; [0,700,1500,3000,5000,8000].forEach(t=>setTimeout(lireClicNotif,t)); setTimeout(lireRecue,8500); } else lireClicNotif();
     if(S.cfg.onb && !S._rappelVu && location.hash!=='#autotest'){ S._rappelVu=true; setTimeout(()=>{ if(!document.getElementById('sheetBg').classList.contains('on')) proposerRappels(false); },2500); }
     if(!S._aboOk){ S._aboOk=true; pushAbonnement().then(sub=>{ if(sub) pushEnvoyerAbo(sub).catch(()=>{}); }); } // rattache l'abonnement aux notifications à ce compte
@@ -2544,10 +2547,12 @@ function chercherVille(q){
       :`<p class="muted" style="font-size:.78rem;margin-top:6px">Ville introuvable. Vérifie l'orthographe ou utilise « ma position actuelle ».</p>`;
   },350);
 }
+const METHODE_PAYS={'Asia/Riyadh':'umq'}; // fuseau horaire → méthode officielle du pays
+function methodeAuto(){ const L=S.cfg.lieu||{}, m=METHODE_PAYS[L.tz]; if(m && S.cfg.priere.methode!==m && S.cfg.priere.methode!=='hsc'){ S.cfg.priere.methode=m; for(const k in _tcache) delete _tcache[k]; return true; } return false; }
 function choisirVille(nom,lat,lon,tz){
   S.cfg.lieu={nom,lat:+lat.toFixed(4),lon:+lon.toFixed(4),tz:tz||(enFrance({lat,lon})?'Europe/Paris':'')}; for(const k in _tcache) delete _tcache[k];
-  if(!S.cfg.lieu.tz) fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=1`).then(r=>r.json()).then(o=>{ if(o.timezone&&S.cfg.lieu.lat===+lat.toFixed(4)){ S.cfg.lieu.tz=o.timezone; for(const k in _tcache) delete _tcache[k]; cfgTouch(); if(S.cfg.onb) render(); } }).catch(()=>{}); if(S.cfg.priere.methode==='hsc') S.cfg.priere.methode='uoif';
-  cfgTouch(); if(S.cfg.onb){ render(); toast('🕌 Horaires mis à jour'); } else { const i=document.getElementById('villeIn'); if(i) i.value=nom; document.getElementById('villeSugg').innerHTML=''; }
+  if(!S.cfg.lieu.tz) fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=1`).then(r=>r.json()).then(o=>{ if(o.timezone&&S.cfg.lieu.lat===+lat.toFixed(4)){ S.cfg.lieu.tz=o.timezone; for(const k in _tcache) delete _tcache[k]; methodeAuto(); cfgTouch(); if(S.cfg.onb) render(); } }).catch(()=>{}); if(S.cfg.priere.methode==='hsc') S.cfg.priere.methode='uoif';
+  methodeAuto(); cfgTouch(); if(S.cfg.onb){ render(); toast('🕌 Horaires mis à jour'); } else { const i=document.getElementById('villeIn'); if(i) i.value=nom; document.getElementById('villeSugg').innerHTML=''; }
 }
 function localiserMoi(){
   if(!navigator.geolocation) return aideLocalisation(0);
