@@ -340,7 +340,7 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 /* Cœur vert (sadaqa / don) */
 .coeur-bg{position:fixed;inset:0;z-index:80;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(16,185,129,.18),transparent 60%);animation:cfond 1.9s ease forwards}
 .coeur-bg .c{font-size:9rem;line-height:1;filter:drop-shadow(0 10px 30px rgba(16,185,129,.55));animation:cbat 1.9s ease forwards}
-.lune-bg{position:fixed;inset:0;z-index:80;pointer-events:none;background:radial-gradient(circle,rgba(250,204,21,.30),transparent 65%);animation:lfond 3.8s ease forwards}
+.lune-bg{position:fixed;inset:0;z-index:80;pointer-events:none;background:radial-gradient(circle,rgba(254,240,138,.55),rgba(255,251,235,.94) 60%);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:lfond 3.8s ease forwards} /* fond quasi opaque : le texte reste bien lisible */
 .lune-bg .c{position:absolute;inset:0;display:grid;place-items:center;font-size:11rem;line-height:1;filter:drop-shadow(0 10px 34px rgba(234,179,8,.75));animation:llune 3.8s ease forwards}
 .lune-bg .t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 18px;opacity:0;animation:ltexte 3.8s ease forwards}
 .lune-bg .t b{font-size:clamp(3rem,15vw,5.5rem);line-height:1.05;font-weight:900;color:#ca8a04;text-shadow:0 4px 24px rgba(250,204,21,.55),0 2px 0 #fff}
@@ -414,7 +414,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-213056'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-213411'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
