@@ -404,7 +404,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-211852'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-212222'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2299,7 +2299,7 @@ function toggle(k){
 }
 function cyclePrayer(p){ const order=[undefined,'heure','retard','manquee']; const d=J(); const i=order.indexOf(d.p[p]); setPrayer(p,order[(i+1)%order.length]||null,true); }
 function setPrayer(p,s,cyc){ const d=J(), avant=cinqALheure(d); d.p[p]=(!cyc&&d.p[p]===s)?null:s; if(!d.p[p]) delete d.p[p]; vib(); touch(); render();
-  if(!avant && cinqALheure(d)) return etoileCinq(); // la 5e prière à l'heure : grande étoile
+  if(S.email===ADMIN_EMAIL && !avant && cinqALheure(d)) return etoileCinq(); // la 5e prière à l'heure : grande étoile (TEST : compte administrateur seulement)
   if(d.p[p]==='heure'||d.p[p]==='mosquee') toast(prayCount(S.sel)===5?'🌟 5/5 prières, mashaAllah !':'🕌 Prière notée'); }
 const cinqALheure=d=>PRAYERS.every(p=>d.p[p.k]==='heure'||d.p[p.k]==='mosquee'); // à l'heure ou à la mosquée
 function etoileCinq(){
