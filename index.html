@@ -395,7 +395,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-083947'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-084925'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1226,7 +1226,7 @@ const DEF_CFG = {
   theme:'auto',
   lieu:{ nom:'', lat:null, lon:null },
   priere:{ methode:'uoif' },
-  travail:{ debut:'09:00', fin:'18:00' },
+  travail:{ debut:'09:00', fin:'18:00', mode:'fixe' }, // mode : fixe | variable | aucun
   sportSemaine:3,
   fumeur:false,
   tabac:{ debut:'', base:20, prix:12.5, pas:2, premiereBase:'08:00', premierePas:15 },
@@ -1588,6 +1588,19 @@ function bandeauRecue(o){ // l'appli est déjà à l'écran quand la notificatio
   b.onclick=()=>{ b.remove(); S.diagClic='notif_msg'; S.clicCorps=o.body||''; ouvrir(cible); };
   document.body.appendChild(b); setTimeout(()=>b.remove(),12000);
 }
+/* ---------- Travail (fixe / variable / aucun) et objectif de poids (perdre / prendre / garder) ---------- */
+const travailMode=()=>(S.cfg.travail&&S.cfg.travail.mode)||'fixe';
+const prioTitre=()=>travailMode()==='aucun'?'3 priorités du jour':'3 priorités business';
+function poidsBut(){ const C=S.cfg; if(C.poidsBut) return C.poidsBut; const dep=C.poidsDepart&&+C.poidsDepart.v; if(C.poidsObj&&dep) return C.poidsObj>dep?'prendre':C.poidsObj<dep?'perdre':'garder'; return 'perdre'; }
+function poidsTexte(actuel){
+  const but=poidsBut(), obj=+S.cfg.poidsObj||null, ref=obj||(S.cfg.poidsDepart&&+S.cfg.poidsDepart.v)||null;
+  if(but==='garder'){ if(!ref) return ''; const e=actuel-ref; return Math.abs(e)<=1?`✓ stable (${ref} kg ±1)`:`${e>0?'+':'−'}${Math.abs(e).toFixed(1).replace('.',',')} kg par rapport à ${ref} kg`; }
+  if(!obj) return '';
+  const reste=but==='prendre'?obj-actuel:actuel-obj;
+  return reste<=0?'🎉 objectif atteint':`encore ${reste.toFixed(1).replace('.',',')} kg à ${but==='prendre'?'prendre':'perdre'}`;
+}
+function choixTravail(m){ S.cfg.travail=Object.assign({debut:'09:00',fin:'18:00'},S.cfg.travail,{mode:m}); cfgTouch(); render(); }
+function choixPoidsBut(b){ S.cfg.poidsBut=b; cfgTouch(); render(); }
 function deroul(k){ S.ouv=S.ouv||{}; S.ouv[k]=!S.ouv[k]; render(); }
 // Ouverture depuis une notification : ?ouvrir=priere|hadith|mindset|recap
 function ouvrir(cible){
@@ -1766,8 +1779,8 @@ function vJour(){
   <div class="grid g2 mt">
     <div class="panel">
       <button onclick="deroul('prio')" style="all:unset;display:block;width:100%;cursor:pointer">
-      <h2><span class="ico">🎯</span>3 priorités business<span class="cnt">${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length||3} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['prio']?180:0}deg)">▾</span></span></h2>
-      <div class="sub" style="margin-bottom:${S.ouv.prio?0:2}px">${S.ouv.prio?`Les 3 tâches qui feront vraiment avancer ton activité aujourd'hui — à fixer en début de journée (${esc(S.cfg.travail.debut)}).`:d.prio.some(p=>p.t.trim())?esc(d.prio.filter(p=>p.t.trim()).map(p=>(p.ok?'✓ ':'')+p.t.trim()).join(' · ')):'Touche pour fixer tes 3 priorités du jour.'}</div></button>
+      <h2><span class="ico">🎯</span>${prioTitre()}<span class="cnt">${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length||3} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['prio']?180:0}deg)">▾</span></span></h2>
+      <div class="sub" style="margin-bottom:${S.ouv.prio?0:2}px">${S.ouv.prio?`${travailMode()==='aucun'?'Les 3 choses importantes à faire aujourd\'hui (famille, maison, démarches…), à fixer le matin.':`Les 3 tâches qui feront vraiment avancer ton activité aujourd'hui — à fixer en début de journée${travailMode()==='fixe'?' ('+esc(S.cfg.travail.debut)+')':''}.`}`:d.prio.some(p=>p.t.trim())?esc(d.prio.filter(p=>p.t.trim()).map(p=>(p.ok?'✓ ':'')+p.t.trim()).join(' · ')):'Touche pour fixer tes 3 priorités du jour.'}</div></button>
       ${S.ouv.prio?`<div class="checks">${d.prio.map((p,i)=>`
         <div class="prio"><button class="ck ${p.ok?'on':''}" onclick="prioOk(${i})" aria-label="Priorité faite"><span class="box"></span></button>
         <input type="text" value="${esc(p.t)}" placeholder="Priorité ${i+1}" oninput="prioTxt(${i},this.value)"></div>`).join('')}</div>`:''}
@@ -1813,9 +1826,9 @@ function vJour(){
     ${hr>=17||S.sel!==today()?soir:`<div class="panel"><h2><span class="ico">🗓️</span>Ma journée type</h2>
       <div class="kv"><span>Fajr · adhkar · Coran</span><b>${hm(timesOf(S.sel)[0])}</b></div>
       <div class="kv"><span>Sport · préparation</span><b>matin</b></div>
-      <div class="kv"><span>Début de journée pro · 3 priorités</span><b>${esc(S.cfg.travail.debut)}</b></div>
+      ${travailMode()==='fixe'?`<div class="kv"><span>Début de journée pro · 3 priorités</span><b>${esc(S.cfg.travail.debut)}</b></div>`:`<div class="kv"><span>${travailMode()==='aucun'?'Mes 3 priorités du jour':'Journée pro · 3 priorités'}</span><b>matin</b></div>`}
       <div class="kv"><span>Dhuhr · Asr</span><b>${hm(timesOf(S.sel)[2])} · ${hm(timesOf(S.sel)[3])}</b></div>
-      <div class="kv"><span>Fin de journée pro</span><b>${esc(S.cfg.travail.fin)}</b></div>
+      ${travailMode()==='fixe'?`<div class="kv"><span>Fin de journée pro</span><b>${esc(S.cfg.travail.fin)}</b></div>`:''}
       <div class="kv"><span>Famille · Maghrib · Isha · bilan</span><b>${hm(timesOf(S.sel)[4])} · ${hm(timesOf(S.sel)[5])}</b></div></div>`}
   </div>
   ${hr>=17||S.sel!==today()?'':`<div class="mt">${soir}</div>`}
@@ -2068,8 +2081,8 @@ function vBilan(){
       ${sel!==today()?`<button class="btn pri mt" onclick="S.view='jour';render()">Modifier cette journée</button>`:''}
     </div>
     <div class="panel">
-      <h2><span class="ico">⚖️</span>Poids${S.cfg.poidsObj?' · objectif '+S.cfg.poidsObj+' kg':''}</h2>
-      <div class="sub">${!pLast?'Enregistre ta première pesée ci-dessous.':S.cfg.poidsObj?`Dernière pesée : ${pLast[1]} kg le ${fmtShort(pLast[0])} · objectif ${S.cfg.poidsObj} kg (écart ${(pLast[1]-S.cfg.poidsObj).toFixed(1)} kg)`:`Dernière pesée : ${pLast[1]} kg le ${fmtShort(pLast[0])}`}</div>
+      <h2><span class="ico">⚖️</span>Poids${S.cfg.poidsObj?' · '+({perdre:'⬇️ objectif ',prendre:'⬆️ objectif ',garder:'⚖️ garder '})[poidsBut()]+S.cfg.poidsObj+' kg':''}</h2>
+      <div class="sub">${!pLast?'Enregistre ta première pesée ci-dessous.':`Dernière pesée : ${pLast[1]} kg le ${fmtShort(pLast[0])}${poidsTexte(pLast[1])?' · '+poidsTexte(pLast[1]):''}`}</div>
       <div class="row"><input class="inp" id="poidsIn" type="number" step="0.1" inputmode="decimal" placeholder="Poids du ${fmtShort(sel)} (kg)" value="${dsel.poids??''}"><button class="btn green" onclick="setPoids()">Enregistrer</button></div>
       ${poids.length>1?`<div class="chart" style="height:110px">${(()=>{ const v=poids.slice(-20), lo=Math.min(...v.map(x=>x[1]),S.cfg.poidsObj||999)-1, hi=Math.max(...v.map(x=>x[1]))+.5;
         return v.map(([k,p])=>`<div class="col" title="${fmtShort(k)} : ${p} kg"><div class="b" style="height:${(p-lo)/(hi-lo)*100}%;background:linear-gradient(180deg,#0ea5e9,#2563eb)"></div><div class="x">${fmtShort(k)}</div></div>`).join(''); })()}</div>`:''}
@@ -2097,11 +2110,14 @@ function vReglages(){
       <button class="btn green" style="margin-bottom:10px" onclick="inviter()">💌 Inviter un proche</button>
       <label class="f">Prénom</label><input class="inp" value="${esc(C.nom)}" onchange="setCfg('nom',this.value)">
       <label class="f">Horaires de travail</label>
-      <div class="row"><input class="inp" type="time" value="${esc(C.travail.debut)}" onchange="setCfg('travail.debut',this.value)"><span class="muted">→</span><input class="inp" type="time" value="${esc(C.travail.fin)}" onchange="setCfg('travail.fin',this.value)"></div>
+      <div class="opt">${[['fixe','⏰ Horaires fixes'],['variable','🔀 Horaires variables'],['aucun','🏡 Je ne travaille pas']].map(([m,l])=>`<button class="${travailMode()===m?'on':''}" onclick="choixTravail('${m}')">${l}</button>`).join('')}</div>
+      ${travailMode()==='fixe'?`<div class="row mt"><input class="inp" type="time" value="${esc(C.travail.debut)}" onchange="setCfg('travail.debut',this.value)"><span class="muted">→</span><input class="inp" type="time" value="${esc(C.travail.fin)}" onchange="setCfg('travail.fin',this.value)"></div>`:''}
       <label class="f">Apparence</label>
       <select class="inp" onchange="setCfg('theme',this.value);applyTheme()">${[['auto','Automatique (comme le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${C.theme===v?'selected':''}>${l}</option>`).join('')}</select>
       <label class="f">Séances de sport visées par semaine</label>${num('sportSemaine',C.sportSemaine)}
-      <label class="f">Objectif de poids (kg)</label>${num('poidsObj',C.poidsObj,.1)}
+      <label class="f">Mon objectif de poids</label>
+      <div class="opt">${[['perdre','⬇️ Perdre'],['prendre','⬆️ Prendre'],['garder','⚖️ Garder']].map(([b,l])=>`<button class="${poidsBut()===b?'on':''}" onclick="choixPoidsBut('${b}')">${l}</button>`).join('')}</div>
+      ${poidsBut()!=='garder'?`<label class="f">Poids visé (kg)</label>${num('poidsObj',C.poidsObj??'',.1)}`:`<label class="f">Poids à garder (kg)</label>${num('poidsObj',C.poidsObj??'',.1)}`}
     </div>
     <div class="panel">
       <h2><span class="ico">🚭</span>Programme tabac</h2>
@@ -2468,13 +2484,16 @@ function vOnb(){
       <input class="inp" id="onbNom" value="${esc(C.nom||'')}" placeholder="Prénom" autocomplete="given-name">
       ${lieuForm()}
       <label class="f">Mes horaires de travail</label>
-      <div class="row"><input class="inp" id="onbDeb" type="time" value="${esc(C.travail.debut)}"><span class="muted">→</span><input class="inp" id="onbFin" type="time" value="${esc(C.travail.fin)}"></div>
+      <div class="opt" id="onbTrav">${[['fixe','⏰ Fixes'],['variable','🔀 Variables'],['aucun','🏡 Je ne travaille pas']].map(([m,l])=>`<button class="${(ONB.travail||'fixe')===m?'on':''}" onclick="ONB.travail='${m}';document.querySelectorAll('#onbTrav button').forEach(b=>b.classList.toggle('on',b===this));document.getElementById('onbHeures').classList.toggle('hide','${m}'!=='fixe')">${l}</button>`).join('')}</div>
+      <div class="row mt ${(ONB.travail||'fixe')==='fixe'?'':'hide'}" id="onbHeures"><input class="inp" id="onbDeb" type="time" value="${esc(C.travail.debut)}"><span class="muted">→</span><input class="inp" id="onbFin" type="time" value="${esc(C.travail.fin)}"></div>
       <label class="f">Séances de sport visées par semaine</label>
       <input class="inp" id="onbSport" type="number" min="0" max="14" value="${C.sportSemaine}">
       <div class="grid g2" style="gap:8px">
         <div><label class="f">Poids actuel (kg, facultatif)</label><input class="inp" id="onbPoids" type="number" step="0.1" inputmode="decimal"></div>
         <div><label class="f">Objectif (kg, facultatif)</label><input class="inp" id="onbObj" type="number" step="0.1" inputmode="decimal"></div>
       </div>
+      <label class="f">Pour mon poids, je veux…</label>
+      <div class="opt" id="onbBut">${[['perdre','⬇️ Perdre'],['prendre','⬆️ Prendre'],['garder','⚖️ Garder']].map(([b,l])=>`<button class="${(ONB.poidsBut||'perdre')===b?'on':''}" onclick="ONB.poidsBut='${b}';document.querySelectorAll('#onbBut button').forEach(x=>x.classList.toggle('on',x===this))">${l}</button>`).join('')}</div>
       <label class="f">Est-ce que tu fumes ?</label>
       <div class="opt"><button id="onbF1" class="${ONB.fumeur?'on':''}" onclick="ONB.fumeur=true;document.getElementById('onbF1').classList.add('on');document.getElementById('onbF0').classList.remove('on');document.getElementById('onbTab').classList.remove('hide')">Oui, je veux arrêter</button>
         <button id="onbF0" class="${ONB.fumeur?'':'on'}" onclick="ONB.fumeur=false;document.getElementById('onbF0').classList.add('on');document.getElementById('onbF1').classList.remove('on');document.getElementById('onbTab').classList.add('hide')">Non</button></div>
@@ -2491,7 +2510,7 @@ function finirOnb(){
   const nom=v('onbNom').value.trim(); if(!nom) return toast('Indique ton prénom');
   if(S.cfg.lieu.lat==null && S.cfg.priere.methode!=='hsc') return toast('Choisis ta ville pour les horaires de prière',3000);
   if(!v('onbOk').checked) return toast('Coche la case d\'accord pour continuer',3000);
-  const C=S.cfg; C.nom=nom; C.travail={debut:v('onbDeb').value||'09:00',fin:v('onbFin').value||'18:00'};
+  const C=S.cfg; C.nom=nom; C.travail={debut:v('onbDeb').value||'09:00',fin:v('onbFin').value||'18:00',mode:ONB.travail||'fixe'}; C.poidsBut=ONB.poidsBut||'perdre';
   C.sportSemaine=Math.max(0,Math.round(num('onbSport')??3));
   const pd=num('onbPoids'), po=num('onbObj'); C.poidsObj=po; C.poidsDepart=pd?{k:today(),v:pd}:null;
   if(pd){ J(today()).poids=pd; touch(today()); }
@@ -3153,7 +3172,7 @@ async function autotest(){
   const err=[]; const vues=['jour','din','noms','coran','qibla','tabac','voyage','citadelle','bilan','reglages'];
   const profils=[
     {nom:'Fumeur',onb:true,fumeur:true,tabac:{debut:addDays(today(),-10),base:20,prix:12,pas:2,premiereBase:'08:00',premierePas:15},lieu:{nom:'Caen',lat:49.18,lon:-0.37},priere:{methode:'uoif'}},
-    {nom:'NonFumeur',onb:true,fumeur:false,lieu:{nom:'Lyon',lat:45.76,lon:4.83},priere:{methode:'mwl'}},
+    {nom:'NonFumeur',onb:true,fumeur:false,travail:{debut:'09:00',fin:'18:00',mode:'aucun'},poidsBut:'prendre',poidsObj:70,lieu:{nom:'Lyon',lat:45.76,lon:4.83},priere:{methode:'mwl'}},
     {nom:'Hsc',onb:true,fumeur:false,priere:{methode:'hsc'},poidsObj:80,poidsDepart:{k:today(),v:85},ess:['coran','rs','rsMatin','marche','p1','adhS'],essPerso:{p1:{i:'⭐',t:'Pas de <sucre>',s:'',g:'k-violet'}}},
   ];
   if(sb) sb.rpc=async()=>({data:{jours:{},config:null},error:null});
