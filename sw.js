@@ -49,10 +49,16 @@ async function copieDabord(req, cle) {
 
 self.addEventListener('push', e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch (x) { d = { title: 'NIYYA', body: e.data ? e.data.text() : '' }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'NIYYA', {
-    body: d.body || '', icon: 'niyya-icon-180.png', badge: 'niyya-icon-180.png', tag: d.tag || 'niyya', renotify: true,
-    data: { url: d.url || './', tag: d.tag || '', body: d.body || '' }
-  }));
+  // on garde aussi la notification REÇUE : l'appli peut l'afficher en entier même si l'iPhone ne signale pas le toucher
+  const recue = { tag: d.tag || '', title: d.title || 'NIYYA', body: d.body || '', t: Date.now() };
+  e.waitUntil(Promise.all([
+    self.registration.showNotification(d.title || 'NIYYA', {
+      body: d.body || '', icon: 'niyya-icon-180.png', badge: 'niyya-icon-180.png', tag: d.tag || 'niyya', renotify: true,
+      data: { url: d.url || './', tag: d.tag || '', body: d.body || '' }
+    }),
+    caches.open('niyya-clic').then(c => c.put('recue', new Response(JSON.stringify(recue)))).catch(() => null),
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => cs.forEach(c => c.postMessage({ recue }))).catch(() => null)
+  ]));
 });
 
 // Toucher une notification ouvre directement le bon écran
