@@ -116,7 +116,7 @@ function vDash(){
   const mxO=Math.max(1,...(D.onglets||[]).map(o=>+o.j30||0));
   app.innerHTML=`
   <div class="top"><div class="logo">نية</div><div><h1>Back-office NIYYA</h1><div class="sub">Mis à jour le ${esc(D.maj)}</div></div><span class="sp"></span>
-    <button class="btn" onclick="charger()">🔄 Actualiser</button><button class="btn" onclick="try{localStorage.removeItem('nya_admin_k')}catch(e){};CLE=null;sb.auth.signOut().then(()=>vLogin())">Déconnexion</button></div>
+    <a class="btn" href="./" style="text-decoration:none">← NIYYA</a><button class="btn" onclick="charger()">🔄 Actualiser</button><button class="btn" onclick="try{localStorage.removeItem('nya_admin_k')}catch(e){};CLE=null;sb.auth.signOut().then(()=>vLogin())">Déconnexion</button></div>
   <div class="grid">
     <div class="kpi k1"><span>👥 Comptes créés</span><b>${D.comptes}</b><small>+${D.nouveaux_7j} ces 7 derniers jours</small></div>
     <div class="kpi k2"><span>✅ Questionnaire fini</span><b>${D.questionnaire_fini}</b><small>${pct} % des comptes</small></div>

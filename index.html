@@ -400,7 +400,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261018-200803'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261018-201742'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2910,7 +2910,7 @@ function statsPanel(){
   return `<div class="panel mt"><h2><span class="ico">📈</span>Statistiques d'utilisation<span class="cnt">admin</span></h2>
     <div class="sub">Ouvertures d'onglets, tous utilisateurs confondus, anonymes (une ouverture comptée au plus toutes les 10 min par personne et par onglet).</div>
     <div id="statsBox">${body}</div>
-    <a class="btn pri" style="display:inline-block;margin-top:12px;text-decoration:none" href="admin.html" target="_blank" rel="noopener">🗂️ Ouvrir le back-office complet</a></div>`;
+    <a class="btn pri" style="display:inline-block;margin-top:12px;text-decoration:none" href="admin.html">🗂️ Ouvrir le back-office complet</a></div>`;
 }
 
 /* =====================================================================
