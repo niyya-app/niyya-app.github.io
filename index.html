@@ -414,7 +414,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261019-171104'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261019-172042'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3003,49 +3003,105 @@ const ALPHA=[
   {a:'و',n:'wâw',ar:'واو',t:[{p:'M122 96 C122 70 86 72 88 96 C90 114 122 114 122 96 C128 132 106 162 60 174'}]},
   {a:'ي',n:'yâ\'',ar:'ياء',t:[{p:'M152 74 C120 68 114 100 146 110 C178 120 168 162 116 162 C70 162 44 152 40 120'},{d:[96,186]},{d:[122,186]}]}
 ];
-let _ap={i:null,k:0,pts:[],ok:false};
-function apprendreFaites(){ return S.cfg.alphaOk||{}; }
+
+/* Formes début / milieu / fin + mots illustrés (première série : ا ب ت ث ج ح خ). Repère 200×200 identique. */
+const _TOOTH_D='M140 92 L140 124 Q140 136 128 136 L42 136', _TOOTH_M='M182 136 L120 136 Q112 136 112 126 L112 96 L106 126 Q102 136 92 136 L22 136', _BOL_F='M186 122 L166 122 C169 152 140 154 100 154 C60 154 35 144 35 106';
+const _HAJ_D='M70 70 L150 64 C122 84 98 104 96 120 L36 124', _HAJ_M='M184 128 C152 128 122 116 96 92 L152 86 C126 102 108 118 102 128 L18 128', _HAJ_F='M186 100 L150 100 C120 100 94 80 70 66 L142 60 C110 78 80 96 70 112 C46 142 56 180 100 182 C126 183 140 176 150 168';
+const FORMES={
+  'ا':{fin:{m:'ـا',t:[{p:'M180 152 L112 152 Q100 152 100 140 L100 36'}]}},
+  'ب':{debut:{m:'بـ',t:[{p:_TOOTH_D},{d:[128,162]}]},milieu:{m:'ـبـ',t:[{p:_TOOTH_M},{d:[110,162]}]},fin:{m:'ـب',t:[{p:_BOL_F},{d:[100,180]}]}},
+  'ت':{debut:{m:'تـ',t:[{p:_TOOTH_D},{d:[128,70]},{d:[150,70]}]},milieu:{m:'ـتـ',t:[{p:_TOOTH_M},{d:[100,72]},{d:[122,72]}]},fin:{m:'ـت',t:[{p:_BOL_F},{d:[88,96]},{d:[112,96]}]}},
+  'ث':{debut:{m:'ثـ',t:[{p:_TOOTH_D},{d:[140,52]},{d:[128,74]},{d:[152,74]}]},milieu:{m:'ـثـ',t:[{p:_TOOTH_M},{d:[111,52]},{d:[99,74]},{d:[123,74]}]},fin:{m:'ـث',t:[{p:_BOL_F},{d:[100,78]},{d:[88,100]},{d:[112,100]}]}},
+  'ج':{debut:{m:'جـ',t:[{p:_HAJ_D},{d:[118,152]}]},milieu:{m:'ـجـ',t:[{p:_HAJ_M},{d:[118,156]}]},fin:{m:'ـج',t:[{p:_HAJ_F},{d:[104,140]}]}},
+  'ح':{debut:{m:'حـ',t:[{p:_HAJ_D}]},milieu:{m:'ـحـ',t:[{p:_HAJ_M}]},fin:{m:'ـح',t:[{p:_HAJ_F}]}},
+  'خ':{debut:{m:'خـ',t:[{p:_HAJ_D},{d:[108,36]}]},milieu:{m:'ـخـ',t:[{p:_HAJ_M},{d:[122,62]}]},fin:{m:'ـخ',t:[{p:_HAJ_F},{d:[106,36]}]}}
+};
+// 3 mots par lettre : [mot avec voyelles, translittération, français, emoji, occurrence à colorer (0 = première, -1 = dernière)]
+const MOTS={
+  'ا':[['أَسَد','asad','lion','🦁',0],['بَاب','bâb','porte','🚪',0],['عَصَا','ʿaṣâ','bâton','🦯',-1]],
+  'ب':[['بَطَّة','baṭṭa','canard','🦆',0],['جَبَل','djabal','montagne','⛰️',0],['كَلْب','kalb','chien','🐕',-1]],
+  'ت':[['تُفَّاح','touffâḥ','pommes','🍎',0],['كِتَاب','kitâb','livre','📖',0],['بَيْت','bayt','maison','🏠',-1]],
+  'ث':[['ثَعْلَب','thaʿlab','renard','🦊',0],['أَثَاث','athâth','meubles','🛋️',0],['مُثَلَّث','mouthallath','triangle','🔺',-1]],
+  'ج':[['جَمَل','djamal','chameau','🐪',0],['نَجْمَة','nadjma','étoile','⭐',0],['دَجَاج','dadjâdj','poules','🐔',-1]],
+  'ح':[['حِصَان','ḥiṣân','cheval','🐴',0],['بَحْر','baḥr','mer','🌊',0],['تُفَّاح','touffâḥ','pommes','🍎',-1]],
+  'خ':[['خُبْز','khoubz','pain','🍞',0],['نَخْلَة','nakhla','palmier','🌴',0],['بِطِّيخ','biṭṭîkh','pastèque','🍉',-1]]
+};
+const NOM_FORME={seule:'Seule',debut:'Au début',milieu:'Au milieu',fin:'À la fin'};
+let _ap={i:null,etape:'seule',forme:null,k:0,pts:[],ok:false,ecoute:{}};
+const apSuivi=()=>S.cfg.alphaSuivi||{}; // {lettre:{seule:true,debut:true,milieu:true,fin:true,mots:true}}
+function apEtat(a){ const o=Object.assign({},apSuivi()[a]||{}); if((S.cfg.alphaOk||{})[a]) o.seule=true; return o; }
+function apMarquer(a,cle){ const T=Object.assign({},apSuivi()); T[a]=Object.assign({},T[a]||{},{[cle]:true}); S.cfg.alphaSuivi=T; if(cle==='seule'){ const ok=Object.assign({},S.cfg.alphaOk||{}); ok[a]=true; S.cfg.alphaOk=ok; } cfgTouch(); }
+const apFormesDe=a=>Object.keys(FORMES[a]||{});
+function apFormesFaites(a){ const e=apEtat(a), F=apFormesDe(a); return F.length>0 && F.every(f=>e[f]); }
+function apTraits(){ const l=ALPHA[_ap.i]; return _ap.etape==='formes'?FORMES[l.a][_ap.forme].t:l.t; }
 function vApprendre(){
   if(_ap.i==null){
-    const ok=apprendreFaites(), n=Object.keys(ok).length;
+    const n=ALPHA.filter(l=>apEtat(l.a).seule).length;
     return `<div class="hero k-violet"><div class="h-lbl">✍️ Apprendre l'alphabet arabe</div><div class="h-big tnum">${n}/28</div>
-      <div class="h-sub">Choisis une lettre, écoute-la, puis trace-la avec le doigt en suivant les numéros.</div></div>
+      <div class="h-sub">Pour chaque lettre : ① la lettre seule, ② ses formes dans un mot, ③ trois mots à écouter. Fais-les dans l'ordre, lettre par lettre.</div></div>
       <div class="panel mt"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;direction:rtl">
-      ${ALPHA.map((l,i)=>`<button onclick="apOuvrir(${i})" style="border:1.5px solid ${ok[l.a]?'#10b981':'var(--line)'};background:${ok[l.a]?'#ecfdf5':'var(--card)'};border-radius:14px;padding:8px 2px;cursor:pointer;font:inherit;color:var(--ink)">
-        <div style="font-family:'Amiri',serif;font-size:2rem;line-height:1.4">${l.a}</div><div style="font-size:.66rem;font-weight:700;direction:ltr">${ok[l.a]?'✓ ':''}${esc(l.n)}</div></button>`).join('')}
-      </div></div>`;
+      ${ALPHA.map((l,i)=>{ const e=apEtat(l.a), tout=e.seule&&(!FORMES[l.a]||apFormesFaites(l.a))&&(!MOTS[l.a]||e.mots);
+        const pastilles=[e.seule,FORMES[l.a]?apFormesFaites(l.a):null,MOTS[l.a]?e.mots:null].map(x=>x==null?'':`<i style="display:inline-block;width:6px;height:6px;border-radius:50%;margin:0 1px;background:${x?'#10b981':'#cbd5e1'}"></i>`).join('');
+        return `<button onclick="apOuvrir(${i})" style="border:1.5px solid ${tout?'#10b981':'var(--line)'};background:${tout?'#ecfdf5':'var(--card)'};border-radius:14px;padding:8px 2px;cursor:pointer;font:inherit;color:var(--ink)">
+        <div style="font-family:'Amiri',serif;font-size:2rem;line-height:1.4">${l.a}</div><div style="font-size:.66rem;font-weight:700;direction:ltr">${esc(l.n)}</div><div style="direction:ltr;height:8px">${pastilles}</div></button>`; }).join('')}
+      </div><p class="muted" style="font-size:.72rem;margin-top:8px">● vert = étape réussie. Formes et mots disponibles pour l'instant de alif à khâ'.</p></div>`;
   }
-  const l=ALPHA[_ap.i];
-  return `<div class="panel">
-    <div class="row" style="align-items:center;gap:10px"><button class="btn sm" onclick="_ap.i=null;render()">‹ Lettres</button><div class="sp"></div>
-      <button class="btn sm" onclick="apSon()">🔊 Écouter</button></div>
-    <div class="row" style="align-items:center;gap:14px;margin-top:10px">
-      <div style="font-family:'Amiri',serif;font-size:4.2rem;line-height:1.2;color:var(--violet)">${l.a}</div>
-      <div><div style="font-size:1.3rem;font-weight:900">La lettre ${esc(l.n)}</div><div class="sub" style="margin:0"><bdi lang="ar" style="font-family:'Amiri',serif;font-size:1.1rem">${esc(l.ar)}</bdi> · ${l.t.length} trait${l.t.length>1?'s':''} à tracer</div></div></div>
-    <div id="apMsg" class="sub" style="margin:10px 0 6px;font-weight:800">${_ap.ok?'✓ Bravo, ma châ\' Allah !':`Trait ${_ap.k+1} sur ${l.t.length} : ${l.t[_ap.k].d?'touche le point':'suis le chemin depuis le rond'} n° ${_ap.k+1}`}</div>
+  const l=ALPHA[_ap.i], e=apEtat(l.a), aF=!!FORMES[l.a], aM=!!MOTS[l.a];
+  const etapes=[['seule','① Seule',true,e.seule],['formes','② Formes',aF&&e.seule,aF&&apFormesFaites(l.a)],['mots','③ Mots',aM&&e.seule&&(!aF||apFormesFaites(l.a)),e.mots]];
+  const bar=`<div class="opt" style="margin-top:10px">${etapes.map(([k,lb,ouvert,fait])=>`<button class="${_ap.etape===k?'on':''}" ${ouvert?`onclick="apEtape('${k}')"`:'disabled style="opacity:.45"'}>${fait?'✓ ':ouvert?'':'🔒 '}${lb}</button>`).join('')}</div>`;
+  const tete=`<div class="row" style="align-items:center;gap:10px"><button class="btn sm" onclick="_ap.i=null;render()">‹ Lettres</button><div class="sp"></div><button class="btn sm" onclick="apSon()">🔊 Écouter</button></div>
+    <div class="row" style="align-items:center;gap:14px;margin-top:10px"><div style="font-family:'Amiri',serif;font-size:4.2rem;line-height:1.2;color:var(--violet)">${_ap.etape==='formes'?FORMES[l.a][_ap.forme].m:l.a}</div>
+      <div><div style="font-size:1.3rem;font-weight:900">La lettre ${esc(l.n)}</div><div class="sub" style="margin:0"><bdi lang="ar" style="font-family:'Amiri',serif;font-size:1.1rem">${esc(l.ar)}</bdi>${_ap.etape==='formes'?' · forme : '+NOM_FORME[_ap.forme]:''}</div></div></div>${bar}`;
+  if(_ap.etape==='mots') return `<div class="panel">${tete}${apVueMots(l)}</div>`;
+  const T=apTraits();
+  const formesBar=_ap.etape==='formes'?`<div class="opt" style="margin-top:8px">${apFormesDe(l.a).map(f=>`<button class="${_ap.forme===f?'on':''}" onclick="apForme('${f}')">${e[f]?'✓ ':''}${NOM_FORME[f]}</button>`).join('')}</div>
+      ${apFormesDe(l.a).length===1?`<p class="muted" style="font-size:.74rem;margin:6px 0 0">La lettre ${esc(l.n)} ne s'attache jamais à la lettre qui suit : elle n'a que deux formes, seule et à la fin.</p>`:''}`:'';
+  const suite=_ap.ok?(_ap.etape==='seule'&&aF?`<button class="btn pri" onclick="apEtape('formes')">② Formes ›</button>`
+      :_ap.etape==='formes'&&apFormeSuivante()?`<button class="btn pri" onclick="apForme('${apFormeSuivante()}')">${NOM_FORME[apFormeSuivante()]} ›</button>`
+      :_ap.etape==='formes'&&aM?`<button class="btn pri" onclick="apEtape('mots')">③ Mots ›</button>`
+      :_ap.i<27?`<button class="btn pri" onclick="apOuvrir(${_ap.i+1})">Lettre suivante ›</button>`:''):'';
+  return `<div class="panel">${tete}${formesBar}
+    <div id="apMsg" class="sub" style="margin:10px 0 6px;font-weight:800">${_ap.ok?'✓ Bravo, mâ châ\' Allah !':`Trait ${_ap.k+1} sur ${T.length} : ${T[_ap.k].d?'touche le point':'suis le chemin depuis le rond'} n° ${_ap.k+1}`}</div>
     <div style="position:relative;max-width:360px;margin:0 auto;aspect-ratio:1;border-radius:20px;background:var(--card);border:2px dashed var(--line)">
-      <svg id="apSvg" viewBox="0 0 200 200" style="width:100%;height:100%;touch-action:none;display:block">${apDessin()}</svg></div>
-    <div class="row mt" style="gap:8px;justify-content:center;flex-wrap:wrap">
-      <button class="btn sm" onclick="apReset()">↺ Recommencer</button>
-      ${_ap.i>0?`<button class="btn sm" onclick="apOuvrir(${_ap.i-1})">‹ Précédente</button>`:''}
-      ${_ap.i<27?`<button class="btn ${_ap.ok?'pri':'sm'}" onclick="apOuvrir(${_ap.i+1})">Suivante ›</button>`:''}
-    </div></div>`;
+      <svg id="apSvg" viewBox="0 0 200 200" style="width:100%;height:100%;touch-action:none;display:block">${_ap.etape==='formes'?'<line x1="0" y1="'+(apLigne())+'" x2="200" y2="'+(apLigne())+'" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4 4"/>':''}${apDessin()}</svg></div>
+    <div class="row mt" style="gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn sm" onclick="apReset()">↺ Recommencer</button>${suite}</div></div>`;
 }
+const apLigne=()=>136; // ligne d'écriture (les lettres attachées s'y relient)
+function apFormeSuivante(){ const F=apFormesDe(ALPHA[_ap.i].a), e=apEtat(ALPHA[_ap.i].a); return F.find(f=>!e[f]&&f!==_ap.forme)||null; }
+function apVueMots(l){
+  const M=MOTS[l.a];
+  return `<p class="sub" style="margin:10px 0">Touche chaque mot pour l'écouter. La lettre <b style="font-family:'Amiri',serif;font-size:1.2rem;color:#7c3aed">${l.a}</b> est en couleur.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${M.map((m,k)=>`<button onclick="apMot(${k})" style="border:1.5px solid ${_ap.ecoute[k]?'#10b981':'var(--line)'};background:var(--card);border-radius:16px;padding:10px 4px;cursor:pointer;font:inherit;color:var(--ink)">
+      <div style="font-size:2.4rem;line-height:1.2">${m[3]}</div>
+      <div lang="ar" dir="rtl" style="font-family:'Amiri',serif;font-size:1.9rem;line-height:1.6">${apColorer(m[0],l.a,m[4])}</div>
+      <div style="font-size:.8rem;font-weight:800">${esc(m[1])}</div><div class="muted" style="font-size:.74rem">${esc(m[2])} ${_ap.ecoute[k]?'✓':'🔊'}</div></button>`).join('')}</div>
+    ${apEtat(l.a).mots?`<p style="font-weight:800;color:#047857;margin-top:10px">✓ Lettre ${esc(l.n)} terminée, mâ châ' Allah !</p>${_ap.i<27?`<button class="btn pri mt" onclick="apOuvrir(${_ap.i+1})">Lettre suivante ›</button>`:''}`:''}`;
+}
+function apColorer(mot,lettre,occ){
+  const H=/[ً-ْٰ]/, egal=c=>c===lettre||(lettre==='ا'&&/[أإآا]/.test(c));
+  const idx=[]; [...mot].forEach((c,i)=>{ if(!H.test(c)&&egal(c)) idx.push(i); });
+  const cible=occ<0?idx[idx.length-1]:idx[occ]; if(cible==null) return esc(mot);
+  const ch=[...mot]; let fin=cible+1; while(fin<ch.length&&H.test(ch[fin])) fin++;
+  return esc(ch.slice(0,cible).join(''))+`<span style="color:#7c3aed">${esc(ch.slice(cible,fin).join(''))}</span>`+esc(ch.slice(fin).join(''));
+}
+function apParler(txt){ try{ const u=new SpeechSynthesisUtterance(txt); u.lang='ar-SA'; u.rate=.75; const v=speechSynthesis.getVoices().find(x=>/^ar/i.test(x.lang)); if(v) u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u); return !!v; }catch(e){ return false; } }
+function apMot(k){ const l=ALPHA[_ap.i], m=MOTS[l.a][k]; apParler(m[0]); _ap.ecoute[k]=true; if(Object.keys(_ap.ecoute).length>=MOTS[l.a].length && !apEtat(l.a).mots){ apMarquer(l.a,'mots'); vib(); } render(); }
+function apEtape(k){ const l=ALPHA[_ap.i]; _ap.etape=k; _ap.k=0; _ap.pts=[]; _ap.ok=false; _ap.ecoute={}; if(k==='formes'){ const e=apEtat(l.a); _ap.forme=apFormesDe(l.a).find(f=>!e[f])||apFormesDe(l.a)[0]; } render(); setTimeout(apBrancher,50); }
+function apForme(f){ _ap.forme=f; _ap.k=0; _ap.pts=[]; _ap.ok=false; render(); setTimeout(apBrancher,50); }
 function apDessin(){
-  const l=ALPHA[_ap.i]; let h='';
-  l.t.forEach((s,j)=>{
+  const T=apTraits(); let h='';
+  T.forEach((s,j)=>{
     const fait=j<_ap.k||_ap.ok, cur=j===_ap.k&&!_ap.ok;
     if(s.d){ h+=`<circle cx="${s.d[0]}" cy="${s.d[1]}" r="${fait?7:8}" fill="${fait?'#10b981':cur?'#c4b5fd':'none'}" stroke="${fait?'#10b981':cur?'#7c3aed':'#cbd5e1'}" stroke-width="2.5" ${fait?'':'stroke-dasharray="3 3"'}/>`; }
     else h+=`<path d="${s.p}" fill="none" stroke="${fait?'#10b981':cur?'#c4b5fd':'#e2e8f0'}" stroke-width="${fait?9:13}" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="${s.p}" fill="none" stroke="${fait?'#10b981':cur?'#7c3aed':'#94a3b8'}" stroke-width="2.5" stroke-dasharray="${fait?'0':'2 6'}" stroke-linecap="round"/>`;
   });
-  // numéros au départ de chaque trait (+ flèche de direction pour le trait en cours)
-  l.t.forEach((s,j)=>{
+  T.forEach((s,j)=>{
     if(j<_ap.k||_ap.ok) return;
     const [x,y]=s.d?s.d:apDebut(s.p), cur=j===_ap.k;
     h+=`<g><circle cx="${x+(s.d?13:0)}" cy="${y-(s.d?13:0)}" r="9" fill="${cur?'#7c3aed':'#94a3b8'}"/><text x="${x+(s.d?13:0)}" y="${y-(s.d?13:0)+4}" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">${j+1}</text></g>`;
   });
-  if(!_ap.ok && ALPHA[_ap.i].t[_ap.k].p){ const f=apFleche(ALPHA[_ap.i].t[_ap.k].p); if(f) h+=`<path d="${f}" fill="#7c3aed"/>`; }
+  if(!_ap.ok && T[_ap.k].p){ const f=apFleche(T[_ap.k].p); if(f) h+=`<path d="${f}" fill="#7c3aed"/>`; }
   h+=`<polyline id="apTrace" points="" fill="none" stroke="#f59e0b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>`;
   return h;
 }
@@ -3055,9 +3111,9 @@ function apDebut(d){ return apEchant(d,1)[0]; }
 function apFleche(d){ const p=apEchant(d,40), a=p[3], b=p[7]; if(!a||!b) return ''; const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), x=b[0], y=b[1], s=7;
   const pt=t=>[x+Math.cos(ang+t)*s, y+Math.sin(ang+t)*s].map(v=>v.toFixed(1)).join(' ');
   return `M${pt(0)} L${pt(2.5)} L${pt(-2.5)} Z`; }
-function apOuvrir(i){ _ap={i,k:0,pts:[],ok:false}; render(); window.scrollTo({top:0}); setTimeout(apBrancher,50); }
+function apOuvrir(i){ _ap={i,etape:'seule',forme:null,k:0,pts:[],ok:false,ecoute:{}}; render(); window.scrollTo({top:0}); setTimeout(apBrancher,50); }
 function apReset(){ _ap.k=0; _ap.pts=[]; _ap.ok=false; render(); setTimeout(apBrancher,50); }
-function apSon(){ try{ const l=ALPHA[_ap.i]; const u=new SpeechSynthesisUtterance(l.ar); u.lang='ar-SA'; u.rate=.75; const v=speechSynthesis.getVoices().find(x=>/^ar/i.test(x.lang)); if(v) u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u); if(!v) toast('Si tu n\'entends rien : active une voix arabe dans Réglages iPhone → Accessibilité → Contenu énoncé',5000); }catch(e){ toast('Son indisponible sur ce téléphone'); } }
+function apSon(){ const l=ALPHA[_ap.i]; if(!apParler(l.ar)) toast('Si tu n\'entends rien : Réglages iPhone → Accessibilité → Contenu énoncé → Voix → Arabe',5000); }
 function apBrancher(){
   const svg=document.getElementById('apSvg'); if(!svg) return;
   const pt=ev=>{ const r=svg.getBoundingClientRect(); return [(ev.clientX-r.left)/r.width*200,(ev.clientY-r.top)/r.height*200]; };
@@ -3068,22 +3124,22 @@ function apBrancher(){
 }
 function apTrace(){ const t=document.getElementById('apTrace'); if(t) t.setAttribute('points',_ap.pts.map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ')); }
 function apVerifier(){
-  const l=ALPHA[_ap.i], s=l.t[_ap.k], P=_ap.pts, d2=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
-  let bon=false;
-  if(s.d){ bon=P.length && P.some(p=>d2(p,s.d)<24); }
+  const l=ALPHA[_ap.i], T=apTraits(), s=T[_ap.k], P=_ap.pts, d2=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+  let bon=false; const msg=t=>{ const m=document.getElementById('apMsg'); if(m) m.textContent=t; };
+  if(s.d){ bon=P.length && P.some(p=>d2(p,s.d)<24); if(!bon) msg('Touche le point n° '+(_ap.k+1)); }
   else if(P.length>3){
     const E=apEchant(s.p,40), tol=22;
-    const couvert=E.filter(e=>P.some(p=>d2(p,e)<tol)).length/E.length;   // le doigt est passé partout sur le chemin
-    const dansLeChemin=P.filter(p=>E.some(e=>d2(p,e)<tol+6)).length/P.length; // sans trop s'en écarter
-    const sens=d2(P[0],E[0])<34;                                           // en partant du bon côté
+    const couvert=E.filter(e=>P.some(p=>d2(p,e)<tol)).length/E.length;
+    const dansLeChemin=P.filter(p=>E.some(e=>d2(p,e)<tol+6)).length/P.length;
+    const sens=d2(P[0],E[0])<34;
     bon=couvert>=0.75 && dansLeChemin>=0.7 && sens;
-    if(!bon){ const m=document.getElementById('apMsg'); if(m) m.textContent=!sens?`Commence au rond n° ${_ap.k+1} 👆`:couvert<0.75?'Suis tout le chemin jusqu\'au bout, réessaie':'Reste bien sur les pointillés, réessaie'; }
-  } else { const m=document.getElementById('apMsg'); if(m) m.textContent=s.d?'Touche le point':'Fais glisser ton doigt le long du chemin'; }
+    if(!bon) msg(!sens?`Commence au rond n° ${_ap.k+1} 👆`:couvert<0.75?'Suis tout le chemin jusqu\'au bout, réessaie':'Reste bien sur les pointillés, réessaie');
+  } else msg('Fais glisser ton doigt le long du chemin');
   _ap.pts=[];
   if(!bon){ apTrace(); vib(); return; }
   _ap.k++; vib();
-  if(_ap.k>=l.t.length){ _ap.ok=true; const ok=Object.assign({},apprendreFaites()); ok[l.a]=true; S.cfg.alphaOk=ok; cfgTouch(); apSon();
-    if(Object.keys(ok).length===28) setTimeout(()=>coeurVert('Ma châ\' Allah : tu sais écrire les 28 lettres !'),400); }
+  if(_ap.k>=T.length){ _ap.ok=true; apMarquer(l.a,_ap.etape==='formes'?_ap.forme:'seule'); apParler(_ap.etape==='formes'?l.ar:l.ar);
+    if(ALPHA.every(x=>apEtat(x.a).seule) && _ap.etape==='seule') setTimeout(()=>coeurVert('Mâ châ\' Allah : tu sais écrire les 28 lettres !'),400); }
   render(); setTimeout(apBrancher,50);
 }
 function vCitadelle(){
