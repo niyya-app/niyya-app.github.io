@@ -415,7 +415,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261019-174051'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261019-174250'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1523,7 +1523,9 @@ function render(){
   const alerte = S.sync==='invalid' ? `<div class="hero" style="background:linear-gradient(135deg,#ef4444,#be123c);margin-bottom:14px"><div class="h-lbl">⚠️ Ta session a expiré</div><div class="h-sub" style="margin:6px 0 10px">Tes saisies sont gardées sur cet appareil et seront envoyées dès que tu te reconnectes.</div><button class="btn" style="background:#fff;color:#be123c;border:none" onclick="deconnexion(true)">Me reconnecter</button></div>` : '';
   document.body.classList.toggle('ramadan',estRamadan(S.sel));
   if(S.view==='apprendre') setTimeout(apBrancher,30);
-  app.innerHTML=head+alerte+(S.view==='jour'?carteBienvenue():'')+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
+  // pages ouvertes depuis ☰ Plus : petit bouton de retour en haut (le menu du bas reste toujours là)
+  const retourPlus=S.email===ADMIN_EMAIL && DANS_PLUS.includes(S.view) && S.view!=='plus' && !(S.view==='apprendre'&&_ap.i!=null) ? `<button class="btn sm" style="margin-bottom:10px" onclick="go('plus')">‹ Plus</button>` : '';
+  app.innerHTML=head+alerte+retourPlus+(S.view==='jour'?carteBienvenue():'')+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
   tick();
 }
 // Clic sur une notification noté par le service worker (fiable même si l'appli était déjà ouverte)
