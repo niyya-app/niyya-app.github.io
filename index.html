@@ -414,7 +414,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261019-172042'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261019-173716'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3026,6 +3026,79 @@ const MOTS={
   'ح':[['حِصَان','ḥiṣân','cheval','🐴',0],['بَحْر','baḥr','mer','🌊',0],['تُفَّاح','touffâḥ','pommes','🍎',-1]],
   'خ':[['خُبْز','khoubz','pain','🍞',0],['نَخْلَة','nakhla','palmier','🌴',0],['بِطِّيخ','biṭṭîkh','pastèque','🍉',-1]]
 };
+
+// ---- formes des 21 autres lettres ----
+const _DAL0='M86 54 C106 80 126 104 128 124 Q129 136 116 136 L64 136';
+const _RA0='M124 104 C128 132 114 158 66 170';
+const _SIN_D='M172 104 Q174 136 160 136 Q148 136 148 112 Q148 136 136 136 Q124 136 124 112 L124 128 Q124 136 114 136 L36 136';
+const _SIN_M='M190 136 L170 136 Q164 136 164 112 Q164 136 152 136 Q140 136 140 112 Q140 136 128 136 Q116 136 116 112 L116 126 Q116 136 106 136 L14 136';
+const _SIN_F='M190 136 L176 136 Q170 136 170 112 Q170 136 158 136 Q146 136 146 112 Q146 136 134 136 Q122 136 122 112 C124 150 110 166 80 166 C50 166 34 152 36 120';
+const _SAD_D='M116 128 C122 96 180 92 176 118 C174 136 136 136 116 128 Q110 126 110 116 L110 136 L36 136';
+const _SAD_M='M190 136 L134 136 Q120 136 124 120 C132 96 184 94 180 120 C178 136 140 136 124 132 Q116 130 116 118 L116 136 L14 136';
+const _SAD_F='M190 136 L134 136 Q122 136 126 120 C134 96 186 94 182 120 C180 136 142 136 126 132 C120 160 70 172 42 142 Q34 132 38 118';
+const _TA_D='M150 134 C174 120 162 82 112 92 C88 98 74 116 64 134 L22 136', _TA_M='M190 136 L150 136 C174 122 162 84 112 94 C88 100 74 118 64 136 L12 136', _TA_F='M190 136 L150 136 C174 122 162 84 112 94 C88 100 74 118 64 136 Q58 140 50 134';
+const _AYN_D='M150 80 C126 56 90 70 98 96 C104 116 126 122 140 128 Q130 136 116 136 L36 136';
+const _AYN_M='M190 136 L136 136 C146 112 124 96 106 112 C94 124 100 136 84 136 L14 136';
+const _AYN_F='M190 136 L140 136 C148 110 118 100 104 116 C96 128 110 136 92 140 C62 150 56 180 104 182 C126 183 140 176 150 168';
+const _FA_D='M150 130 C128 130 128 98 150 98 C172 98 172 130 150 130 L150 136 L36 136';
+const _FA_M='M190 136 L160 136 C176 130 172 98 150 98 C128 98 128 130 148 134 L14 136';
+const _FA_F='M190 138 L164 138 C178 128 172 100 152 100 C130 100 130 128 150 132 C170 136 168 146 146 146 L56 146 Q38 146 40 120';
+const _QAF_F='M190 136 L164 136 C178 126 172 98 152 98 C130 98 130 128 150 132 C170 142 162 180 100 180 C56 180 40 156 46 124';
+const _KAF_D='M150 40 L150 128 Q150 136 140 136 L36 136', _KAF_M='M190 136 L160 136 Q150 136 150 126 L150 40', _KAF_T='M150 42 L106 64';
+const _LAM_D='M140 28 L140 126 Q140 136 128 136 L36 136';
+const _MIM_D='M150 124 C150 100 112 100 112 120 C112 136 150 140 150 124', _MIM_M='M190 128 L150 128 C150 152 110 152 112 130 L14 128';
+const _MIM_F='M190 116 L150 116 C150 94 112 94 112 116 C112 132 150 132 150 116';
+const _HA_D='M136 136 C150 108 130 84 108 96 C88 108 100 136 122 124 C134 116 126 104 114 108 L36 136';
+const _HA_M='M190 136 L128 136 C150 120 140 96 120 104 C104 112 108 150 120 164 C130 150 128 120 112 120 L14 136';
+const _HA_F='M190 136 L150 136 C156 108 120 90 104 108 C92 124 110 140 132 136 Q150 132 150 120';
+const _WAW='M122 96 C122 70 86 72 88 96 C90 114 122 114 122 96 C128 132 106 162 60 174';
+const _YA_F='M186 108 L166 108 C150 104 140 112 150 120 C176 134 168 164 116 164 C70 164 44 154 40 124';
+Object.assign(FORMES,{
+  'د':{fin:{m:'ـد',t:[{p:'M188 136 L130 136'},{p:_DAL0}]}},
+  'ذ':{fin:{m:'ـذ',t:[{p:'M188 136 L130 136'},{p:_DAL0},{d:[84,32]}]}},
+  'ر':{fin:{m:'ـر',t:[{p:'M188 104 L124 104'},{p:_RA0}]}},
+  'ز':{fin:{m:'ـز',t:[{p:'M188 104 L124 104'},{p:_RA0},{d:[124,80]}]}},
+  'س':{debut:{m:'سـ',t:[{p:_SIN_D}]},milieu:{m:'ـسـ',t:[{p:_SIN_M}]},fin:{m:'ـس',t:[{p:_SIN_F}]}},
+  'ش':{debut:{m:'شـ',t:[{p:_SIN_D},{d:[148,70]},{d:[136,90]},{d:[160,90]}]},milieu:{m:'ـشـ',t:[{p:_SIN_M},{d:[140,70]},{d:[128,90]},{d:[152,90]}]},fin:{m:'ـش',t:[{p:_SIN_F},{d:[146,70]},{d:[134,90]},{d:[158,90]}]}},
+  'ص':{debut:{m:'صـ',t:[{p:_SAD_D}]},milieu:{m:'ـصـ',t:[{p:_SAD_M}]},fin:{m:'ـص',t:[{p:_SAD_F}]}},
+  'ض':{debut:{m:'ضـ',t:[{p:_SAD_D},{d:[146,74]}]},milieu:{m:'ـضـ',t:[{p:_SAD_M},{d:[152,72]}]},fin:{m:'ـض',t:[{p:_SAD_F},{d:[154,72]}]}},
+  'ط':{debut:{m:'طـ',t:[{p:_TA_D},{p:'M88 30 L88 132'}]},milieu:{m:'ـطـ',t:[{p:_TA_M},{p:'M88 30 L88 132'}]},fin:{m:'ـط',t:[{p:_TA_F},{p:'M88 30 L88 132'}]}},
+  'ظ':{debut:{m:'ظـ',t:[{p:_TA_D},{p:'M88 30 L88 132'},{d:[126,66]}]},milieu:{m:'ـظـ',t:[{p:_TA_M},{p:'M88 30 L88 132'},{d:[126,68]}]},fin:{m:'ـظ',t:[{p:_TA_F},{p:'M88 30 L88 132'},{d:[126,68]}]}},
+  'ع':{debut:{m:'عـ',t:[{p:_AYN_D}]},milieu:{m:'ـعـ',t:[{p:_AYN_M}]},fin:{m:'ـع',t:[{p:_AYN_F}]}},
+  'غ':{debut:{m:'غـ',t:[{p:_AYN_D},{d:[120,44]}]},milieu:{m:'ـغـ',t:[{p:_AYN_M},{d:[114,82]}]},fin:{m:'ـغ',t:[{p:_AYN_F},{d:[120,82]}]}},
+  'ف':{debut:{m:'فـ',t:[{p:_FA_D},{d:[150,72]}]},milieu:{m:'ـفـ',t:[{p:_FA_M},{d:[150,72]}]},fin:{m:'ـف',t:[{p:_FA_F},{d:[152,74]}]}},
+  'ق':{debut:{m:'قـ',t:[{p:_FA_D},{d:[138,72]},{d:[162,72]}]},milieu:{m:'ـقـ',t:[{p:_FA_M},{d:[138,72]},{d:[162,72]}]},fin:{m:'ـق',t:[{p:_QAF_F},{d:[140,72]},{d:[164,72]}]}},
+  'ك':{debut:{m:'كـ',t:[{p:_KAF_D},{p:_KAF_T}]},milieu:{m:'ـكـ',t:[{p:_KAF_M},{p:_KAF_T},{p:'M150 136 L14 136'}]},fin:{m:'ـك',t:[{p:'M188 140 L152 140'},{p:'M150 36 L150 140 L52 140 L52 116'},{p:'M92 74 L120 86 L92 102'}]}},
+  'ل':{debut:{m:'لـ',t:[{p:_LAM_D}]},milieu:{m:'ـلـ',t:[{p:'M188 136 L144 136'},{p:'M140 28 L140 126 Q140 136 128 136 L14 136'}]},fin:{m:'ـل',t:[{p:'M188 136 L144 136'},{p:'M140 28 L140 128 C140 172 66 178 52 132'}]}},
+  'م':{debut:{m:'مـ',t:[{p:_MIM_D},{p:'M112 130 L36 136'}]},milieu:{m:'ـمـ',t:[{p:_MIM_M}]},fin:{m:'ـم',t:[{p:_MIM_F},{p:'M112 120 L112 184'}]}},
+  'ن':{debut:{m:'نـ',t:[{p:_TOOTH_D},{d:[140,70]}]},milieu:{m:'ـنـ',t:[{p:_TOOTH_M},{d:[112,72]}]},fin:{m:'ـن',t:[{p:'M186 100 L166 100 C170 150 132 166 100 166 C60 166 38 150 40 102'},{d:[100,82]}]}},
+  'ه':{debut:{m:'هـ',t:[{p:_HA_D}]},milieu:{m:'ـهـ',t:[{p:_HA_M}]},fin:{m:'ـه',t:[{p:_HA_F}]}},
+  'و':{fin:{m:'ـو',t:[{p:'M188 108 L124 104'},{p:_WAW}]}},
+  'ي':{debut:{m:'يـ',t:[{p:_TOOTH_D},{d:[118,162]},{d:[140,162]}]},milieu:{m:'ـيـ',t:[{p:_TOOTH_M},{d:[100,162]},{d:[122,162]}]},fin:{m:'ـي',t:[{p:_YA_F},{d:[96,188]},{d:[122,188]}]}}
+});
+Object.assign(MOTS,{
+  'د':[['دُبّ','doubb','ours','🐻',0],['وَرْدَة','warda','rose','🌹',0],['أَسَد','asad','lion','🦁',-1]],
+  'ذ':[['ذِئْب','dhi\'b','loup','🐺',0],['ذُرَة','dhoura','maïs','🌽',0],['تِلْمِيذ','tilmîdh','élève','🧒',-1]],
+  'ر':[['رَجُل','radjoul','homme','👨',0],['قِرْد','qird','singe','🐒',0],['قَمَر','qamar','lune','🌙',-1]],
+  'ز':[['زَيْتُون','zaytoûn','olives','🫒',0],['غَزَال','ghazâl','gazelle','🦌',0],['مَوْز','mawz','bananes','🍌',-1]],
+  'س':[['سَمَك','samak','poissons','🐟',0],['مِسْطَرَة','misṭara','règle','📏',0],['شَمْس','chams','soleil','☀️',-1]],
+  'ش':[['شَمْس','chams','soleil','☀️',0],['فَرَاشَة','farâcha','papillon','🦋',0],['عُشّ','ʿouchch','nid','🪺',-1]],
+  'ص':[['صَقْر','ṣaqr','faucon','🦅',0],['قَصْر','qaṣr','palais','🏰',0],['قَمِيص','qamîṣ','chemise','👕',-1]],
+  'ض':[['ضِفْدَع','ḍifdaʿ','grenouille','🐸',0],['بَيْضَة','bayḍa','œuf','🥚',0],['أَرْض','arḍ','terre','🌍',-1]],
+  'ط':[['طَائِرَة','ṭâ\'ira','avion','✈️',0],['بَطَّة','baṭṭa','canard','🦆',0],['قِطّ','qiṭṭ','chat','🐈',-1]],
+  'ظ':[['ظَرْف','ẓarf','enveloppe','✉️',0],['مِظَلَّة','miẓalla','parapluie','☂️',0],['حَظّ','ḥaẓẓ','chance','🍀',-1]],
+  'ع':[['عَيْن','ʿayn','œil','👁️',0],['نَعْجَة','naʿdja','brebis','🐑',0],['ضِفْدَع','ḍifdaʿ','grenouille','🐸',-1]],
+  'غ':[['غَزَال','ghazâl','gazelle','🦌',0],['مَغْرِب','maghrib','coucher du soleil','🌇',0],['دِمَاغ','dimâgh','cerveau','🧠',-1]],
+  'ف':[['فِيل','fîl','éléphant','🐘',0],['سَفِينَة','safîna','bateau','🚢',0],['خَرُوف','kharoûf','mouton','🐑',-1]],
+  'ق':[['قَمَر','qamar','lune','🌙',0],['بَقَرَة','baqara','vache','🐄',0],['طَبَق','ṭabaq','assiette','🍽️',-1]],
+  'ك':[['كَلْب','kalb','chien','🐕',0],['سُكَّر','soukkar','sucre','🍬',0],['سَمَك','samak','poissons','🐟',-1]],
+  'ل':[['لَيْمُون','laymoûn','citron','🍋',0],['نَحْلَة','naḥla','abeille','🐝',0],['جَمَل','djamal','chameau','🐪',-1]],
+  'م':[['مَوْز','mawz','bananes','🍌',0],['نَمْلَة','namla','fourmi','🐜',0],['قَلَم','qalam','crayon','✏️',-1]],
+  'ن':[['نَحْلَة','naḥla','abeille','🐝',0],['أَنْف','anf','nez','👃',0],['لَيْمُون','laymoûn','citron','🍋',-1]],
+  'ه':[['هِلَال','hilâl','croissant de lune','🌙',0],['زَهْرَة','zahra','fleur','🌸',0],['وَجْه','wadjh','visage','🙂',-1]],
+  'و':[['وَرْدَة','warda','rose','🌹',0],['حُوت','ḥoût','baleine','🐋',0],['دَلْو','dalw','seau','🪣',-1]],
+  'ي':[['يَد','yad','main','✋',0],['بَيْت','bayt','maison','🏠',0],['كُرْسِيّ','koursiyy','chaise','🪑',-1]]
+});
 const NOM_FORME={seule:'Seule',debut:'Au début',milieu:'Au milieu',fin:'À la fin'};
 let _ap={i:null,etape:'seule',forme:null,k:0,pts:[],ok:false,ecoute:{}};
 const apSuivi=()=>S.cfg.alphaSuivi||{}; // {lettre:{seule:true,debut:true,milieu:true,fin:true,mots:true}}
@@ -3044,7 +3117,7 @@ function vApprendre(){
         const pastilles=[e.seule,FORMES[l.a]?apFormesFaites(l.a):null,MOTS[l.a]?e.mots:null].map(x=>x==null?'':`<i style="display:inline-block;width:6px;height:6px;border-radius:50%;margin:0 1px;background:${x?'#10b981':'#cbd5e1'}"></i>`).join('');
         return `<button onclick="apOuvrir(${i})" style="border:1.5px solid ${tout?'#10b981':'var(--line)'};background:${tout?'#ecfdf5':'var(--card)'};border-radius:14px;padding:8px 2px;cursor:pointer;font:inherit;color:var(--ink)">
         <div style="font-family:'Amiri',serif;font-size:2rem;line-height:1.4">${l.a}</div><div style="font-size:.66rem;font-weight:700;direction:ltr">${esc(l.n)}</div><div style="direction:ltr;height:8px">${pastilles}</div></button>`; }).join('')}
-      </div><p class="muted" style="font-size:.72rem;margin-top:8px">● vert = étape réussie. Formes et mots disponibles pour l'instant de alif à khâ'.</p></div>`;
+      </div><p class="muted" style="font-size:.72rem;margin-top:8px">● vert = étape réussie : lettre seule · formes · mots.</p></div>`;
   }
   const l=ALPHA[_ap.i], e=apEtat(l.a), aF=!!FORMES[l.a], aM=!!MOTS[l.a];
   const etapes=[['seule','① Seule',true,e.seule],['formes','② Formes',aF&&e.seule,aF&&apFormesFaites(l.a)],['mots','③ Mots',aM&&e.seule&&(!aF||apFormesFaites(l.a)),e.mots]];
