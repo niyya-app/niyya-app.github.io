@@ -10,7 +10,7 @@ returns void language plpgsql volatile security definer set search_path = public
 begin
   if auth.uid() is null then return; end if;
   if p_onglet not in ('jour','din','noms','coran','qibla','tabac','voyage','bilan','reglages','don',
-                      'actif','lancement_appli','lancement_web','citadelle','notif_msg','notif_cache','notif_url',
+                      'actif','lancement_appli','lancement_web','citadelle','plus','apprendre','notif_msg','notif_cache','notif_url',
                       'ouvert_priere','ouvert_hadith','ouvert_mindset','ouvert_recap','ouvert_annonce','ouvert_soir','inviter') then return; end if;
   insert into public.niyya_stats (jour, onglet, nb) values ((now() at time zone 'Europe/Paris')::date, p_onglet, 1)
   on conflict (jour, onglet) do update set nb = public.niyya_stats.nb + 1;
