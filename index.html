@@ -339,8 +339,8 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .dua .src{font-size:.72rem;color:var(--muted);font-weight:700;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
 @media (max-width:480px){.pill .plbl{display:none}.pill{padding:9px}.gearbtn{width:36px;height:36px;font-size:1rem}.brand h1{font-size:1.2rem}}
 /* Cœur vert (sadaqa / don) */
-.coeur-bg{position:fixed;inset:0;z-index:80;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(16,185,129,.18),transparent 60%);animation:cfond 1.9s ease forwards}
-.coeur-bg .c{font-size:9rem;line-height:1;filter:drop-shadow(0 10px 30px rgba(16,185,129,.55));animation:cbat 1.9s ease forwards}
+.coeur-bg{position:fixed;inset:0;z-index:80;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(167,243,208,.6),rgba(236,253,245,.95) 62%);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:cfond 2.8s ease forwards}
+.coeur-bg .c{font-size:9rem;line-height:1;filter:drop-shadow(0 10px 30px rgba(16,185,129,.55));animation:cbat 2.8s ease forwards}
 .lune-bg{position:fixed;inset:0;z-index:80;pointer-events:none;background:radial-gradient(circle,rgba(254,240,138,.55),rgba(255,251,235,.94) 60%);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:lfond 3.8s ease forwards} /* fond quasi opaque : le texte reste bien lisible */
 .lune-bg .c{position:absolute;inset:0;display:grid;place-items:center;font-size:11rem;line-height:1;filter:drop-shadow(0 10px 34px rgba(234,179,8,.75));animation:llune 3.8s ease forwards}
 .lune-bg .t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 18px;opacity:0;animation:ltexte 3.8s ease forwards}
@@ -355,7 +355,7 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .etoile-bg .c{filter:drop-shadow(0 10px 34px rgba(234,179,8,.75));animation-duration:2.8s;font-size:10rem}
 .etoile-bg .m{color:#a16207;font-size:2.4rem;letter-spacing:.01em;animation-duration:2.8s}
 .etoile-bg .m small{display:block;font-size:1.05rem;font-weight:700;margin-top:4px;color:#854d0e}
-.coeur-bg .m{position:absolute;top:62%;left:0;right:0;text-align:center;font-weight:800;font-size:1.05rem;color:#047857;padding:0 24px;animation:cmsg 1.9s ease forwards}
+.coeur-bg .m{position:absolute;top:63%;left:0;right:0;text-align:center;font-weight:900;font-size:1.6rem;line-height:1.25;color:#065f46;padding:0 24px;animation:cmsg 2.8s ease forwards}
 @keyframes cbat{0%{transform:scale(.2);opacity:0}25%{transform:scale(1.15);opacity:1}40%{transform:scale(.95)}55%{transform:scale(1.08)}80%{opacity:1}100%{transform:scale(1.25);opacity:0}}
 @keyframes cfond{0%{opacity:0}20%{opacity:1}80%{opacity:1}100%{opacity:0}}
 @keyframes cmsg{0%,20%{opacity:0;transform:translateY(10px)}35%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
@@ -415,7 +415,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261021-153831'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261021-193201'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3462,7 +3462,7 @@ function coeurVert(msg){
   try{ navigator.vibrate&&navigator.vibrate([30,60,30]); }catch(e){}
   const el=document.createElement('div'); el.className='coeur-bg';
   el.innerHTML=`<div class="c">💚</div><div class="m">${esc(msg||'Qu\'Allah accepte ta sadaqa')}</div>`;
-  document.body.appendChild(el); setTimeout(()=>el.remove(),2000);
+  document.body.appendChild(el); setTimeout(()=>el.remove(),2900);
 }
 const _fmtH={};
 function hijriParts(k){
