@@ -415,7 +415,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261019-192919'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261021-093841'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1484,6 +1484,9 @@ function scoreOf(k){
   let score=max?Math.round(tot/max*100):0;
   // Bonus jeûne : +10 points (jeûne surérogatoire ou jour de Ramadan jeûné), sans pénaliser les jours sans jeûne
   if(d.jeuneNafl||d.jeune==='fait'){ parts.push({k:'jeune',l:'Jeûne',bonus:true,f:1,pts:10,max:0,txt:d.jeune==='fait'?'Ramadan':'surérogatoire'}); score=Math.min(100,score+10); }
+  if(S.email===ADMIN_EMAIL){ // istighfar et dhikr : points bonus (test)
+    if((d.istighfar||0)>=100){ parts.push({k:'istighfar',l:'Istighfar',bonus:true,f:1,pts:PTS_ISTIGHFAR,max:0,txt:'100'}); score=Math.min(100,score+PTS_ISTIGHFAR); }
+    if(dhikrFait(d)){ parts.push({k:'dhikr',l:'Dhikr',bonus:true,f:1,pts:PTS_DHIKR,max:0,txt:'fait'}); score=Math.min(100,score+PTS_DHIKR); } }
   return {score, parts};
 }
 function scoreColor(s){ return s>=80?'#10b981':s>=60?'#84cc16':s>=40?'#f59e0b':s>0?'#fb7185':'var(--card2)'; }
@@ -1886,7 +1889,7 @@ function vJour(){
         <div class="h-sub" style="font-size:.9rem;margin-top:4px">${sc.score>=80?'Journée excellente, mashaAllah 🌟':sc.score>=60?'Belle journée, continue':sc.score>=30?'On avance, un pas après l\'autre':'Chaque case cochée compte'}</div>
         <div class="h-sub">${streakTxt()}</div>${progCarte(true)}</div>
       </div>
-      <div class="chips">${sc.parts.map(p=>`<span class="chip">${p.bonus?'🍽️ '+p.l+' +'+p.pts:p.l+' '+p.pts+'/'+p.max}</span>`).join('')}</div>
+      <div class="chips">${sc.parts.map(p=>`<span class="chip">${p.bonus?({jeune:'🍽️',istighfar:'📿',dhikr:'🤍'}[p.k]||'⭐')+' '+p.l+' +'+p.pts:p.l+' '+p.pts+'/'+p.max}</span>`).join('')}</div>
     </div>`}
     ${heroPriere()}
   </div>
@@ -2006,7 +2009,7 @@ function vDin(){
       ${naflPanel()}
       ${jeunePanel()}
     </div>
-    <div>
+    <div>${S.email===ADMIN_EMAIL?cartesDhikr(d)+'<div style="display:none">':''}
       <div class="hero k-teal">
         <div class="h-lbl">📿 Istighfar & dhikr</div>
         <div class="dhikr" style="margin-top:8px"><div class="big tnum">${d.istighfar}</div>
@@ -2017,7 +2020,7 @@ function vDin(){
             <button style="background:rgba(255,255,255,.15)" onclick="dhikr(-1)">−1</button></div></div>
         <div class="bar"><div style="width:${Math.min(100,d.istighfar)}%"></div></div>
         <div class="h-sub" style="margin-top:6px">Objectif : 100 par jour, comme le Prophète ﷺ</div>
-      </div>
+      </div>${S.email===ADMIN_EMAIL?'</div>':''}
       <div class="panel mt">
         <h2><span class="ico">📖</span>Spiritualité du jour</h2>
         <div class="checks" style="margin-top:8px">
@@ -2389,7 +2392,58 @@ function ba(i){ const d=J(); if(!d.baIds) d.baIds=baJour(S.sel); d.ba[i]=!d.ba[i
 function prioOk(i){ const d=J(); d.prio[i].ok=!d.prio[i].ok; vib(); touch(); render(); }
 function prioTxt(i,v){ J().prio[i].t=v; touch(); }
 function setTxt(k,v){ J()[k]=v; touch(); }
-function dhikr(n){ const d=J(); d.istighfar=Math.max(0,d.istighfar+n); vib(); touch(); render(); if(d.istighfar>=100&&d.istighfar-n<100) toast('🤲 100 istighfar, qu\'Allah te pardonne'); }
+/* ---------- 📿 Compteurs : istighfar + dhikr (récompenses = points + hadith) ---------- */
+const DHIKRS={
+  tasbih:{l:'Après la prière',but:100,etapes:[['سُبْحَانَ اللّٰهِ','SubhânAllâh','Gloire à Allah',33],['الْحَمْدُ لِلّٰهِ','Al-hamdou lillâh','Louange à Allah',33],['اللّٰهُ أَكْبَرُ','Allâhou akbar','Allah est le plus grand',34]],
+    r:'« Des formules dont celui qui les dit après chaque prière obligatoire ne sera jamais déçu : 33 fois SubhânAllâh, 33 fois Al-hamdou lillâh et 34 fois Allâhou akbar. »',src:'Muslim n° 596'},
+  sbh:{l:'SubhânAllâhi wa bihamdihi',but:100,etapes:[['سُبْحَانَ اللّٰهِ وَبِحَمْدِهِ','SubhânAllâhi wa bihamdihi','Gloire et louange à Allah',100]],
+    r:'« Celui qui dit SubhânAllâhi wa bihamdihi cent fois par jour, ses péchés lui sont pardonnés, même s\'ils sont comme l\'écume de la mer. »',src:'Al-Bukhari n° 6405'},
+  tahlil:{l:'Lâ ilâha illallâh…',but:100,etapes:[['لَا إِلٰهَ إِلَّا اللّٰهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ','Lâ ilâha illallâhou wahdahou lâ charîka lah, lahou l-moulkou wa lahou l-hamdou wa houwa ʿalâ koulli chay\'in qadîr','Nulle divinité qu\'Allah, Seul, sans associé ; à Lui la royauté et la louange, et Il est capable de toute chose',100]],
+    r:'« Cent fois par jour : la récompense d\'avoir affranchi dix esclaves, cent bonnes actions inscrites, cent péchés effacés, et une protection contre Satan ce jour-là jusqu\'au soir. »',src:'Al-Bukhari n° 6403'}
+};
+const PTS_ISTIGHFAR=5, PTS_DHIKR=5; // points bonus dans le score du jour (ne pénalisent pas ceux qui ne le font pas)
+const dk=d=>{ d.dk=d.dk||{}; return d.dk; };
+const dhikrFait=d=>{ const o=d.dk||{}; return (o.tasbihTours||0)>=1 || (o.sbh||0)>=100 || (o.tahlil||0)>=100; };
+function dhikrEtape(mode,n){ const E=DHIKRS[mode].etapes; let r=n; for(let i=0;i<E.length;i++){ if(r<E[i][3]) return [i,r]; r-=E[i][3]; } return [E.length-1,E[E.length-1][3]]; }
+function compterDhikr(){
+  const d=J(), o=dk(d), m=S.dhikrMode||'tasbih', avant=dhikrFait(d);
+  o[m]=(o[m]||0)+1; try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){}
+  if(m==='tasbih'){ const [i,r]=dhikrEtape('tasbih',o.tasbih); if(r===0&&i>0) try{ navigator.vibrate&&navigator.vibrate([30,40,30]); }catch(e){}
+    if(o.tasbih>=100){ o.tasbih=0; o.tasbihTours=(o.tasbihTours||0)+1; touch(); render(); celebrer('مَا شَاءَ اللّٰه','Tasbîh terminé',`${o.tasbihTours}${o.tasbihTours>1?'e':'er'} après-prière aujourd'hui${!avant?' · +'+PTS_DHIKR+' points':''}`); return; } }
+  else if(o[m]===100){ touch(); render(); celebrer('مَا شَاءَ اللّٰه','100 fois',`${DHIKRS[m].l}${!avant?' · +'+PTS_DHIKR+' points':''}`); return; }
+  touch(); render();
+}
+function annulerDhikr(){ const d=J(), o=dk(d), m=S.dhikrMode||'tasbih'; if((o[m]||0)>0){ o[m]--; touch(); render(); } }
+function celebrer(ar,tr,sous){ // même animation que les 5 prières : croissant puis texte
+  try{ navigator.vibrate&&navigator.vibrate([40,60,40,60,120]); }catch(e){}
+  const el=document.createElement('div'); el.className='lune-bg';
+  el.innerHTML=`<div class="c">🌙</div><div class="t"><b class="ar" lang="ar" dir="rtl">${ar}</b><i>${esc(tr)}</i><small>${esc(sous)}</small></div>`;
+  document.body.appendChild(el); setTimeout(()=>el.remove(),3900);
+}
+function cartesDhikr(d){
+  const o=d.dk||{}, m=S.dhikrMode||'tasbih', D=DHIKRS[m], n=o[m]||0, [i,r]=m==='tasbih'?dhikrEtape('tasbih',n):[0,n], E=D.etapes[i];
+  const ist=d.istighfar||0;
+  return `<div class="hero k-teal">
+      <div class="row" style="align-items:center"><div class="h-lbl">📿 Istighfar</div><div class="sp"></div><span class="chip">${ist>=100?'✓ +'+PTS_ISTIGHFAR+' points':'+'+PTS_ISTIGHFAR+' pts à 100'}</span></div>
+      <div lang="ar" dir="rtl" style="font-family:'Amiri',serif;font-size:2rem;text-align:center;margin-top:4px">أَسْتَغْفِرُ اللّٰهَ</div>
+      <div class="h-sub" style="text-align:center">Astaghfiroullâh · Je demande pardon à Allah</div>
+      <button onclick="dhikr(1)" style="display:block;margin:10px auto 6px;width:130px;height:130px;border-radius:50%;border:none;background:#fff;color:#0f766e;font-size:2.4rem;font-weight:900;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer">${ist}<small style="display:block;font-size:.75rem;font-weight:700">/ 100 · touche</small></button>
+      <div class="bar"><div style="width:${Math.min(100,ist)}%"></div></div>
+      <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(-1)">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(10)">+10</button></div>
+      <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 « Je demande pardon à Allah cent fois par jour », disait le Prophète ﷺ. — Muslim n° 2702</div>
+    </div>
+    <div class="hero k-violet mt">
+      <div class="row" style="align-items:center"><div class="h-lbl">📿 Dhikr</div><div class="sp"></div><span class="chip">${dhikrFait(d)?'✓ +'+PTS_DHIKR+' points':'+'+PTS_DHIKR+' pts'}</span></div>
+      <div class="opt" style="margin-top:8px">${Object.entries(DHIKRS).map(([k,x])=>`<button class="${m===k?'on':''}" style="${m===k?'':'background:rgba(255,255,255,.15);color:#fff;border-color:transparent'}" onclick="S.dhikrMode='${k}';render()">${esc(x.l)}</button>`).join('')}</div>
+      <div lang="ar" dir="rtl" style="font-family:'Amiri',serif;font-size:${E[0].length>40?'1.25rem':'2rem'};line-height:1.7;text-align:center;margin-top:8px">${E[0]}</div>
+      <div class="h-sub" style="text-align:center">${esc(E[1])}<br><span style="opacity:.85">${esc(E[2])}</span></div>
+      <button onclick="compterDhikr()" style="display:block;margin:10px auto 6px;width:130px;height:130px;border-radius:50%;border:none;background:#fff;color:#6d28d9;font-size:2.4rem;font-weight:900;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer">${r}<small style="display:block;font-size:.75rem;font-weight:700">/ ${E[3]} · touche</small></button>
+      ${m==='tasbih'?`<div class="row" style="justify-content:center;gap:6px">${DHIKRS.tasbih.etapes.map((x,j)=>`<span class="chip" style="${j===i?'background:#fff;color:#6d28d9':''}">${j<i?'✓ ':''}${esc(x[1])} ${x[3]}</span>`).join('')}</div><div class="h-sub" style="text-align:center;margin-top:6px">Après-prière terminés aujourd'hui : <b>${o.tasbihTours||0}</b>/5</div>`:''}
+      <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="annulerDhikr()">−1</button></div>
+      <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 ${esc(D.r)} — ${esc(D.src)}</div>
+    </div>`;
+}
+function dhikr(n){ const d=J(); d.istighfar=Math.max(0,d.istighfar+n); vib(); touch(); render(); if(d.istighfar>=100&&d.istighfar-n<100){ if(S.email===ADMIN_EMAIL) celebrer('أَسْتَغْفِرُ اللّٰهَ','100 istighfar','Qu\'Allah te pardonne · +'+PTS_ISTIGHFAR+' points'); else toast('🤲 100 istighfar, qu\'Allah te pardonne'); } }
 /* ---------- Faire un don ---------- */
 function ouvrirDons(){
   compter('don');
@@ -3436,6 +3490,8 @@ function progression(){
     ['d10','🤲','10 sadaqas',nbSad,10],
     ['a9','✨','9/9 bonnes actions',cpt(T.ba9),1],
     ['a100','🌸','100 bonnes actions',nbBA,100],
+    ['i7','📿','100 istighfar · 7 jours',meilleure((k,d)=>(d.istighfar||0)>=100),7],
+    ['k7','🤍','Dhikr · 7 jours',meilleure((k,d)=>dhikrFait(d)),7],
     ['m80','⭐','Score de 80',maxScore>=80?1:0,1],
     ['m100','👑','Journée parfaite (100)',maxScore>=100?1:0,1],
   ];
