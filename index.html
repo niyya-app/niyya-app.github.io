@@ -415,7 +415,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261021-093841'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261021-094254'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2405,13 +2405,16 @@ const PTS_ISTIGHFAR=5, PTS_DHIKR=5; // points bonus dans le score du jour (ne p�
 const dk=d=>{ d.dk=d.dk||{}; return d.dk; };
 const dhikrFait=d=>{ const o=d.dk||{}; return (o.tasbihTours||0)>=1 || (o.sbh||0)>=100 || (o.tahlil||0)>=100; };
 function dhikrEtape(mode,n){ const E=DHIKRS[mode].etapes; let r=n; for(let i=0;i<E.length;i++){ if(r<E[i][3]) return [i,r]; r-=E[i][3]; } return [E.length-1,E[E.length-1][3]]; }
-function compterDhikr(){
-  const d=J(), o=dk(d), m=S.dhikrMode||'tasbih', avant=dhikrFait(d);
-  o[m]=(o[m]||0)+1; try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){}
-  if(m==='tasbih'){ const [i,r]=dhikrEtape('tasbih',o.tasbih); if(r===0&&i>0) try{ navigator.vibrate&&navigator.vibrate([30,40,30]); }catch(e){}
-    if(o.tasbih>=100){ o.tasbih=0; o.tasbihTours=(o.tasbihTours||0)+1; touch(); render(); celebrer('مَا شَاءَ اللّٰه','Tasbîh terminé',`${o.tasbihTours}${o.tasbihTours>1?'e':'er'} après-prière aujourd'hui${!avant?' · +'+PTS_DHIKR+' points':''}`); return; } }
-  else if(o[m]===100){ touch(); render(); celebrer('مَا شَاءَ اللّٰه','100 fois',`${DHIKRS[m].l}${!avant?' · +'+PTS_DHIKR+' points':''}`); return; }
+function compterDhikr(n){
+  n=n||1; const d=J(), o=dk(d), m=S.dhikrMode||'tasbih', avant=dhikrFait(d); let fete=null;
+  for(let x=0;x<n;x++){
+    o[m]=(o[m]||0)+1;
+    if(m==='tasbih' && o.tasbih>=100){ o.tasbih=0; o.tasbihTours=(o.tasbihTours||0)+1; fete=['Tasbîh terminé',`${o.tasbihTours}${o.tasbihTours>1?'e':'er'} après-prière aujourd'hui`]; }
+    else if(m!=='tasbih' && o[m]===100) fete=['100 fois',DHIKRS[m].l];
+  }
+  try{ navigator.vibrate&&navigator.vibrate(n>1?[20,30,20]:12); }catch(e){}
   touch(); render();
+  if(fete) celebrer('مَا شَاءَ اللّٰه',fete[0],fete[1]+(!avant&&dhikrFait(d)?' · +'+PTS_DHIKR+' points':''));
 }
 function annulerDhikr(){ const d=J(), o=dk(d), m=S.dhikrMode||'tasbih'; if((o[m]||0)>0){ o[m]--; touch(); render(); } }
 function celebrer(ar,tr,sous){ // même animation que les 5 prières : croissant puis texte
@@ -2429,7 +2432,7 @@ function cartesDhikr(d){
       <div class="h-sub" style="text-align:center">Astaghfiroullâh · Je demande pardon à Allah</div>
       <button onclick="dhikr(1)" style="display:block;margin:10px auto 6px;width:130px;height:130px;border-radius:50%;border:none;background:#fff;color:#0f766e;font-size:2.4rem;font-weight:900;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer">${ist}<small style="display:block;font-size:.75rem;font-weight:700">/ 100 · touche</small></button>
       <div class="bar"><div style="width:${Math.min(100,ist)}%"></div></div>
-      <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(-1)">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(10)">+10</button></div>
+      <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(-1)">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(10)">+10</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(33)">+33</button></div>
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 « Je demande pardon à Allah cent fois par jour », disait le Prophète ﷺ. — Muslim n° 2702</div>
     </div>
     <div class="hero k-violet mt">
@@ -2439,7 +2442,7 @@ function cartesDhikr(d){
       <div class="h-sub" style="text-align:center">${esc(E[1])}<br><span style="opacity:.85">${esc(E[2])}</span></div>
       <button onclick="compterDhikr()" style="display:block;margin:10px auto 6px;width:130px;height:130px;border-radius:50%;border:none;background:#fff;color:#6d28d9;font-size:2.4rem;font-weight:900;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer">${r}<small style="display:block;font-size:.75rem;font-weight:700">/ ${E[3]} · touche</small></button>
       ${m==='tasbih'?`<div class="row" style="justify-content:center;gap:6px">${DHIKRS.tasbih.etapes.map((x,j)=>`<span class="chip" style="${j===i?'background:#fff;color:#6d28d9':''}">${j<i?'✓ ':''}${esc(x[1])} ${x[3]}</span>`).join('')}</div><div class="h-sub" style="text-align:center;margin-top:6px">Après-prière terminés aujourd'hui : <b>${o.tasbihTours||0}</b>/5</div>`:''}
-      <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="annulerDhikr()">−1</button></div>
+      <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="annulerDhikr()">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(10)">+10</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(33)">+33</button></div>
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 ${esc(D.r)} — ${esc(D.src)}</div>
     </div>`;
 }
