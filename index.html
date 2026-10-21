@@ -415,7 +415,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261021-095859'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261021-100139'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1817,7 +1817,7 @@ function heroTabac(){
 const ESS_CAT={
   sport:{i:'💪',t:'Sport fait',s:'',g:'k-emerald'}, coran:{i:'📖',t:'Coran 20 min',s:'Lecture & méditation',g:'k-teal'},
   lecture:{i:'📚',t:'Lecture 20 min',s:'Développement perso',g:'k-sky'}, famille:{i:'❤️',t:'Temps famille',s:'Avec mes proches, sans téléphone',g:'k-pink'},
-  adhM:{i:'☀️',t:'Invocations du matin',s:'Après Fajr',g:'k-sunset'}, adhS:{i:'🌙',t:'Invocations du soir',s:'Après Asr',g:'k-magenta'},
+  adhM:{i:'☀️',t:'Adhkar du matin (invocations)',s:'Après Fajr',g:'k-sunset'}, adhS:{i:'🌙',t:'Adhkar du soir (invocations)',s:'Après Asr',g:'k-magenta'},
   marche:{i:'🚶',t:'Marcher 30 min',s:'',g:'k-emerald'}, coucher:{i:'😴',t:'Coucher avant minuit',s:'',g:'k-violet'},
   sourate:{i:'🧠',t:'Apprendre une sourate',s:'Quelques versets par jour',g:'k-teal'},
   rs:{i:'📵',t:'Pas de réseaux sociaux',s:'De toute la journée',g:'k-sky'}, rsMatin:{i:'🌅',t:'Pas de réseaux sociaux au réveil',s:'',g:'k-sunset'},
@@ -1958,7 +1958,7 @@ function vJour(){
       ${(()=>{ const j=jeunesDuJour(S.sel), dm=jeunesDuJour(addDays(S.sel,1)); return j.liste.length?`<div class="coach mt">🍽️ <b>Jeûne recommandé aujourd'hui</b> : ${esc(j.liste.map(x=>x[0]).join(', '))}</div>`:dm.liste.length?`<div class="coach mt">🌙 <b>Demain</b>, jeûne recommandé : ${esc(dm.liste.map(x=>x[0]).join(', '))}. Pense au suhur.</div>`:''; })()}
     </div>
     ${hr>=17||S.sel!==today()?soir:!S.ouv.jt?`<div class="panel"><button onclick="deroul('jt')" style="all:unset;display:block;width:100%;cursor:pointer"><h2><span class="ico">🗓️</span>Ma journée type<span class="cnt">▾</span></h2><div class="sub" style="margin-bottom:2px">Prochaine étape : ${esc(nextPrayer().p.n)} à ${hm(nextPrayer().at%1440)} · touche pour ouvrir</div></button></div>`:`<div class="panel">${true?`<button onclick="deroul('jt')" style="all:unset;float:right;cursor:pointer;font-weight:800" aria-label="Replier">▴</button>`:''}<h2><span class="ico">🗓️</span>Ma journée type</h2>
-      <div class="kv"><span>Fajr · invocations · Coran</span><b>${hm(timesOf(S.sel)[0])}</b></div>
+      <div class="kv"><span>Fajr · adhkar · Coran</span><b>${hm(timesOf(S.sel)[0])}</b></div>
       <div class="kv"><span>Sport · préparation</span><b>matin</b></div>
       ${travailMode()==='fixe'?`<div class="kv"><span>Début de journée pro · 3 priorités</span><b>${esc(S.cfg.travail.debut)}</b></div>`:`<div class="kv"><span>${travailMode()==='aucun'?'Mes 3 priorités du jour':'Journée pro · 3 priorités'}</span><b>matin</b></div>`}
       <div class="kv"><span>Dhuhr · Asr</span><b>${hm(timesOf(S.sel)[2])} · ${hm(timesOf(S.sel)[3])}</b></div>
@@ -2024,7 +2024,7 @@ function vDin(){
       <div class="panel mt">
         <h2><span class="ico">📖</span>Spiritualité du jour</h2>
         <div class="checks" style="margin-top:8px">
-          ${[['coran','📖 Coran — 20 minutes'],['adhM','☀️ Invocations du matin'],['adhS','🌙 Invocations du soir']].map(([k,l])=>`<button class="ck ${d[k]?'on':''}" onclick="toggle('${k}')"><span class="box"></span>${l}</button>`).join('')}
+          ${[['coran','📖 Coran — 20 minutes'],['adhM','☀️ Adhkar du matin (invocations)'],['adhS','🌙 Adhkar du soir (invocations)']].map(([k,l])=>`<button class="ck ${d[k]?'on':''}" onclick="toggle('${k}')"><span class="box"></span>${l}</button>`).join('')}
         </div>
       </div>
       <div class="panel mt">
@@ -2150,7 +2150,7 @@ function coachMsg(){
   const ago=last?Math.round((Date.now()-last)/60000):null;
   if(today()<S.cfg.tabac.debut) return `Le programme démarre le ${esc(fmtLong(S.cfg.tabac.debut))}. Prépare-toi.`;
   if(t===0) return n===0?'Objectif zéro : chaque heure sans cigarette est une victoire. Ton corps se répare déjà.':'Ce n\'est pas un échec, c\'est une information. Note ce qui a déclenché l\'envie et reprends tout de suite.';
-  if(!n && m<lim) return `Pas encore fumé, bravo. Tiens jusqu'à <b>${hm(lim)}</b> pour la première : bois de l'eau, fais tes invocations, va au sport.`;
+  if(!n && m<lim) return `Pas encore fumé, bravo. Tiens jusqu'à <b>${hm(lim)}</b> pour la première : bois de l'eau, fais tes adhkar (invocations), va au sport.`;
   if(n>=t) return `Tu as atteint ton maximum du jour (${t}). Chaque cigarette en moins maintenant, c'est ${prixCig().toFixed(2).replace('.',',')} € et quelques minutes de vie gagnés. Utilise le bouton « envie ».`;
   const restH=Math.max(1,(23*60-m)/60), per=(t-n)/restH;
   return `Il te reste <b>${t-n}</b> cigarette${t-n>1?'s':''} pour la journée${ago!==null?`, la dernière date de ${ago<60?ago+' min':Math.floor(ago/60)+' h '+pad(ago%60)}`:''}. Espace-les : environ une toutes les ${Math.round(60/Math.max(per,.01))} min au maximum.`;
