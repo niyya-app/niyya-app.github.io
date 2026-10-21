@@ -98,6 +98,8 @@ begin
         'derniere', (select to_char(max(j.updated_at) at time zone 'Europe/Paris','DD/MM/YY HH24:MI') from public.niyya_jours j where j.user_id = u.id),
         'notifs', exists(select 1 from public.niyya_push n where n.user_id = u.id and n.actif),
         'id', u.id,
+        'code', left(u.id::text, 8),
+        'parrain', p.data->>'parrain',
         'icone', coalesce((p.data->>'vuIcone')::boolean, false),
         'jours_inscrit', ((now() at time zone 'Europe/Paris')::date - (u.created_at at time zone 'Europe/Paris')::date),
         -- fidélité : revenu le lendemain de l'inscription / encore actif 7 jours après (null si trop récent)

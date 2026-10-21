@@ -104,6 +104,9 @@ async function notifierUn(id,prenom){
     alert(o.ok?`✅ Envoyée à ${prenom} (${o.envoyes} téléphone${o.envoyes>1?'s':''}).`:'❌ '+(o.erreur||'échec')); }catch(e){ alert('❌ Erreur réseau'); }
 }
 const joursDepuis=t=>{ if(!t) return null; const m=/^(\d\d)\/(\d\d)\/(\d\d)/.exec(t); if(!m) return null; return Math.floor((Date.now()-new Date(2000+ +m[3],m[2]-1,+m[1]))/864e5); };
+// Parrainage : qui a invité qui (lien « Inviter un proche » avec le code de la personne)
+const parrainDe=u=>{ if(!u.parrain) return ''; const p=(D.utilisateurs||[]).find(x=>x.code===u.parrain); return p?(p.prenom!=='—'?p.prenom:p.email):'?'; };
+const filleuls=u=>(D.utilisateurs||[]).filter(x=>x.parrain&&x.parrain===u.code).length;
 function barres(rows,cle,cls){
   const mx=Math.max(1,...rows.map(r=>+r[cle]||0));
   return `<div class="chart">${rows.map(r=>`<div class="col" title="${jm(r.jour)} : ${r[cle]}">${+r[cle]?`<div class="n">${r[cle]}</div>`:''}<div class="bar ${cls||''}" style="height:${(+r[cle]||0)/mx*100}%"></div><div class="x">${new Date(r.jour).getDate()}</div></div>`).join('')}</div>`;
@@ -169,8 +172,8 @@ function vDash(){
     <label>Message</label><textarea class="inp" id="anM" rows="3" maxlength="300" placeholder="Ex. Le mois béni commence dans 3 jours, préparons-nous !"></textarea>
     <button class="btn pri" style="margin-top:12px" onclick="annoncer()">📣 Envoyer à tous</button><span id="anR" class="note" style="margin-left:10px"></span></div>`:''}
   <div class="panel"><h2>👥 Utilisateurs</h2><div class="sub">Comptes, du plus récent au plus ancien — aucune donnée personnelle de pratique n'est affichée</div>
-    <div class="tw"><table><tr><th>Prénom</th><th>E-mail</th><th>Inscrit le</th><th>Questionnaire</th><th>Ville</th><th>Jours remplis</th><th>Dernière activité</th><th>🔔 Notifs</th></tr>
-    ${(D.utilisateurs||[]).map(u=>`<tr><td><b>${esc(u.prenom)}</b></td><td>${esc(u.email)}</td><td>${esc(u.inscrit)}</td><td>${u.questionnaire?'<span class="ok">✓</span>':'<span class="ko">✗</span>'}</td><td>${esc(u.ville)}</td><td>${u.jours}</td><td>${esc(u.derniere||'—')}</td><td>${u.notifs?'<span class="ok">✓ activées</span>':'<span class="ko">✗</span>'}</td></tr>`).join('')}</table></div>
+    <div class="tw"><table><tr><th>Prénom</th><th>E-mail</th><th>Inscrit le</th><th>Questionnaire</th><th>Ville</th><th>Jours remplis</th><th>Dernière activité</th><th>🔔 Notifs</th><th>💌 Invité par</th><th>💌 A invité</th></tr>
+    ${(D.utilisateurs||[]).map(u=>`<tr><td><b>${esc(u.prenom)}</b></td><td>${esc(u.email)}</td><td>${esc(u.inscrit)}</td><td>${u.questionnaire?'<span class="ok">✓</span>':'<span class="ko">✗</span>'}</td><td>${esc(u.ville)}</td><td>${u.jours}</td><td>${esc(u.derniere||'—')}</td><td>${u.notifs?'<span class="ok">✓ activées</span>':'<span class="ko">✗</span>'}</td><td>${esc(parrainDe(u))}</td><td>${filleuls(u)||''}</td></tr>`).join('')}</table></div>
     <p class="note">ℹ️ NIYYA n'est pas sur l'App Store : il n'existe donc pas de « téléchargements » au sens strict. Les meilleurs indicateurs sont les <b>comptes créés</b> et les <b>ouvertures depuis l'icône</b> (personnes qui ont ajouté NIYYA à leur écran d'accueil). Les clics et les actifs par jour sont comptés de façon anonyme, à partir du 15/10/2026.</p></div>`;
 }
 (async function(){
