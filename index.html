@@ -415,7 +415,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261021-152209'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261021-152855'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1087,8 +1087,9 @@ const BOOKS = {
   manson:{t:'L\'art subtil de s\'en foutre', c:'k-pink'},
   hardy:{t:'L\'effet cumulé', c:'k-violet'},
   coelho:{t:'L\'Alchimiste', c:'k-magenta'},
-  carnegie:{t:'Comment se faire des amis', c:'k-teal'},
+  carnegie:{t:'Dale Carnegie', a:1, c:'k-teal'}, // affiché par son auteur (demande de Mehdi)
   miracle:{t:'Miracle Morning', c:'k-gold'},
+  knight:{t:'L\'art de la victoire', c:'k-sky'}, // Phil Knight, fondateur de Nike (Shoe Dog)
 };
 const MINDSET = [
   ['robbins','C\'est dans tes moments de décision que se dessine ton destin.'],
@@ -1165,6 +1166,16 @@ const MINDSET = [
   ['carnegie','Quand tu as tort, reconnais-le vite et franchement : ça désarme tout le monde.'],
   ['carnegie','Commence toujours une discussion difficile de façon amicale.'],
   ['carnegie','Laisse l\'autre croire que la bonne idée vient de lui.'],
+  ['knight','Commence avant d\'être prêt : personne ne l\'est vraiment au départ.'],
+  ['knight','Quand tout le monde trouve ton idée folle, c\'est parfois le signe qu\'elle est nouvelle.'],
+  ['knight','Les grandes choses se construisent en continuant quand les autres abandonnent.'],
+  ['knight','Un refus dit souvent plus de la prudence des autres que de ta valeur.'],
+  ['knight','Entoure-toi de passionnés : la passion compense bien des diplômes.'],
+  ['knight','Le manque d\'argent oblige à être inventif : fais-en un moteur, pas une excuse.'],
+  ['knight','Construis quelque chose qui a du sens ; l\'argent n\'est qu\'une conséquence.'],
+  ['knight','Chaque crise surmontée est une fondation de plus pour ce que tu bâtis.'],
+  ['knight','Garde l\'esprit du coureur : un pas après l\'autre, même quand les jambes protestent.'],
+  ['knight','La peur de l\'échec ne doit pas t\'empêcher de prendre le départ.'],
   ['miracle','La façon dont tu commences ta journée décide souvent de la façon dont tu la vis.'],
   ['miracle','Lève-toi un peu plus tôt : une heure pour toi avant que le monde ne te sollicite.'],
   ['miracle','Ton niveau de réussite dépasse rarement ton niveau de développement personnel.'],
@@ -1946,7 +1957,7 @@ function vJour(){
     <div class="quote ${b.c}" id="cMindset">
       <span class="q-tag">💡 Mindset du jour</span>
       <p>${esc(m[1])}</p>
-      <div class="src">D'après « ${esc(b.t)} »<button onclick="nextMind()">Une autre ↻</button></div>
+      <div class="src">D'après ${b.a?esc(b.t):'« '+esc(b.t)+' »'}<button onclick="nextMind()">Une autre ↻</button></div>
     </div>
   </div>
   <div class="grid g2 mt">
