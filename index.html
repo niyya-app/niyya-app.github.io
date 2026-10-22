@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261022-194645'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261022-194811'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1743,7 +1743,7 @@ async function proposerRappels(force){
       <div class="sub">Chaque jour, à l'heure exacte :</div>
       <div class="checks" style="margin-top:10px;gap:6px;font-weight:600">
         <div>🕌 L'adhan de chaque prière, avec un verset du Coran</div>
-        <div>📜 Le hadith du jour à 8 h · 💡 une phrase mindset à 9 h 30</div>
+        <div>📜 Le hadith du jour à 8 h · 💡 une phrase mindset à 10 h</div>
         <div>📊 Ton récap de la semaine le dimanche soir</div>
       </div>
       <p class="muted" style="font-size:.75rem;margin-top:8px">Tu choisis ensuite ce que tu veux garder dans ⚙️ → 🔔.</p>
@@ -1884,7 +1884,7 @@ function ouvrir(cible){
   diagNotif('ouvrir '+cible+(!S.uid||!S.pret?' (en attente du chargement)':'')); marquerRecue(Date.now());
   try{ sessionStorage.setItem('nya_ouvrir',JSON.stringify({cible,corps:S.clicCorps||'',t:Date.now()})); }catch(e){}
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
-  S.sel=today(); S.mindIdx=cible==='mindset'?(dayOfYear(today())*7)%MINDSET.length:null; S.hadIdx=null; // la notification de 9 h 30 montre la phrase du matin
+  S.sel=today(); S.mindIdx=cible==='mindset'?(dayOfYear(today())*7)%MINDSET.length:null; S.hadIdx=null; // la notification de 10 h montre la phrase du matin
   go(cible==='recap'?'bilan':'jour');
   if(/^priere-/.test(cible)){ const c0=S.clicCorps, k=cible; S.clicCorps=''; corpsRecent(k,c0).then(c=>versetPriere(k.slice(7),c)); }
   else if(cible==='recap'){ const c0=S.clicCorps; S.clicCorps=''; corpsRecent('recap',c0).then(corps=>{ if(!corps) return; const L=corps.split('\n').filter(Boolean);
@@ -2663,7 +2663,7 @@ function delSad(i){ J().sadaqa.splice(i,1); touch(); render(); }
 function setPoids(){ const v=parseFloat((document.getElementById('poidsIn').value||'').replace(',','.')); J().poids=v>0?v:null; touch(); render(); toast('⚖️ Poids enregistré'); }
 function aimeIdx(){ return S.aimeI??(dayOfYear(S.sel)%ALLAH_AIME.length); }
 function nextHadith(){ const di=dayOfYear(S.sel); S.hadIdx=((S.hadIdx??(di%HADITHS.length))+1)%HADITHS.length; render(); }
-// Phrase mindset : celle du matin (la même que la notification de 9 h 30), puis une 2e à partir de 14 h (sans notification)
+// Phrase mindset : celle du matin (la même que la notification de 10 h), puis une 2e à partir de 14 h (sans notification)
 function mindDuMoment(k){ const di=dayOfYear(k), matin=(di*7)%MINDSET.length; const apresMidi=k===today()&&new Date().getHours()>=14; return apresMidi?(matin+Math.floor(MINDSET.length/2))%MINDSET.length:matin; }
 function nextMind(){ S.mindIdx=((S.mindIdx??mindDuMoment(S.sel))+1)%MINDSET.length; render(); }
 function setCfg(path,v,isNum){
@@ -3791,11 +3791,11 @@ function notifPanel(){
     : e==='refus'?`<div class="coach" style="font-size:.84rem;font-weight:600">🔕 Les notifications ont été refusées. Pour les autoriser : <b>Réglages de l'iPhone → Notifications → NIYYA</b> (ou les réglages du site dans ton navigateur), puis reviens ici.</div>`
     : e==='actif'?`<p style="font-weight:800;color:var(--emerald-d)">✅ Activées : tu es prévenu à l'heure exacte de l'adhan.</p>
         <label class="f">Prières à notifier</label><div class="opt">${NOTIF_PRIERES.map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
-        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 9 h 30'],['recap','📊 Récap de la semaine · dim. 20 h'],['soir','🌙 Rappel à 21 h si rien coché']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
+        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 10 h'],['recap','📊 Récap de la semaine · dim. 20 h'],['soir','🌙 Rappel à 21 h si rien coché']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
         <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>
         <details class="mt" ontoggle="if(this.open&&!_dernierSW) lireDernierSW().then(()=>{ if(_dernierSW) render(); })"${_dernierSW?' open':''}><summary class="muted" style="font-size:.75rem;font-weight:700;cursor:pointer">🔧 Derniers clics sur une notification</summary><div class="muted" style="font-size:.7rem;font-family:ui-monospace,monospace;white-space:pre-wrap;margin-top:6px">Dernier toucher reçu par le téléphone : ${esc(_dernierSW||'aucun pour l\'instant')}
 ${esc(diagTexte().join('\n')||'(aucun clic traité par l\'appli)')}</div></details>`
-    : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, le hadith du jour à 8 h, une phrase mindset à 9 h 30, ton récap de la semaine le dimanche à 20 h, ainsi que les annonces de NIYYA.</p>
+    : `<p class="muted" style="font-size:.84rem;font-weight:600">Reçois une notification à l'heure exacte de chaque adhan${typeof lieuNom==='function'?' ('+esc(lieuNom())+')':''}, le hadith du jour à 8 h, une phrase mindset à 10 h, ton récap de la semaine le dimanche à 20 h, ainsi que les annonces de NIYYA.</p>
         <button class="btn pri" onclick="activerNotifs()">🔔 Activer les notifications</button>`;
   return `<div class="panel mt"><h2><span class="ico">🔔</span>Notifications de prière</h2>${corps}</div>`;
 }
