@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261022-081806'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261022-193741'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1586,7 +1586,7 @@ function scoreOf(k){
   let score=max?Math.round(tot/max*100):0;
   // Bonus jeûne : +10 points (jeûne surérogatoire ou jour de Ramadan jeûné), sans pénaliser les jours sans jeûne
   if(d.jeuneNafl||d.jeune==='fait'){ parts.push({k:'jeune',l:'Jeûne',bonus:true,f:1,pts:10,max:0,txt:d.jeune==='fait'?'Ramadan':'surérogatoire'}); score=Math.min(100,score+10); }
-  if(S.email===ADMIN_EMAIL){ // istighfar et dhikr : points bonus (test)
+  { // istighfar et dhikr : points bonus (pour tous depuis le 22/10)
     if((d.istighfar||0)>=100){ parts.push({k:'istighfar',l:'Istighfar',bonus:true,f:1,pts:PTS_ISTIGHFAR,max:0,txt:'100'}); score=Math.min(100,score+PTS_ISTIGHFAR); }
     if(dhikrFait(d)){ parts.push({k:'dhikr',l:'Dhikr',bonus:true,f:1,pts:PTS_DHIKR,max:0,txt:'fait'}); score=Math.min(100,score+PTS_DHIKR); } }
   return {score, parts};
@@ -2111,7 +2111,7 @@ function vDin(){
       ${naflPanel()}
       ${jeunePanel()}
     </div>
-    <div>${S.email===ADMIN_EMAIL?cartesDhikr(d)+'<div style="display:none">':''}
+    <div>${cartesDhikr(d)+'<div style="display:none">'}
       <div class="hero k-teal">
         <div class="h-lbl">📿 Istighfar & dhikr</div>
         <div class="dhikr" style="margin-top:8px"><div class="big tnum">${d.istighfar}</div>
@@ -2122,7 +2122,7 @@ function vDin(){
             <button style="background:rgba(255,255,255,.15)" onclick="dhikr(-1)">−1</button></div></div>
         <div class="bar"><div style="width:${Math.min(100,d.istighfar)}%"></div></div>
         <div class="h-sub" style="margin-top:6px">Objectif : 100 par jour, comme le Prophète ﷺ</div>
-      </div>${S.email===ADMIN_EMAIL?'</div>':''}
+      </div>${'</div>'}
       <div class="panel mt">
         <h2><span class="ico">📖</span>Spiritualité du jour</h2>
         <div class="checks" style="margin-top:8px">
@@ -2561,7 +2561,7 @@ function cartesDhikr(d){
     </div>`;
   return carteIst+carteDk;
 }
-function dhikr(n){ const d=J(); d.istighfar=Math.max(0,d.istighfar+n); vib(); touch(); render(); if(d.istighfar>=100&&d.istighfar-n<100){ if(S.email===ADMIN_EMAIL) celebrer('أَسْتَغْفِرُ اللّٰهَ','100 istighfar','Qu\'Allah te pardonne · +'+PTS_ISTIGHFAR+' points'); else toast('🤲 100 istighfar, qu\'Allah te pardonne'); } }
+function dhikr(n){ const d=J(); d.istighfar=Math.max(0,d.istighfar+n); vib(); touch(); render(); if(d.istighfar>=100&&d.istighfar-n<100){ if(true) celebrer('أَسْتَغْفِرُ اللّٰهَ','100 istighfar','Qu\'Allah te pardonne · +'+PTS_ISTIGHFAR+' points'); else toast('🤲 100 istighfar, qu\'Allah te pardonne'); } }
 /* ---------- Faire un don ---------- */
 function ouvrirDons(){
   compter('don');
