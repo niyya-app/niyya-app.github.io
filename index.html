@@ -324,7 +324,8 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .ayah .ar .fin{font-family:'Amiri',serif;color:var(--emerald);font-size:.85em;margin-right:4px}
 .ayah .tr{font-size:calc(.95rem*var(--qz,1));line-height:1.65;margin-top:6px}
 .ayah .tr b{color:var(--emerald)}
-.ayah .bm{position:absolute;left:4px;top:10px;border:none;background:none;font-size:1rem;cursor:pointer;opacity:.35}
+.ayah .bm{position:absolute;left:2px;top:8px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;font-size:1.05rem;padding:3px 6px;cursor:pointer;opacity:.85}
+.ayah .pg{display:inline-block;font-size:.66rem;font-weight:800;color:var(--muted);margin-left:6px}
 .ayah.mark{background:color-mix(in srgb,var(--amber) 13%,transparent);border-radius:14px}
 .ayah.mark .bm{opacity:1}
 .bism{font-family:'Amiri Quran','Amiri',serif;text-align:center;font-size:1.8rem;margin:8px 0 4px;direction:rtl}
@@ -415,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261021-193201'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261022-081406'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2939,7 +2940,7 @@ async function chargerSourate(n){
   if(!r){ r=await fetch(url); if(!r.ok) throw new Error('serveur indisponible'); try{ if(c) await c.put(url,r.clone()); }catch(e){} }
   const j=await r.json(); const [A,F]=j.data;
   const ar=A.ayahs.map((a,i)=>{ let t=a.text.replace(/^\uFEFF/,''); if(n!==1 && i===0){ const w=t.split(/\s+/); if(w.length>4 && w[0].startsWith('بِسْمِ')) t=w.slice(4).join(' '); } return t; });
-  return { ar, fr:F.ayahs.map(a=>a.text) };
+  return { ar, fr:F.ayahs.map(a=>a.text), page:A.ayahs.map(a=>a.page||null), juz:A.ayahs.map(a=>a.juz||null) };
 }
 function ouvrirSourate(n,verset){
   QC.n=n; QC.data=null; QC.err=null; QC.goto=verset||null; render(); window.scrollTo({top:0});
@@ -2951,7 +2952,18 @@ function filtrerSourates(q){
   q=q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
   document.querySelectorAll('.sur-row').forEach(b=>{ b.style.display=!q||b.dataset.k.includes(q)?'':'none'; });
 }
-function marquer(v){ S.cfg.lecture={s:QC.n,a:v,t:Date.now()}; cfgTouch(); render(); toast(`🔖 Lecture marquée : ${SURATES[QC.n-1][2]}, verset ${v}`); }
+function marquer(v){ const pg=QC.data&&QC.data.page?QC.data.page[v-1]:null; S.cfg.lecture={s:QC.n,a:v,p:pg,t:Date.now()}; cfgTouch(); render(); toast(`🔖 Marque-page : ${SURATES[QC.n-1][2]}, verset ${v}${pg?' · page '+pg:''}`); }
+// 📍 dernière lecture enregistrée toute seule : le verset en haut de l'écran pendant qu'on lit
+let _lectT=null;
+function suivreLecture(){
+  if(S.view!=='coran'||!QC.n||!QC.data) return;
+  clearTimeout(_lectT); _lectT=setTimeout(()=>{
+    const els=[...document.querySelectorAll('.ayah[id^="ay"]')]; const el=els.find(e=>e.getBoundingClientRect().bottom>90); if(!el) return;
+    const a=+el.id.slice(2), cur=S.cfg.lectureAuto||{}; if(cur.s===QC.n&&cur.a===a) return;
+    S.cfg.lectureAuto={s:QC.n,a,p:QC.data.page?QC.data.page[a-1]:null,t:Date.now()}; saveLocal(); S.cfgDirty=true; planPush();
+  },1200);
+}
+window.addEventListener('scroll',suivreLecture,{passive:true});
 function taille(d){ const z=Math.min(1.6,Math.max(.8,(S.cfg.qz||1)+d)); S.cfg.qz=Math.round(z*10)/10; cfgTouch(); render(); }
 function vCoran(){
   const L=S.cfg.lecture, z=S.cfg.qz||1, dT=J(today());
@@ -2960,7 +2972,9 @@ function vCoran(){
       <div class="h-lbl">📖 Le Saint Coran</div>
       <div class="h-big" style="font-family:'Amiri Quran','Amiri',serif;font-size:2.2rem;line-height:1.9;margin:6px 0 8px">القرآن الكريم</div>
       <div class="h-sub">114 sourates · arabe et traduction française</div>
-      ${L?`<button class="btn sm" style="margin-top:12px;background:#fff;color:#047857;border:none" onclick="ouvrirSourate(${L.s},${L.a})">🔖 Reprendre : ${esc(SURATES[L.s-1][2])}, verset ${L.a}</button>`:''}
+      ${L?`<button class="btn sm" style="margin-top:12px;background:#fff;color:#047857;border:none" onclick="ouvrirSourate(${L.s},${L.a})">🔖 Mon marque-page : ${esc(SURATES[L.s-1][2])}, verset ${L.a}${L.p?' · page '+L.p:''}</button>`:''}
+      ${(()=>{ const A=S.cfg.lectureAuto; return A&&!(L&&L.s===A.s&&L.a===A.a)?`<button class="btn sm" style="margin-top:8px;background:rgba(255,255,255,.22);color:#fff;border:none" onclick="ouvrirSourate(${A.s},${A.a})">📍 Dernière lecture : ${esc(SURATES[A.s-1][2])}, verset ${A.a}${A.p?' · page '+A.p:''}</button>`:''; })()}
+      ${!L&&!S.cfg.lectureAuto?'<div class="h-sub" style="margin-top:10px">Astuce : en lisant, touche 🔖 à côté d\'un verset pour retrouver exactement où tu t\'es arrêté.</div>':''}
     </div>
     <div class="panel mt">
       <input class="inp" placeholder="🔎 Chercher une sourate (nom ou numéro)" oninput="filtrerSourates(this.value)">
@@ -2979,11 +2993,12 @@ function vCoran(){
     </div>
     <div class="panel mt" style="--qz:${z}">
       ${!D?(QC.err?`<div class="coach">Impossible de charger la sourate (${esc(QC.err)}). Vérifie ta connexion. <button class="btn sm" onclick="ouvrirSourate(${n})">Réessayer</button></div>`:'<p class="muted" style="text-align:center;padding:30px 0;font-weight:700">Chargement de la sourate…</p>'):`
+      <div class="coach" style="font-size:.8rem;margin-bottom:8px">🔖 Touche le marque-page à côté d'un verset pour noter où tu t'arrêtes. Ta dernière lecture (📍) est aussi gardée toute seule.</div>
       ${n!==1&&n!==9?`<div class="bism">${BISM}</div>`:''}
       ${D.ar.map((a,i)=>`<div class="ayah ${L&&L.s===n&&L.a===i+1?'mark':''}" id="ay${i+1}">
         <button class="bm" onclick="marquer(${i+1})" title="Marquer ma lecture ici" aria-label="Marquer ma lecture au verset ${i+1}">🔖</button>
         <div class="ar">${a} <span class="fin">﴿${arNum(i+1)}﴾</span></div>
-        <div class="tr"><b>${i+1}.</b> ${esc(D.fr[i]||'')}</div></div>`).join('')}`}
+        <div class="tr"><b>${i+1}.</b> ${esc(D.fr[i]||'')}${D.page&&D.page[i]?`<span class="pg">p. ${D.page[i]}${D.juz&&D.juz[i]?' · juz '+D.juz[i]:''}</span>`:''}</div></div>`).join('')}`}
     </div>
     <div class="row mt" style="flex-wrap:wrap">
       ${n>1?`<button class="btn" onclick="ouvrirSourate(${n-1})">← ${esc(SURATES[n-2][2])}</button>`:''}<span class="sp"></span>
