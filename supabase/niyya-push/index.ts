@@ -69,6 +69,8 @@ function horaires(params: any, now: Date): { tz: string; t: number[]; jour: stri
     const mn = (x: Date) => partsTz(x, tz).min;
     t = [mn(pt.fajr), mn(pt.sunrise), mn(pt.dhuhr), mn(pt.asr), mn(pt.maghrib), mn(pt.isha)];
   }
+  // ajustements « ma mosquée » (minutes par prière) réglés dans l'appli
+  if (params.ajust) for (const [k, , i] of PRIERES) { const d = Number(params.ajust[k]) || 0; if (d) t[i] = (t[i] + d + 1440) % 1440; }
   return { tz, t, jour, min: P.min, vendredi: P.wd === "Fri", dimanche: P.wd === "Sun" };
 }
 

@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261022-195159'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261022-195946'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1488,7 +1488,26 @@ function vieGagnee(n){
 }
 /* ---------- Horaires ---------- */
 const _tcache={};
-function timesOf(k){
+function timesOf(k){ // horaires affichés = calcul (ou calendrier) + ajustements « ma mosquée »
+  const t=timesBrut(k), A=(S.cfg.priere||{}).ajust; if(!A) return t;
+  const r=t.slice(); PRAYERS.forEach(p=>{ const d=+A[p.k]||0; if(d) r[p.i]=(t[p.i]+d+1440)%1440; }); return r;
+}
+const iqamaDe=pk=>{ const Q=(S.cfg.priere||{}).iqamas; if(Q&&Q[pk]!=null&&Q[pk]!=='') return +Q[pk]; return isHsc()?IQAMA:null; };
+function ajusterPriere(pk,d){ const P=S.cfg.priere; P.ajust=Object.assign({},P.ajust||{}); P.ajust[pk]=Math.max(-60,Math.min(60,(+P.ajust[pk]||0)+d)); cfgTouch(); render(); }
+function iqamaPriere(pk,v){ const P=S.cfg.priere; P.iqamas=Object.assign({},P.iqamas||{}); if(v===''||v==null) delete P.iqamas[pk]; else P.iqamas[pk]=Math.max(0,Math.min(60,Math.round(+v))); cfgTouch(); render(); }
+function ajustForm(){
+  const P=S.cfg.priere||{}, A=P.ajust||{}, k=today(), tb=timesBrut(k), t=timesOf(k);
+  return `<details class="mt" ${Object.values(A).some(x=>+x)?'open':''}><summary style="font-weight:800;cursor:pointer">🕌 Ajuster à ma mosquée</summary>
+    <p class="muted" style="font-size:.78rem;margin:8px 0">Compare avec les horaires affichés à ta mosquée aujourd'hui, puis décale chaque prière avec − / +. L'adhan, le compte à rebours et les notifications suivront.</p>
+    ${PRAYERS.map(p=>{ const d=+A[p.k]||0, q=(P.iqamas||{})[p.k]; return `<div class="kv" style="align-items:center;gap:6px">
+      <span style="min-width:62px"><b>${p.n}</b><small class="muted" style="display:block">calcul ${hm(tb[p.i])}</small></span>
+      <span class="row" style="gap:4px;align-items:center"><button class="btn sm" onclick="ajusterPriere('${p.k}',-1)">−</button><b class="tnum" style="min-width:52px;text-align:center">${hm(t[p.i])}</b><button class="btn sm" onclick="ajusterPriere('${p.k}',1)">+</button></span>
+      <span class="muted tnum" style="min-width:44px;font-size:.75rem">${d?(d>0?'+':'')+d+' min':'—'}</span>
+      <span style="font-size:.72rem">iqama +<input class="inp" type="number" min="0" max="60" inputmode="numeric" value="${q??''}" placeholder="${isHsc()?IQAMA:'—'}" style="width:52px;padding:4px 6px;display:inline-block" onchange="iqamaPriere('${p.k}',this.value)"></span></div>`; }).join('')}
+    ${Object.values(A).some(x=>+x)?`<button class="btn sm mt" onclick="S.cfg.priere.ajust={};cfgTouch();render()">↺ Revenir au calcul</button>`:''}
+  </details>`;
+}
+function timesBrut(k){
   const P=S.cfg.priere||{}, L=S.cfg.lieu||{};
   if(P.methode!=='hsc' && L.lat!=null && window.adhan){
     const tz=lieuTz(), ck=k+'|'+P.methode+'|'+L.lat+'|'+L.lon+'|'+tz; if(_tcache[ck]) return _tcache[ck];
@@ -1930,7 +1949,7 @@ function heroPriere(){
     <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
     <div class="h-lbl" style="padding-right:80px">🕌 ${isT?'Prochaine prière':'Prières du jour'} · ${esc(lieuNom())}</div>
     ${isT?`<div class="h-big tnum"><span id="npName">${np.p.n}</span> <span id="npCount" style="font-size:1.25rem;font-weight:700;opacity:.95"></span></div>
-    <div class="h-sub">Adhan ${hm(np.at%1440)}${isHsc()?` · Iqama ${hm((np.at+IQAMA)%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${JUMUA.join(' / ')}`:''}</div>`
+    <div class="h-sub">Adhan ${hm(np.at%1440)}${iqamaDe(np.p.k)!=null?` · Iqama ${hm((np.at+iqamaDe(np.p.k))%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${JUMUA.join(' / ')}`:''}</div>`
     :`<div class="h-big">${PRAYERS.filter(p=>d.p[p.k]&&d.p[p.k]!=='manquee').length}/5</div><div class="h-sub">Touche une prière pour changer son statut</div>`}
     <div class="prow big">${minis}</div>
   </div>`;
@@ -2167,7 +2186,7 @@ function vDin(){
       ${PRAYERS.map(p=>`
       <div class="prayer ${cur&&cur.k===p.k?'cur':''}">
         <div class="nm"><b>${p.k==='dhuhr'&&fri?'Joumouʿa':p.n}</b><span class="arn">${p.ar}</span>
-          <small>${!isHsc()?'Adhan':p.k==='dhuhr'&&fri?`Khotba ${JUMUA.join(' / ')} · Dhuhr ${hm(t[p.i])}`:`Iqama ${hm(t[p.i]+IQAMA)}`}</small></div>
+          <small>${isHsc()&&p.k==='dhuhr'&&fri?`Khotba ${JUMUA.join(' / ')} · Dhuhr ${hm(t[p.i])}`:iqamaDe(p.k)!=null?`Iqama ${hm((t[p.i]+iqamaDe(p.k))%1440)}`:'Adhan'}</small></div>
         <div class="hr tnum">${hm(t[p.i])}</div>
         <div class="seg">${PSTAT.map(s=>`<button class="s-${s.k} ${d.p[p.k]===s.k?'on':''}" onclick="setPrayer('${p.k}','${s.k}')">${s.l}</button>`).join('')}</div>
       </div>`).join('')}
@@ -2467,6 +2486,7 @@ function vReglages(){
   <div class="panel mt"><h2><span class="ico">🕌</span>Horaires de prière</h2>
     <div class="sub">${isHsc()?`Calendrier annuel de la mosquée An-Nour d'Hérouville-Saint-Clair (Mawaqit), iqama +${IQAMA} min, Joumouʿa ${JUMUA.join(' et ')}.`:`Calculés pour <b>${esc(C.lieu.nom||'—')}</b>, à l'heure locale (${esc(lieuTz())}).`}</div>
     ${lieuForm()}
+    ${S.email===ADMIN_EMAIL?ajustForm():''}
     ${hijriReglage()}
   </div>`;
 }
@@ -3757,7 +3777,7 @@ async function pushMajEtat(){
 function pushParams(){
   const L=(S.cfg&&S.cfg.lieu)||{};
   return { tz:lieuTz(), lat:L.lat??null, lon:L.lon??null, methode:(S.cfg.priere||{}).methode||'uoif', hsc:typeof isHsc==='function'?isHsc():true,
-           prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0),
+           prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0), ajust:(S.cfg.priere||{}).ajust||null,
            hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, recap:(S.cfg.notifOff||[]).indexOf('recap')<0, soir:(S.cfg.notifOff||[]).indexOf('soir')<0, url:'./' };
 }
 async function pushRpc(fn,args){ let jwt=null; try{ const {data}=await sb.auth.getSession(); jwt=data&&data.session&&data.session.access_token; }catch(e){} const r=await fetch(PUSH_BASE+'/rest/v1/rpc/'+fn,{method:'POST',headers:Object.assign({apikey:PUSH_KEY,'Content-Type':'application/json'},jwt?{Authorization:'Bearer '+jwt}:{}),body:JSON.stringify(args)}); if(!r.ok) throw new Error(await r.text()); }
