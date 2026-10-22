@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261022-194811'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261022-195159'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3017,7 +3017,10 @@ function filtrerSourates(q){
   q=q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
   document.querySelectorAll('.sur-row').forEach(b=>{ b.style.display=!q||b.dataset.k.includes(q)?'':'none'; });
 }
-function marquer(v){ const pg=QC.data&&QC.data.page?QC.data.page[v-1]:null; S.cfg.lecture={s:QC.n,a:v,p:pg,t:Date.now()}; cfgTouch(); render(); toast(`🔖 Marque-page : ${SURATES[QC.n-1][2]}, verset ${v}${pg?' · page '+pg:''}`); }
+function marquer(v){
+  const L=S.cfg.lecture;
+  if(L && L.s===QC.n && L.a===v){ S.cfg.lecture=null; cfgTouch(); render(); return toast('🔖 Marque-page retiré'); } // rappuyer sur le même verset l'enlève
+  const pg=QC.data&&QC.data.page?QC.data.page[v-1]:null; S.cfg.lecture={s:QC.n,a:v,p:pg,t:Date.now()}; cfgTouch(); render(); toast(`🔖 Marque-page : ${SURATES[QC.n-1][2]}, verset ${v}${pg?' · page '+pg:''}`); }
 // 📍 dernière lecture enregistrée toute seule : le verset en haut de l'écran pendant qu'on lit
 let _lectT=null;
 function suivreLecture(){
