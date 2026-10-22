@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261022-193741'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261022-194548'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1090,7 +1090,10 @@ const BOOKS = {
   coelho:{t:'L\'Alchimiste', c:'k-magenta'},
   carnegie:{t:'Dale Carnegie', a:1, c:'k-teal'}, // affiché par son auteur (demande de Mehdi)
   miracle:{t:'Miracle Morning', c:'k-gold'},
-  knight:{t:'L\'art de la victoire', c:'k-sky'}, // Phil Knight, fondateur de Nike (Shoe Dog)
+  knight:{t:'L\'art de la victoire', c:'k-sky'},
+  clear:{t:'Un rien peut tout changer', c:'k-emerald'}, // James Clear (Atomic Habits)
+  covey:{t:'Les 7 habitudes', c:'k-violet'}, // Stephen Covey
+  essentiel:{t:'Essentialisme', c:'k-pink'}, // Greg McKeown // Phil Knight, fondateur de Nike (Shoe Dog)
 };
 const MINDSET = [
   ['robbins','C\'est dans tes moments de décision que se dessine ton destin.'],
@@ -1279,6 +1282,66 @@ const MINDSET = [
   ['miracle','Écris dès le matin l\'objectif principal de ta journée.'],
   ['miracle','Lève-toi avec une intention, pas seulement avec une alarme.'],
   ['miracle','Le matin, ton temps t\'appartient : utilise-le pour toi avant les autres.'],
+  ['clear','On ne s\'élève pas au niveau de ses objectifs, on retombe au niveau de ses habitudes.'],
+  ['clear','Améliore-toi d\'1 % chaque jour : les petits gains s\'additionnent.'],
+  ['clear','Pense identité : « je suis quelqu\'un qui prie à l\'heure », plutôt que « je veux prier à l\'heure ».'],
+  ['clear','Rends la bonne habitude évidente : prépare ton tapis de prière à l\'avance.'],
+  ['clear','Rends la bonne habitude agréable : associe-la à quelque chose que tu aimes.'],
+  ['clear','Rends la bonne habitude facile : commence par deux minutes.'],
+  ['clear','Rends la bonne habitude satisfaisante : coche-la et savoure-le.'],
+  ['clear','Pour lâcher une mauvaise habitude, rends-la invisible, difficile et sans plaisir.'],
+  ['clear','Accroche une nouvelle habitude à une ancienne : « après le Fajr, je lis une page de Coran ».'],
+  ['clear','Ne rate jamais deux fois de suite.'],
+  ['clear','Ton environnement guide ton comportement : organise-le pour qu\'il t\'aide.'],
+  ['clear','Chaque action est un vote pour la personne que tu veux devenir.'],
+  ['clear','Soigne ton système plutôt que d\'obséder sur le résultat.'],
+  ['clear','Commence si petit que tu ne peux pas dire non.'],
+  ['clear','La motivation est surestimée, l\'environnement est sous-estimé.'],
+  ['clear','Les résultats tardent : continue, tu es en train de franchir le palier invisible.'],
+  ['clear','Réduis les obstacles pour ce que tu veux faire, ajoute-en pour ce que tu veux éviter.'],
+  ['clear','Entoure-toi de gens pour qui le bon comportement est normal.'],
+  ['clear','Les habitudes sont les intérêts composés de ton amélioration.'],
+  ['clear','Une habitude n\'a pas besoin d\'être parfaite, elle a besoin d\'être répétée.'],
+  ['covey','Sois proactif : tu choisis ta réponse à ce qui t\'arrive.'],
+  ['covey','Mets ton énergie dans ce que tu peux influencer, pas dans ce qui t\'échappe.'],
+  ['covey','Commence avec la fin en tête : sache où tu veux arriver.'],
+  ['covey','Écris ta mission personnelle : elle guidera tes décisions.'],
+  ['covey','L\'essentiel d\'abord : place tes priorités avant de remplir ton agenda.'],
+  ['covey','Distingue l\'important de l\'urgent, et vis davantage dans l\'important.'],
+  ['covey','Planifie ta semaine selon tes rôles : époux, père, entrepreneur, croyant.'],
+  ['covey','Pense gagnant-gagnant : cherche des accords bons pour les deux.'],
+  ['covey','Cherche d\'abord à comprendre, ensuite à être compris.'],
+  ['covey','Écoute pour comprendre, pas pour répondre.'],
+  ['covey','Ensemble, on peut faire plus que la somme de chacun.'],
+  ['covey','Aiguise la scie : prends soin de ton corps, de ton esprit, de ton cœur et de ta foi.'],
+  ['covey','Fais des dépôts de confiance : tenir parole, être bienveillant, savoir s\'excuser.'],
+  ['covey','Chaque promesse tenue envers toi-même renforce ta confiance en toi.'],
+  ['covey','Ton caractère compte plus que tes techniques.'],
+  ['covey','Ne sacrifie pas ton important pour l\'urgent des autres.'],
+  ['covey','Entre ce qui t\'arrive et ta réaction, il y a un espace : c\'est là qu\'est ta liberté.'],
+  ['covey','Le temps en famille n\'est jamais urgent, mais il est toujours important.'],
+  ['covey','La victoire sur soi précède toujours la réussite avec les autres.'],
+  ['covey','Change-toi d\'abord toi-même avant de vouloir changer les autres.'],
+  ['essentiel','Moins, mais mieux.'],
+  ['essentiel','Si ce n\'est pas un oui évident, c\'est un non.'],
+  ['essentiel','Si tu ne choisis pas tes priorités, quelqu\'un d\'autre le fera pour toi.'],
+  ['essentiel','Tu ne peux pas tout faire ; tu peux faire ce qui compte.'],
+  ['essentiel','Dire non avec respect, c\'est dire oui à l\'essentiel.'],
+  ['essentiel','Protège du temps pour réfléchir : c\'est là que naissent les bonnes décisions.'],
+  ['essentiel','Abandonne ce qui ne sert plus, même si tu y as déjà beaucoup investi.'],
+  ['essentiel','Le sommeil n\'est pas un luxe : c\'est ce qui te rend efficace.'],
+  ['essentiel','Prévois de la marge : tout prend plus de temps que prévu.'],
+  ['essentiel','Une seule vraie priorité à la fois.'],
+  ['essentiel','Un objectif flou disperse ; un objectif clair concentre.'],
+  ['essentiel','Demande-toi souvent : « Qu\'est-ce qui compte vraiment ici ? »'],
+  ['essentiel','Tu as toujours le pouvoir de choisir, même quand tu crois ne pas l\'avoir.'],
+  ['essentiel','Avance par petites victoires plutôt que par grands efforts épuisants.'],
+  ['essentiel','Simplifie : enlève avant d\'ajouter.'],
+  ['essentiel','Ce que tu refuses dit autant de toi que ce que tu acceptes.'],
+  ['essentiel','Crée des routines pour que l\'essentiel se fasse presque tout seul.'],
+  ['essentiel','Être occupé n\'est pas être productif.'],
+  ['essentiel','Concentre-toi sur ce qui est important maintenant.'],
+  ['essentiel','Ta vie est trop précieuse pour la disperser dans l\'accessoire.'],
 ];
 // « Allah aime… » (Coran) et idées de sunnah pour la journée
 // « Allah aime… » dans le Coran (traduction Hamidullah) + une action concrète pour l'appliquer dans la journée
