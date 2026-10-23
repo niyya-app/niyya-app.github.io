@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-092533'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-092720'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3567,6 +3567,7 @@ function quizRepondre(x){
   if(ok&&!z.revoir) z.j[z.tour].pts++; vib(); render();
 }
 function quizSuivant(){
+  try{ document.activeElement&&document.activeElement.blur(); }catch(e){}
   const z=S.qz; z.i++; z.rep=null; z.tour=(z.tour+1)%z.j.length;
   if(z.i>=z.L.length){ z.fini=true;
     if(z.mode==='jour'&&!z.revoir){ const d=J(today()); d.quiz={s:z.j[0].pts,n:z.L.length,fin:1}; touch(); }
@@ -3582,7 +3583,7 @@ function vQuiz(){
       ${z.mode==='fam'?`<div class="h-big" style="font-size:1.5rem">Au tour de ${esc(p.nom)}</div>`:''}
       <div class="h-sub">${esc(QUIZ_TH[q.th]||'')}</div></div>
     <div class="panel mt"><div style="font-weight:800;font-size:1.15rem;line-height:1.4">${esc(q.q)}</div>
-      <div style="display:grid;gap:8px;margin-top:14px">${q.rep.map((r,i)=>{ const st=z.rep==null?'':r===q.bonne?'background:#dcfce7;border-color:#22c55e;color:#14532d':i===z.rep?'background:#fee2e2;border-color:#ef4444;color:#7f1d1d':'opacity:.55';
+      <div style="display:grid;gap:8px;margin-top:14px">${q.rep.map((r,i)=>{ const st=z.rep==null?'color:var(--ink);border-color:var(--line,#e5e7eb);background:var(--card)':r===q.bonne?'background:#dcfce7;border-color:#22c55e;color:#14532d':i===z.rep?'background:#fee2e2;border-color:#ef4444;color:#7f1d1d':'opacity:.55';
         return `<button class="btn" style="text-align:left;justify-content:flex-start;padding:14px;font-size:1rem;border:2px solid var(--line,#e5e7eb);${st}" onclick="quizRepondre(${i})">${z.rep!=null&&r===q.bonne?'✓ ':z.rep===i?'✗ ':''}${esc(r)}</button>`; }).join('')}</div>
       ${z.rep!=null?`<div class="coach mt" style="font-size:.86rem"><b>${q.rep[z.rep]===q.bonne?'✅ Bonne réponse !':'La bonne réponse : '+esc(q.bonne)}</b>${q.x?`<div style="margin-top:8px;font-weight:600;line-height:1.5;white-space:pre-line">${esc(q.x)}</div>`:''}<div class="muted" style="font-size:.74rem;font-weight:700;margin-top:6px">📚 ${esc(q.src)}</div></div>
       <button class="btn green" style="width:100%;margin-top:12px" onclick="quizSuivant()">${z.i+1<z.L.length?'Question suivante →':'Voir le résultat'}</button>`:''}
