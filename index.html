@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-104203'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-132253'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3956,7 +3956,7 @@ const PUSH_BASE='https://acalynsfttpchvnomjwb.supabase.co', PUSH_KEY='sb_publish
 const SW_PATH='sw.js';
 const NOTIF_PRIERES=[['fajr','Fajr'],['dhuhr','Dhuhr'],['asr','Asr'],['maghrib','Maghrib'],['isha','Isha']];
 const estIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-const estInstallee=()=>(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+const estInstallee=()=>NATIF||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
 function b64uVersOctets(s){ const p='='.repeat((4-s.length%4)%4), b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from([...b].map(c=>c.charCodeAt(0))); }
 async function swEnregistrer(){ try{ if(!NATIF&&'serviceWorker' in navigator) await navigator.serviceWorker.register(SW_PATH); }catch(e){} }
 async function pushAbonnement(){ try{ if(!('serviceWorker' in navigator)) return null; const r=await navigator.serviceWorker.getRegistration(); return r&&r.pushManager?await r.pushManager.getSubscription():null; }catch(e){ return null; } }
