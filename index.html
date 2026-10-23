@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-132253'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-141419'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3965,7 +3965,10 @@ async function pushAbonnement(){ try{ if(!('serviceWorker' in navigator)) return
    (inactif sur le web : NATIF est faux, rien ne change pour la version actuelle)
    ===================================================================== */
 const NATIF=!!(window.Capacitor&&typeof Capacitor.isNativePlatform==='function'&&Capacitor.isNativePlatform());
-const LN=NATIF&&Capacitor.registerPlugin?Capacitor.registerPlugin('LocalNotifications'):null;
+const LN=!NATIF?null:Capacitor.registerPlugin?Capacitor.registerPlugin('LocalNotifications'):(()=>{ // appli iPhone sans @capacitor/core : appel direct du module natif
+  const P='LocalNotifications', call=m=>o=>Capacitor.nativePromise(P,m,o||{});
+  return { schedule:call('schedule'), getPending:call('getPending'), cancel:call('cancel'), checkPermissions:call('checkPermissions'), requestPermissions:call('requestPermissions'), addListener:(ev,cb)=>Capacitor.addListener(P,ev,cb) };
+})();
 function dateTz(k,min,tz){ // jour k + minute « heure de la ville » → instant réel
   const [y,m,d]=k.split('-').map(Number); let ms=Date.UTC(y,m-1,d,0,0)+min*60e3;
   for(let i=0;i<2;i++){ const vu=minIn(new Date(ms),tz); let ec=vu-min; if(ec>720) ec-=1440; if(ec<-720) ec+=1440; ms-=ec*60e3; }
