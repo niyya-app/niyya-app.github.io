@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261022-201018'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-081640'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1653,7 +1653,7 @@ function avgCig(n,fromK){ let tot=0,c=0; for(let i=1;i<=n;i++){ const k=addDays(
 function scoreOf(k){
   const d=J(k), W=S.cfg.poids, parts=[];
   const pv=PRAYERS.reduce((s,p)=>s+((PSTAT.find(x=>x.k===d.p[p.k])||{v:0}).v),0)/5;
-  parts.push({k:'prieres',l:'Prières',f:pv,txt:`${PRAYERS.filter(p=>['heure','mosquee','retard'].includes(d.p[p.k])).length}/5`});
+  parts.push(dispOf(k)?{k:'prieres',l:'Prières',f:1,txt:'🌸 dispensée'}:{k:'prieres',l:'Prières',f:pv,txt:`${PRAYERS.filter(p=>['heure','mosquee','retard'].includes(d.p[p.k])).length}/5`});
   const n=d.cig.length, t=targetOf(k);
   const tv = k<S.cfg.tabac.debut ? 0 : (n<=t?1:Math.max(0,1-(n-t)/5));
   if(S.cfg.fumeur) parts.push({k:'tabac',l:'Tabac',f:tv,txt:`${n}/${t}`});
@@ -1951,7 +1951,10 @@ function heroPriere(){
     ${isT?`<div class="h-big tnum"><span id="npName">${np.p.n}</span> <span id="npCount" style="font-size:1.25rem;font-weight:700;opacity:.95"></span></div>
     <div class="h-sub">Adhan ${hm(np.at%1440)}${iqamaDe(np.p.k)!=null?` · Iqama ${hm((np.at+iqamaDe(np.p.k))%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${JUMUA.join(' / ')}`:''}</div>`
     :`<div class="h-big">${PRAYERS.filter(p=>d.p[p.k]&&d.p[p.k]!=='manquee').length}/5</div><div class="h-sub">Touche une prière pour changer son statut</div>`}
-    <div class="prow big">${minis}</div>
+    ${dispOf(S.sel)?`<div style="margin-top:10px;background:rgba(255,255,255,.18);border-radius:16px;padding:12px">
+        <b>🌸 Période de dispense</b><div class="h-sub" style="margin-top:4px">Tu obéis à Allah en t'abstenant de prier. Tes points de prière restent au maximum${estRamadan(S.sel)?' · ce jour de jeûne sera à rattraper':''}.</div>
+        <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${dispEnCours()&&S.sel===today()?'<button class="btn sm" style="background:#fff;color:#047857;border:none" onclick="dispTerminer()">✓ Ma période est terminée</button>':''}<button class="btn sm" style="background:rgba(255,255,255,.22);color:#fff;border:none" onclick="dispInfo()">En savoir plus</button></div></div>`
+      :`<div class="prow big">${minis}</div>${estFemme()&&!dispEnCours()&&S.sel>=addDays(today(),-7)?`<button class="btn sm" style="margin-top:8px;background:rgba(255,255,255,.18);color:#fff;border:none" onclick="dispCommencer()">🌸 Je suis en période de dispense</button>`:''}`}
   </div>`;
 }
 function prieresGrandes(d,t,np){
@@ -2163,11 +2166,23 @@ function sportWeek(k){ // séances du lundi au dimanche
   for(let i=0;i<7;i++){ const x=S.jours[addDays(lun,i)]; if(x&&x.sport) n++; } return n;
 }
 function streakTxt(){
-  let p=0; for(let k=has(today())&&prayCount(today())===5?today():addDays(today(),-1); has(k)&&prayCount(k)===5; k=addDays(k,-1)) p++;
+  let p=0; for(let k=has(today())&&(prayCount(today())===5||dispOf(today()))?today():addDays(today(),-1); (has(k)&&prayCount(k)===5)||dispOf(k); k=addDays(k,-1)){ p++; if(p>3650) break; }
   let s=0; for(let k=today(); ; k=addDays(k,-1)){ const x=S.jours[k]; if(x&&(x.sport||x.repos)) s++; else if(k===today()) continue; else break; if(s>400) break; }
   const bits=[]; if(p) bits.push(`🕌 ${p} j de suite 5/5 prières`); if(s) bits.push(`💪 ${s} j sport/repos`);
   return bits.join(' · ')||'Commence ta série aujourd\'hui';
 }
+/* ---------- 🌸 Période de dispense (règles / lochies) — uniquement pour les femmes ---------- */
+const estFemme=()=>S.cfg.genre==='f';
+const dispOf=k=>estFemme() && (S.cfg.periodes||[]).some(p=>k>=p.d && (!p.f || k<=p.f));
+const dispEnCours=()=>estFemme() && (S.cfg.periodes||[]).some(p=>!p.f);
+function dispCommencer(){ if(dispEnCours()) return; const P=(S.cfg.periodes||[]).slice(-24); P.push({d:S.sel||today(),f:null}); S.cfg.periodes=P; cfgTouch(); render(); toast('🌸 Période de dispense commencée · tes points de prière restent au maximum',4000); }
+function dispTerminer(){ const P=(S.cfg.periodes||[]).map(x=>Object.assign({},x)); const c=P.find(x=>!x.f); if(!c) return; const fin=addDays(today(),-1);
+  if(fin<c.d) P.splice(P.indexOf(c),1); else c.f=fin; S.cfg.periodes=P; cfgTouch(); render(); toast('🌸 Période terminée · tu reprends la prière aujourd\'hui, qu\'Allah l\'accepte',4000); }
+function dispInfo(){ openSheet(`<h2 style="margin:0 0 6px">🌸 Période de dispense</h2>
+  <p style="line-height:1.55">Pendant les règles et les lochies, la femme ne prie pas et ne jeûne pas. Elle rattrape ensuite les jours de jeûne de Ramadan, mais pas les prières. En t'abstenant, tu obéis à Allah.</p>
+  <div class="coach" style="font-size:.86rem;line-height:1.5">« Nous avions nos règles du temps du Messager d'Allah ﷺ : on nous ordonnait de rattraper le jeûne, et on ne nous ordonnait pas de rattraper la prière. »<br><b>ʿÂ'icha, rapporté par Muslim n° 335</b> (voir aussi Al-Bukhari n° 321)</div>
+  <p class="muted" style="font-size:.8rem;margin-top:10px">Pendant ces jours, tes points de prière comptent au maximum et tes séries ne sont pas cassées. Tu peux faire du dhikr, de l'istighfar, des invocations, de la sadaqa et écouter le Coran. Pour les cas particuliers (saignements irréguliers…), demande à une personne de science.</p>
+  <button class="btn mt" onclick="closeSheet()">Fermer</button>`); }
 const prayCount=k=>{ const d=S.jours[k]; return d?PRAYERS.filter(p=>['heure','mosquee','retard'].includes((d.p||{})[p.k])).length:0; };
 
 /* ---------- Dîn ---------- */
@@ -2180,7 +2195,8 @@ function vDin(){
   return `
   <div class="grid g2">
     <div class="panel">
-      <h2><span class="ico">🕌</span>Mes prières<span class="cnt">${prayCount(S.sel)}/5</span></h2>
+      <h2><span class="ico">🕌</span>Mes prières<span class="cnt">${dispOf(S.sel)?'🌸':prayCount(S.sel)+'/5'}</span></h2>
+      ${dispOf(S.sel)?'<div class="coach" style="font-size:.82rem">🌸 Période de dispense : pas besoin de noter tes prières, tes points restent au maximum. <button class="btn sm" onclick="dispInfo()">En savoir plus</button></div>':''}
       <div class="sub">${isHsc()?'Mosquée An-Nour, Hérouville-Saint-Clair':esc(S.cfg.lieu.nom||'')+' · '+esc((METHODES[S.cfg.priere.methode]||METHODES.uoif).l)} · Chourouq ${hm(t[1])}</div>
       <button class="btn green" style="width:100%;margin-bottom:12px" onclick="openQibla()">🧭 Trouver la direction de la Qibla</button>
       ${PRAYERS.map(p=>`
@@ -2435,6 +2451,8 @@ function vReglages(){
       <h2><span class="ico">👤</span>Général</h2>
       <button class="btn green" style="margin-bottom:10px" onclick="inviter()">💌 Inviter un proche</button>
       <label class="f">Prénom</label><input class="inp" value="${esc(C.nom)}" onchange="setCfg('nom',this.value)">
+      ${S.email===ADMIN_EMAIL?`<label class="f">Je suis</label><div class="opt">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${C.genre===g?'on':''}" onclick="setCfg('genre','${g}');render()">${l}</button>`).join('')}</div>
+      ${C.genre==='f'?`<label class="f">🌸 Pendant la période de dispense</label><div class="opt">${[[true,'🔕 Mettre l\'adhan en pause'],[false,'🔔 Garder l\'adhan']].map(([v,l])=>`<button class="${(C.dispPauseAdhan!==false)===v?'on':''}" onclick="S.cfg.dispPauseAdhan=${v};cfgTouch();render()">${l}</button>`).join('')}</div>`:''}`:''}
       <label class="f">Horaires de travail</label>
       <div class="opt">${[['fixe','⏰ Horaires fixes'],['variable','🔀 Horaires variables'],['aucun','🏡 Je ne travaille pas']].map(([m,l])=>`<button class="${travailMode()===m?'on':''}" onclick="choixTravail('${m}')">${l}</button>`).join('')}</div>
       ${travailMode()==='fixe'?`<div class="row mt"><input class="inp" type="time" value="${esc(C.travail.debut)}" onchange="setCfg('travail.debut',this.value)"><span class="muted">→</span><input class="inp" type="time" value="${esc(C.travail.fin)}" onchange="setCfg('travail.fin',this.value)"></div>`:''}
@@ -3680,11 +3698,11 @@ function progression(){
   if(_prog && _progSig===sig) return _prog;
   const sc={}; ks.forEach(k=>{ sc[k]=scoreOf(k).score; });
   const xp=ks.reduce((t,k)=>t+sc[k],0), niv=niveauDe(xp);
-  const serie=(test)=>{ let n=0; for(let k=today();;k=addDays(k,-1)){ const ok=has(k)&&test(k,J(k)); if(ok) n++; else if(k===today()) continue; else break; if(n>3650) break; } return n; };
+  const serie=(test)=>{ let n=0; for(let k=today();;k=addDays(k,-1)){ const ok=(has(k)||(test===T.prieres&&dispOf(k)))&&test(k,J(k)); /* un jour de dispense sans saisie ne casse pas la série de prières */ if(ok) n++; else if(k===today()) continue; else break; if(n>3650) break; } return n; };
   const meilleure=(test)=>{ let best=0,cur=0,prev=null; for(const k of ks){ if(test(k,J(k))){ cur=(prev&&addDays(prev,1)===k)?cur+1:1; best=Math.max(best,cur); prev=k; } else { cur=0; prev=k; } } return best; };
   const cpt=(test)=>ks.filter(k=>test(k,J(k))).length;
   const T={
-    regul:(k)=>sc[k]>=50, prieres:(k,d)=>prayCount(k)===5, coran:(k,d)=>d.coran, sport:(k,d)=>d.sport,
+    regul:(k)=>sc[k]>=50, prieres:(k,d)=>prayCount(k)===5||dispOf(k), coran:(k,d)=>d.coran, sport:(k,d)=>d.sport,
     tabac:(k,d)=>S.cfg.fumeur!==false&&k>=S.cfg.tabac.debut&&k<today()&&(d.cig||[]).length<=targetOf(k), eau:(k,d)=>(d.eau||0)>=6,
     jeune:(k,d)=>d.jeuneNafl||d.jeune==='fait', sadaqa:(k,d)=>(d.sadaqa||[]).length>0, ba9:(k,d)=>baNb(d)>=9,
   };
@@ -3777,7 +3795,7 @@ async function pushMajEtat(){
 function pushParams(){
   const L=(S.cfg&&S.cfg.lieu)||{};
   return { tz:lieuTz(), lat:L.lat??null, lon:L.lon??null, methode:(S.cfg.priere||{}).methode||'uoif', hsc:typeof isHsc==='function'?isHsc():true,
-           prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0), ajust:(S.cfg.priere||{}).ajust||null,
+           prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0), ajust:(S.cfg.priere||{}).ajust||null, pause:dispEnCours()&&S.cfg.dispPauseAdhan!==false,
            hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, recap:(S.cfg.notifOff||[]).indexOf('recap')<0, soir:(S.cfg.notifOff||[]).indexOf('soir')<0, url:'./' };
 }
 async function pushRpc(fn,args){ let jwt=null; try{ const {data}=await sb.auth.getSession(); jwt=data&&data.session&&data.session.access_token; }catch(e){} const r=await fetch(PUSH_BASE+'/rest/v1/rpc/'+fn,{method:'POST',headers:Object.assign({apikey:PUSH_KEY,'Content-Type':'application/json'},jwt?{Authorization:'Bearer '+jwt}:{}),body:JSON.stringify(args)}); if(!r.ok) throw new Error(await r.text()); }

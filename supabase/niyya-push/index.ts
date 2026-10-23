@@ -158,6 +158,7 @@ Deno.serve(async (req) => {
       const actives: string[] = Array.isArray(params.prieres) ? params.prieres : PRIERES.map((p) => p[0]);
       let H; try { H = horaires(params, now); } catch (e) { console.error("horaires", e); continue; }
       for (const [k, nom, i] of PRIERES) {
+        if (params.pause) break; // période de dispense : l'utilisatrice a mis l'adhan en pause
         if (!actives.includes(k)) continue;
         if (H.t[i] !== H.min) continue;
         const cle = `${H.jour}|${k}`;
