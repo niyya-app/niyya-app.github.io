@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-081950'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-082526'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1587,7 +1587,7 @@ async function pull(){
     if(!S.pret){ S.pret=true; render(); compter(S.view||'jour'); }
     if(S.cfg.onb && !S.cfg.methodeAutoFaite && METHODE_PAYS[(S.cfg.lieu||{}).tz]){ S.cfg.methodeAutoFaite=true; if(methodeAuto()){ cfgTouch(); pushMajParams(); render(); toast('🕌 Horaires : méthode Umm al-Qura (Arabie saoudite)',4000); } else cfgTouch(); }
     if(S.ouvrirEnAttente && S.cfg.onb){ const c=S.ouvrirEnAttente; S.ouvrirEnAttente=null; ouvrir(c); } else if(!S._clicDemarrage){ S._clicDemarrage=true; [0,700,1500,3000,5000,8000].forEach(t=>setTimeout(lireClicNotif,t)); [400,1500,4000].forEach(t=>setTimeout(lireRecue,t)); } // au lancement : on regarde tout de suite quelle notification a été touchée else lireClicNotif();
-    if(S.cfg.onb && !S._rappelVu && location.hash!=='#autotest'){ S._rappelVu=true; setTimeout(()=>{ if(!document.getElementById('sheetBg').classList.contains('on')) proposerRappels(false); },2500); }
+    if(S.cfg.onb && !S._rappelVu && location.hash!=='#autotest'){ S._rappelVu=true; setTimeout(()=>{ if(document.getElementById('sheetBg').classList.contains('on')) return; if(!demanderGenre()) proposerRappels(false); },2500); } // d'abord homme/femme (une fois), sinon la proposition des rappels
     if(!S._aboOk){ S._aboOk=true; pushAbonnement().then(sub=>{ if(sub) pushEnvoyerAbo(sub).catch(()=>{}); }); } // rattache l'abonnement aux notifications à ce compte
     else if(changed && !document.activeElement?.matches('input,textarea')) render();
     { let ci=null; try{ ci=localStorage.getItem('nya_import'); }catch(e){} if(ci){ if(S.email===ADMIN_EMAIL) importAncien(ci); else { try{ localStorage.removeItem('nya_import'); }catch(e){} } } } // lien d'import automatique (#import=…) : réservé à l'administrateur
@@ -1742,6 +1742,14 @@ function carteBienvenue(){
     </div>
     <div class="row mt" style="flex-wrap:wrap;gap:8px">${S.pushEtat!=='actif'?'<button class="btn pri sm" onclick="proposerRappels(true)">🔔 Recevoir les rappels de prière</button>':''}<button class="btn sm" onclick="S.cfg.bienvenueVue=true;cfgTouch();render()">J'ai compris ✓</button></div>
   </div>`;
+}
+function demanderGenre(){
+  if(S.cfg.genre || !S.cfg.onb || S._genreDemande) return false; S._genreDemande=true;
+  openSheet(`<h2 style="margin:0 0 6px">Une petite question 🙂</h2>
+    <div class="sub">Pour adapter NIYYA à toi (par exemple, pour les sœurs, la période de dispense de prière).</div>
+    <div class="opt" style="margin-top:14px">${[['h','👨 Je suis un homme'],['f','👩 Je suis une femme']].map(([g,l])=>`<button style="padding:14px" onclick="S.cfg.genre='${g}';cfgTouch();closeSheet();render();toast('Merci, c’est noté')">${l}</button>`).join('')}</div>
+    <p class="muted" style="font-size:.74rem;margin-top:10px">Cette information reste dans ton compte. Tu pourras la changer dans ⚙️ Réglages.</p>`);
+  return true;
 }
 async function proposerRappels(force){
   const C=S.cfg; const e=await pushMajEtat(); if(e==='actif'||e==='non') return;
@@ -2451,7 +2459,7 @@ function vReglages(){
       <h2><span class="ico">👤</span>Général</h2>
       <button class="btn green" style="margin-bottom:10px" onclick="inviter()">💌 Inviter un proche</button>
       <label class="f">Prénom</label><input class="inp" value="${esc(C.nom)}" onchange="setCfg('nom',this.value)">
-      ${S.email===ADMIN_EMAIL?`<label class="f">Je suis</label><div class="opt">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${C.genre===g?'on':''}" onclick="setCfg('genre','${g}');render()">${l}</button>`).join('')}</div>
+      ${true?`<label class="f">Je suis</label><div class="opt">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${C.genre===g?'on':''}" onclick="setCfg('genre','${g}');render()">${l}</button>`).join('')}</div>
       ${C.genre==='f'?`<label class="f">🌸 Pendant la période de dispense</label><div class="opt">${[[true,'🔕 Mettre l\'adhan en pause'],[false,'🔔 Garder l\'adhan']].map(([v,l])=>`<button class="${(C.dispPauseAdhan!==false)===v?'on':''}" onclick="S.cfg.dispPauseAdhan=${v};cfgTouch();render()">${l}</button>`).join('')}</div>`:''}`:''}
       <label class="f">Horaires de travail</label>
       <div class="opt">${[['fixe','⏰ Horaires fixes'],['variable','🔀 Horaires variables'],['aucun','🏡 Je ne travaille pas']].map(([m,l])=>`<button class="${travailMode()===m?'on':''}" onclick="choixTravail('${m}')">${l}</button>`).join('')}</div>
@@ -2917,6 +2925,8 @@ function vOnb(){
         <div><label class="f">Poids actuel (kg, facultatif)</label><input class="inp" id="onbPoids" type="number" step="0.1" inputmode="decimal"></div>
         <div><label class="f">Objectif (kg, facultatif)</label><input class="inp" id="onbObj" type="number" step="0.1" inputmode="decimal"></div>
       </div>
+      <label class="f">Je suis</label>
+      <div class="opt" id="onbGenre">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${ONB.genre===g?'on':''}" onclick="ONB.genre='${g}';document.querySelectorAll('#onbGenre button').forEach(x=>x.classList.toggle('on',x===this))">${l}</button>`).join('')}</div>
       <label class="f">Pour mon poids, je veux…</label>
       <div class="opt" id="onbBut">${[['perdre','⬇️ Perdre'],['prendre','⬆️ Prendre'],['garder','⚖️ Garder']].map(([b,l])=>`<button class="${(ONB.poidsBut||'perdre')===b?'on':''}" onclick="ONB.poidsBut='${b}';document.querySelectorAll('#onbBut button').forEach(x=>x.classList.toggle('on',x===this))">${l}</button>`).join('')}</div>
       <label class="f">Est-ce que tu fumes ?</label>
@@ -2935,7 +2945,7 @@ function finirOnb(){
   const nom=v('onbNom').value.trim(); if(!nom) return toast('Indique ton prénom');
   if(S.cfg.lieu.lat==null && S.cfg.priere.methode!=='hsc') return toast('Choisis ta ville pour les horaires de prière',3000);
   if(!v('onbOk').checked) return toast('Coche la case d\'accord pour continuer',3000);
-  const C=S.cfg; C.nom=nom; C.travail={debut:v('onbDeb').value||'09:00',fin:v('onbFin').value||'18:00',mode:ONB.travail||'fixe'}; C.poidsBut=ONB.poidsBut||'perdre';
+  const C=S.cfg; C.nom=nom; C.travail={debut:v('onbDeb').value||'09:00',fin:v('onbFin').value||'18:00',mode:ONB.travail||'fixe'}; C.poidsBut=ONB.poidsBut||'perdre'; if(ONB.genre) C.genre=ONB.genre;
   C.sportSemaine=Math.max(0,Math.round(num('onbSport')??3));
   const pd=num('onbPoids'), po=num('onbObj'); C.poidsObj=po; C.poidsDepart=pd?{k:today(),v:pd}:null;
   if(pd){ J(today()).poids=pd; touch(today()); }
