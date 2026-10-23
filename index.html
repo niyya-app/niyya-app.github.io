@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-084503'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-091722'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3540,9 +3540,12 @@ function quizGenere(r){
   const out=[];
   NOMS.forEach((n,i)=>{ const faux=melanger(NOMS.filter((x,j)=>j!==i&&x[2]!==n[2]),r).slice(0,3).map(x=>x[2]);
     out.push(['a','noms',`Que signifie le nom d'Allah « ${n[1]} » (${n[0]}) ?`,[n[2],...faux],'Les 99 noms d\'Allah (liste d\'At-Tirmidhi n° 3507)']); });
-  const th=CITADELLE.map(x=>({l:x.label.replace(/^[^A-Za-zÀ-ÿ]+/,''),items:x.items.filter(d=>d.phon&&d.src)})).filter(x=>x.items.length);
-  th.forEach((t,i)=>t.items.forEach(d=>{ const faux=melanger(th.filter((x,j)=>j!==i).map(x=>x.l),r).slice(0,3);
-    if(faux.length===3) out.push(['a','citadelle',`À quel moment dit-on : « ${d.phon.length>110?d.phon.slice(0,108)+'…':d.phon} » ?`,[t.l,...faux],d.src]); }));
+  // Citadelle : on montre le SENS en français, et les réponses sont des moments clairs
+  const MOM={'Avant de manger':'Avant de manger','Après avoir mangé':'Après avoir mangé','Réveil':'Au réveil','Avant de dormir':'Avant de dormir','Sortir / entrer à la maison':'En sortant ou en entrant chez soi','Mosquée':'En entrant ou en sortant de la mosquée','Toilettes':'En entrant ou en sortant des toilettes','Après les ablutions':'Après les ablutions','Colère':'Quand on est en colère','Tristesse et angoisse':'Quand on est triste ou angoissé','Malade':'Quand on est malade ou qu\'on visite un malade','Pluie':'Quand il pleut','Éternuement':'Quand quelqu\'un éternue','Matin et soir':'Le matin et le soir'};
+  const tous=CITADELLE.flatMap(x=>x.items.map(d=>(d.fr||'').trim()));
+  const th=CITADELLE.map(x=>({m:MOM[x.label.replace(/^[^A-Za-zÀ-ÿ]+/,'').trim()],items:x.items.filter(d=>d.fr&&d.src&&d.fr.trim().length>=20&&tous.filter(f=>f===d.fr.trim()).length===1&&!/^(Rappel|Conseil|À tout moment)/.test(d.quand||'')&&!/^(Allah! Point|Dis:|Gloire et louange)/.test(d.fr.trim()))})).filter(x=>x.m&&x.items.length);
+  th.forEach((t,i)=>t.items.forEach(d=>{ const faux=melanger(th.filter((x,j)=>j!==i).map(x=>x.m),r).slice(0,3); const f=d.fr.trim();
+    if(faux.length===3) out.push(['a','citadelle',`Quand dit-on cette invocation : « ${f.length>140?f.slice(0,138)+'…':f} » ?`,[t.m,...faux],d.src]); }));
   return out;
 }
 function quizPioche(niv,n,r){
