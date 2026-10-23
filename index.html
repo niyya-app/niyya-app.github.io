@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-095754'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-100624'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1807,7 +1807,7 @@ async function corpsRecent(tag,deja){
 }
 // Notification REÇUE (le service worker la garde) : si on ouvre / revient sur l'appli peu après, on l'affiche en entier.
 // Ne dépend pas du « toucher », que certains iPhone ne transmettent pas.
-const cibleDeTag=t=>/^priere-/.test(t)?t:['hadith','mindset','recap','soir'].includes(t)?t:'';
+const cibleDeTag=t=>/^priere-/.test(t)?t:['hadith','mindset','recap','soir','calendrier'].includes(t)?t:'';
 function recueVue(t){ try{ return +localStorage.getItem('nya_recue_vue')>=t; }catch(e){ return false; } }
 function marquerRecue(t){ try{ localStorage.setItem('nya_recue_vue',String(t)); }catch(e){} }
 async function lireRecue(){
@@ -1927,8 +1927,10 @@ function ouvrir(cible){
   try{ sessionStorage.setItem('nya_ouvrir',JSON.stringify({cible,corps:S.clicCorps||'',t:Date.now()})); }catch(e){}
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
   S.sel=today(); S.mindIdx=cible==='mindset'?(dayOfYear(today())*7)%MINDSET.length:null; S.hadIdx=null; // la notification de 10 h montre la phrase du matin
-  go(cible==='recap'?'bilan':'jour');
+  go(cible==='recap'?'bilan':cible==='calendrier'?'calendrier':'jour');
   if(/^priere-/.test(cible)){ const c0=S.clicCorps, k=cible; S.clicCorps=''; corpsRecent(k,c0).then(c=>versetPriere(k.slice(7),c)); }
+  else if(cible==='calendrier'){ const c0=S.clicCorps; S.clicCorps=''; corpsRecent('calendrier',c0).then(corps=>{ if(!corps) return;
+    openSheet(`<h2 style="margin:0 0 4px">📅 Calendrier islamique</h2><div style="margin-top:10px;font-weight:700;line-height:1.55;white-space:pre-line">${esc(corps)}</div><button class="btn pri mt" onclick="closeSheet()">Voir le calendrier</button>`); }); }
   else if(cible==='recap'){ const c0=S.clicCorps; S.clicCorps=''; corpsRecent('recap',c0).then(corps=>{ if(!corps) return; const L=corps.split('\n').filter(Boolean);
     openSheet(`<h2 style="margin:0 0 4px">📊 Ta semaine NIYYA</h2><div class="sub">Les 7 derniers jours</div>
       <div class="checks" style="margin-top:12px;gap:8px;font-size:1rem;font-weight:700">${L.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
@@ -3795,7 +3797,7 @@ function ramadanCarte(){
     <div class="src">📜 ${esc(SRC_RAMADAN[0])} — ${esc(SRC_RAMADAN[1])}</div>
   </div>`;
 }
-function hijriReglage(){ const v=+S.cfg.hijriDecal||0; return `<label class="f">Calendrier hégirien (Ramadan, jeûnes)</label><div class="opt">${[[-1,'−1 jour'],[0,'Calcul standard'],[1,'+1 jour']].map(([x,l])=>`<button class="${v===x?'on':''}" onclick="S.cfg.hijriDecal=${x};cfgTouch();render()">${l}</button>`).join('')}</div><p class="muted" style="font-size:.74rem;font-weight:600;margin-top:6px">Aujourd'hui : ${esc(hijri(today()))}. Décale d'un jour si ta mosquée annonce le début du mois un jour plus tôt ou plus tard.</p>`; }
+function hijriReglage(){ const v=+S.cfg.hijriDecal||0; return `<label class="f">Calendrier hégirien (Ramadan, jeûnes)</label><div class="opt">${[[-1,'−1 jour'],[0,'Calcul standard'],[1,'+1 jour']].map(([x,l])=>`<button class="${v===x?'on':''}" onclick="S.cfg.hijriDecal=${x};cfgTouch();pushMajParams();render()">${l}</button>`).join('')}</div><p class="muted" style="font-size:.74rem;font-weight:600;margin-top:6px">Aujourd'hui : ${esc(hijri(today()))}. Décale d'un jour si ta mosquée annonce le début du mois un jour plus tôt ou plus tard.</p>`; }
 function setJeune(v){ const d=J(); d.jeune=d.jeune===v?'':v; vib(); touch(); render(); if(d.jeune==='fait') toast('🌙 Qu\'Allah accepte ton jeûne'); }
 function juz(n){ const d=J(); d.juz=Math.max(0,(+d.juz||0)+n); vib(); touch(); render(); }
 function zakatFitr(){ const a=hijriParts(S.sel).a; S.cfg.zakatFitr=Object.assign({},S.cfg.zakatFitr); S.cfg.zakatFitr[a]=!S.cfg.zakatFitr[a]; cfgTouch(); render(); if(S.cfg.zakatFitr[a]) coeurVert('Qu\'Allah accepte ta zakat al-fitr'); }
@@ -3976,7 +3978,7 @@ function pushParams(){
   const L=(S.cfg&&S.cfg.lieu)||{};
   return { tz:lieuTz(), lat:L.lat??null, lon:L.lon??null, methode:(S.cfg.priere||{}).methode||'uoif', hsc:typeof isHsc==='function'?isHsc():true,
            prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0), ajust:(S.cfg.priere||{}).ajust||null, pause:dispEnCours()&&S.cfg.dispPauseAdhan!==false,
-           hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, recap:(S.cfg.notifOff||[]).indexOf('recap')<0, soir:(S.cfg.notifOff||[]).indexOf('soir')<0, url:'./' };
+           hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, recap:(S.cfg.notifOff||[]).indexOf('recap')<0, soir:(S.cfg.notifOff||[]).indexOf('soir')<0, calendrier:(S.cfg.notifOff||[]).indexOf('calendrier')<0, hdec:+S.cfg.hijriDecal||0, url:'./' };
 }
 async function pushRpc(fn,args){ let jwt=null; try{ const {data}=await sb.auth.getSession(); jwt=data&&data.session&&data.session.access_token; }catch(e){} const r=await fetch(PUSH_BASE+'/rest/v1/rpc/'+fn,{method:'POST',headers:Object.assign({apikey:PUSH_KEY,'Content-Type':'application/json'},jwt?{Authorization:'Bearer '+jwt}:{}),body:JSON.stringify(args)}); if(!r.ok) throw new Error(await r.text()); }
 async function pushEnvoyerAbo(sub){ await pushRpc('niyya_push_abonner',{p_sub:sub.toJSON(),p_params:pushParams()}); }
@@ -4012,7 +4014,7 @@ function notifPanel(){
     : e==='refus'?`<div class="coach" style="font-size:.84rem;font-weight:600">🔕 Les notifications ont été refusées. Pour les autoriser : <b>Réglages de l'iPhone → Notifications → NIYYA</b> (ou les réglages du site dans ton navigateur), puis reviens ici.</div>`
     : e==='actif'?`<p style="font-weight:800;color:var(--emerald-d)">✅ Activées : tu es prévenu à l'heure exacte de l'adhan.</p>
         <label class="f">Prières à notifier</label><div class="opt">${NOTIF_PRIERES.map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
-        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 10 h'],['recap','📊 Récap de la semaine · dim. 20 h'],['soir','🌙 Rappel à 21 h si rien coché']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
+        <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 10 h'],['recap','📊 Récap de la semaine · dim. 20 h'],['soir','🌙 Rappel à 21 h si rien coché'],['calendrier','📅 Dates islamiques · la veille à 20 h 30']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
         <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>
         <details class="mt" ontoggle="if(this.open&&!_dernierSW) lireDernierSW().then(()=>{ if(_dernierSW) render(); })"${_dernierSW?' open':''}><summary class="muted" style="font-size:.75rem;font-weight:700;cursor:pointer">🔧 Derniers clics sur une notification</summary><div class="muted" style="font-size:.7rem;font-family:ui-monospace,monospace;white-space:pre-wrap;margin-top:6px">Dernier toucher reçu par le téléphone : ${esc(_dernierSW||'aucun pour l\'instant')}
 ${esc(diagTexte().join('\n')||'(aucun clic traité par l\'appli)')}</div></details>`

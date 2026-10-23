@@ -98,6 +98,35 @@ async function quotidien() {
 }
 const RAPPELS = [["h", 8 * 60, "hadith"], ["m", 10 * 60, "mindset"]] as const;
 
+// 📅 Calendrier islamique : rappel la VEILLE à 20 h 30 (date hégirienne de demain, avec le décalage ±1 jour choisi dans l'appli)
+function hijriDe(jour: string, dec: number) {
+  const d = new Date(jour + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + dec);
+  try {
+    const p = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn", { day: "numeric", month: "numeric", timeZone: "UTC" }).formatToParts(d);
+    return { m: +(p.find((x) => x.type === "month")?.value || 0), j: +(p.find((x) => x.type === "day")?.value || 0) };
+  } catch { return { m: 0, j: 0 }; }
+}
+function rappelCalendrier(jour: string, dec: number): { title: string; body: string } | null {
+  const h = hijriDe(jour, 1 + dec), k = h.m + "-" + h.j;
+  const verif = "\nLa date peut varier d'un jour selon l'observation de la lune : vérifie l'annonce de ta mosquée.";
+  const R: Record<string, [string, string]> = {
+    "1-1": ["🌙 Demain : Nouvel an hégirien", "Début du mois sacré de Mouharram.\n« Le meilleur jeûne après le Ramadan est celui du mois d'Allah, al-Mouharram. » — Muslim n° 1163"],
+    "1-9": ["🤲 Demain : Tasouʿa (9 Mouharram)", "Jeûne recommandé demain, avant Achoura.\n« Si je suis encore en vie l'an prochain, je jeûnerai certainement le neuvième. » — Muslim n° 1134\nPense au sahour 🌙"],
+    "1-10": ["🤲 Demain : Achoura", "« J'espère d'Allah que le jeûne de Achoura efface les péchés de l'année passée. » — Muslim n° 1162\nPense au sahour 🌙"],
+    "9-1": ["🌙 Demain : début du Ramadan", "Ramadan Moubarak ! Qu'Allah nous fasse atteindre ce mois et l'accepte de nous." + verif],
+    "9-21": ["✨ Ce soir : les 10 dernières nuits", "« Cherchez la nuit du Destin dans les nuits impaires des dix dernières nuits du Ramadan. » — Al-Boukhari n° 2017"],
+    "10-1": ["🎉 Demain : Aïd al-Fitr", "Aïd Moubarak ! N'oublie pas la zakat al-fitr, à donner avant la prière de l'Aïd (Al-Boukhari n° 1503)." + verif],
+    "10-2": ["🤲 Dès demain : les 6 jours de Chawwal", "« Celui qui jeûne le Ramadan puis le fait suivre de six jours de Chawwal, c'est comme s'il avait jeûné toute l'année. » — Muslim n° 1164"],
+    "12-1": ["🕋 Demain : les 10 premiers jours de Dhou al-Hijja", "« Il n'y a pas de jours où les bonnes œuvres sont meilleures que celles de ces jours-ci. » — Al-Boukhari n° 969"],
+    "12-9": ["⛰️ Demain : jour de ʿArafat", "« J'espère d'Allah que le jeûne du jour de ʿArafat efface les péchés de l'année passée et de l'année à venir. » — Muslim n° 1162\nPense au sahour 🌙"],
+    "12-10": ["🐑 Demain : Aïd al-Adha", "Aïd Moubarak ! Qu'Allah accepte vos sacrifices et vos bonnes œuvres." + verif],
+  };
+  if (R[k]) return { title: R[k][0], body: R[k][1] };
+  // jours blancs (13, 14, 15) : sauf en Ramadan et en Dhou al-Hijja (le 13 est un jour de Tachrîq, sans jeûne)
+  if (h.j === 13 && h.m !== 9 && h.m !== 12) return { title: "⚪ Demain : début des jours blancs", body: "Jeûne recommandé les 13, 14 et 15 du mois hégirien.\n« Si tu jeûnes trois jours dans le mois, jeûne le 13, le 14 et le 15. » — At-Tirmidhi n° 761" };
+  return null;
+}
+
 // 📊 Récap de la semaine (dimanche 20 h) : calculé à partir des journées de l'utilisateur, envoyé à lui seul
 const decale = (jour: string, n: number) => { const d = new Date(jour + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 async function recap(uid: string, jour: string) {
@@ -193,6 +222,13 @@ Deno.serve(async (req) => {
           if (!count && await envoyer(row, { title: "🌙 Ta journée NIYYA", body: "Tu n'as encore rien coché aujourd'hui. 30 secondes pour tes prières et tes essentiels 🤲", tag: "soir", url: params.url || "./" })) { envoyes++; parType.soir++; }
         } catch (e) { console.error("soir", e); }
         await sb.from("niyya_push").update({ dernier_q: `${H.jour}|r` }).eq("endpoint", row.endpoint);
+      }
+      if (H.min === 20 * 60 + 30 && params.calendrier !== false && row.dernier_q !== `${H.jour}|c`) {
+        const c = rappelCalendrier(H.jour, Number(params.hdec) || 0);
+        if (c) {
+          if (await envoyer(row, { ...c, tag: "calendrier", url: params.url || "./" })) envoyes++;
+          await sb.from("niyya_push").update({ dernier_q: `${H.jour}|c` }).eq("endpoint", row.endpoint);
+        }
       }
       if (H.dimanche && H.min === 20 * 60 && params.recap !== false && row.user_id && row.dernier_q !== `${H.jour}|s`) {
         try {
