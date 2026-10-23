@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-094714'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-095039'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2503,6 +2503,7 @@ function vReglages(){
       ${S.email===ADMIN_EMAIL?`<details class="mt"><summary style="font-weight:800;font-size:.85rem;cursor:pointer">Importer depuis l'ancienne NIYYA (lien secret)</summary>
         <div class="row mt"><input class="inp" id="oldLien" placeholder="https://…niyya.html#k=…"><button class="btn green" onclick="importAncien()">Importer</button></div></details>`:''}
       <div class="row mt" style="flex-wrap:wrap"><button class="btn sm" onclick="deconnexion()">Se déconnecter</button><button class="btn sm" style="color:#be123c" onclick="supprimerCompte()">Supprimer mon compte et mes données</button></div>
+      <p class="muted" style="font-size:.78rem;font-weight:600;margin-top:10px">🔒 <a href="confidentialite.html" target="_blank" rel="noopener" style="color:var(--violet)">Politique de confidentialité</a> · contact : <a href="mailto:contact.nyya@gmail.com" style="color:var(--violet)">contact.nyya@gmail.com</a></p>
     </div>
   </div>
   ${statsPanel()}
@@ -2941,7 +2942,7 @@ function vOnb(){
         <div><label class="f">Cigarettes par jour</label><input class="inp" id="onbCig" type="number" min="1" value="${C.tabac.base}"></div>
         <div><label class="f">Prix du paquet (€)</label><input class="inp" id="onbPrix" type="number" step="0.1" value="${C.tabac.prix}"></div>
       </div>
-      <label class="consent"><input type="checkbox" id="onbOk"> <span>J'accepte que NIYYA enregistre mes données (pratique religieuse, santé, habitudes) <b>uniquement pour mon usage personnel</b>. Elles ne sont ni vendues ni partagées, et je peux supprimer mon compte à tout moment dans Réglages. Seul un comptage <b>anonyme</b> des onglets ouverts est fait pour améliorer l'appli.</span></label>
+      <label class="consent"><input type="checkbox" id="onbOk"> <span>J'accepte que NIYYA enregistre mes données (pratique religieuse, santé, habitudes) <b>uniquement pour mon usage personnel</b>. Elles ne sont ni vendues ni partagées, et je peux supprimer mon compte à tout moment dans Réglages. Seul un comptage <b>anonyme</b> des onglets ouverts est fait pour améliorer l'appli. <a href="confidentialite.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--violet);font-weight:700">Politique de confidentialité</a></span></label>
       <button class="btn pri" style="width:100%;margin-top:14px;padding:13px" onclick="finirOnb()">C'est parti, Bismillah 🚀</button>
     </div></div>`;
 }
