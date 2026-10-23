@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-082526'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-082936'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2204,7 +2204,8 @@ function vDin(){
   <div class="grid g2">
     <div class="panel">
       <h2><span class="ico">🕌</span>Mes prières<span class="cnt">${dispOf(S.sel)?'🌸':prayCount(S.sel)+'/5'}</span></h2>
-      ${dispOf(S.sel)?'<div class="coach" style="font-size:.82rem">🌸 Période de dispense : pas besoin de noter tes prières, tes points restent au maximum. <button class="btn sm" onclick="dispInfo()">En savoir plus</button></div>':''}
+      ${dispOf(S.sel)?'<div class="coach" style="font-size:.82rem">🌸 Période de dispense : pas besoin de noter tes prières, tes points restent au maximum. <button class="btn sm" onclick="dispInfo()">En savoir plus</button>'+(dispEnCours()&&S.sel===today()?' <button class="btn sm green" onclick="dispTerminer()">✓ Ma période est terminée</button>':'')+'</div>':''}
+      ${estFemme()&&!dispEnCours()&&S.sel>=addDays(today(),-7)?'<button class="btn" style="width:100%;margin-bottom:8px;background:#fdf2f8;color:#9d174d;border:1px solid #fbcfe8" onclick="dispCommencer()">🌸 Je suis en période de dispense</button>':''}
       <div class="sub">${isHsc()?'Mosquée An-Nour, Hérouville-Saint-Clair':esc(S.cfg.lieu.nom||'')+' · '+esc((METHODES[S.cfg.priere.methode]||METHODES.uoif).l)} · Chourouq ${hm(t[1])}</div>
       <button class="btn green" style="width:100%;margin-bottom:12px" onclick="openQibla()">🧭 Trouver la direction de la Qibla</button>
       ${PRAYERS.map(p=>`
