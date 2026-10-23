@@ -1,6 +1,6 @@
 // NIYYA — service worker : notifications (prières, rappels, annonces) + ouverture SANS RÉSEAU
-const CACHE = 'niyya-app-v1';
-const BASE = ['./', 'vendor/supabase.min.js', 'vendor/adhan.umd.min.js', 'manifest.json', 'niyya-icon-180.png', 'niyya-icon-512.png'];
+const CACHE = 'niyya-app-v2';
+const BASE = ['./', 'vendor/supabase.min.js', 'vendor/adhan.umd.min.js', 'manifest.json', 'niyya-logo-180.png', 'niyya-logo-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(BASE.map(u => c.add(u).catch(() => null)))).then(() => self.skipWaiting()));
@@ -53,7 +53,7 @@ self.addEventListener('push', e => {
   const recue = { tag: d.tag || '', title: d.title || 'NIYYA', body: d.body || '', t: Date.now(), essai: !!d.essai };
   e.waitUntil(Promise.all([
     self.registration.showNotification(d.title || 'NIYYA', {
-      body: d.body || '', icon: 'niyya-icon-180.png', badge: 'niyya-icon-180.png', tag: d.tag || 'niyya', renotify: true,
+      body: d.body || '', icon: 'niyya-logo-180.png', badge: 'niyya-logo-180.png', tag: d.tag || 'niyya', renotify: true,
       data: { url: d.url || './', tag: d.tag || '', body: d.body || '', essai: !!d.essai }
     }),
     caches.open('niyya-clic').then(async c => {
