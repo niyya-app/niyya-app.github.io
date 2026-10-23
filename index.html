@@ -428,7 +428,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-143728'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-171701'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3977,9 +3977,10 @@ async function pushAbonnement(){ try{ if(!('serviceWorker' in navigator)) return
    (inactif sur le web : NATIF est faux, rien ne change pour la version actuelle)
    ===================================================================== */
 const NATIF=!!(window.Capacitor&&typeof Capacitor.isNativePlatform==='function'&&Capacitor.isNativePlatform());
+const ANDROID=NATIF&&typeof Capacitor.getPlatform==='function'&&Capacitor.getPlatform()==='android';
 const LN=!NATIF?null:Capacitor.registerPlugin?Capacitor.registerPlugin('LocalNotifications'):(()=>{ // appli iPhone sans @capacitor/core : appel direct du module natif
   const P='LocalNotifications', call=m=>o=>Capacitor.nativePromise(P,m,o||{});
-  return { schedule:call('schedule'), getPending:call('getPending'), cancel:call('cancel'), checkPermissions:call('checkPermissions'), requestPermissions:call('requestPermissions'), addListener:(ev,cb)=>Capacitor.addListener(P,ev,cb) };
+  return { schedule:call('schedule'), getPending:call('getPending'), cancel:call('cancel'), checkPermissions:call('checkPermissions'), requestPermissions:call('requestPermissions'), createChannel:call('createChannel'), addListener:(ev,cb)=>Capacitor.addListener(P,ev,cb) };
 })();
 function dateTz(k,min,tz){ // jour k + minute « heure de la ville » → instant réel
   const [y,m,d]=k.split('-').map(Number); let ms=Date.UTC(y,m-1,d,0,0)+min*60e3;
@@ -4005,14 +4006,20 @@ function rappelCalendrierLocal(k){ // même contenu que le robot du serveur (vei
 let _quotLocal=null;
 async function quotLocal(){ if(_quotLocal) return _quotLocal; try{ _quotLocal=await (await fetch('https://niyya-app.github.io/quotidien.json?t='+today(),{cache:'no-cache'})).json(); }catch(e){ try{ _quotLocal=await (await fetch('quotidien.json')).json(); }catch(e2){ _quotLocal={}; } } return _quotLocal; }
 const idNotif=(k,slot)=>{ const [y,m,d]=k.split('-').map(Number); return ((y%100)*400+m*32+d)*20+slot; }; // identifiant stable par jour et par type
+let _canaux=false;
+async function canauxAndroid(){ if(!ANDROID||_canaux) return; _canaux=true; try{
+  await LN.createChannel({id:'adhan',name:'Adhan (heure de la prière)',description:'Adhan sonore à chaque prière',importance:5,visibility:1,sound:'adhan.wav',vibration:true});
+  await LN.createChannel({id:'bip',name:'Prière (son normal)',description:'Prière avec le son habituel',importance:5,visibility:1,vibration:true});
+  await LN.createChannel({id:'rappels',name:'Rappels NIYYA',description:'Hadith, mindset, calendrier, rappels',importance:3,visibility:1});
+}catch(e){ diagNotif('canaux : '+(e.message||e)); } }
 async function planifierLocal(){
   if(!LN||!S.cfg||!S.cfg.onb) return;
-  try{
+  try{ await canauxAndroid();
     const att=await LN.getPending(); if(att.notifications&&att.notifications.length) await LN.cancel({notifications:att.notifications.map(n=>({id:n.id}))});
     if(!S.cfg.notifOn) return;
     const tz=lieuTz(), off=S.cfg.notifOff||[], Q=await quotLocal(), maintenant=Date.now(), L=[];
     const sonDe=pk=>sonPriere(pk)==='adhan'?'adhan.caf':undefined; // sinon : bip normal du téléphone
-    const ajoute=(k,slot,min,title,body,tag,son)=>{ const at=dateTz(k,min,tz); if(at.getTime()>maintenant+30e3) L.push({id:idNotif(k,slot),title,body,schedule:{at,allowWhileIdle:true},sound:son,extra:{tag,corps:body}}); };
+    const ajoute=(k,slot,min,title,body,tag,son)=>{ const at=dateTz(k,min,tz); if(at.getTime()>maintenant+30e3) L.push({id:idNotif(k,slot),title,body,schedule:{at,allowWhileIdle:true},sound:son,channelId:/^priere-/.test(tag)?(son?'adhan':'bip'):'rappels',isExactNotification:!(ANDROID&&S.cfg.exactRefuse),smallIcon:'ic_stat_niyya',extra:{tag,corps:body}}); };
     for(let i=0;i<10;i++){
       const k=addDays(jourIn(tz),i), t=timesOf(k), q=Q[k]||{};
       if(!dispOf(k)||S.cfg.dispPauseAdhan===false) NOTIF_PRIERES.forEach(([pk,nom],j)=>{ if(off.includes(pk)) return; const p=PRAYERS.find(x=>x.k===pk), v=(q.v||[])[j];
@@ -4027,7 +4034,8 @@ async function planifierLocal(){
     L.sort((a,b)=>a.schedule.at-b.schedule.at);
     const garde=L.slice(0,63); // iPhone : 64 notifications programmées au maximum
     if(L.length>63){ const der=garde[garde.length-1].schedule.at; garde.push({id:1999999,title:'🔔 NIYYA',body:'Ouvre NIYYA pour continuer à recevoir l\'adhan des prochains jours.',schedule:{at:new Date(der.getTime()+60e3),allowWhileIdle:true},extra:{tag:'jour'}}); }
-    if(garde.length) await LN.schedule({notifications:garde});
+    if(garde.length){ const r=await LN.schedule({notifications:garde});
+      if(ANDROID&&r&&r.warning&&!S.cfg.exactRefuse){ S.cfg.exactRefuse=true; cfgTouch(); toast('⏰ Pour un adhan à la minute près : Réglages Android → Applis → NIYYA → « Alarmes et rappels » → autoriser',7000); } }
     diagNotif('programmées : '+garde.length);
   }catch(e){ diagNotif('programmation : '+(e.message||e)); }
 }
@@ -4036,8 +4044,8 @@ function choisirSon(pk,v){ S.cfg.adhanSons=Object.assign({},S.cfg.adhanSons,{[pk
 const jourRempli=k=>{ const d=S.jours[k]; return !!(d&&d.u); };
 let _planT=null; function planifierBientot(){ if(!LN) return; clearTimeout(_planT); _planT=setTimeout(planifierLocal,1500); }
 async function natifEtat(){ if(!LN) return 'non'; try{ const p=await LN.checkPermissions(); return p.display==='denied'?'refus':(p.display==='granted'&&S.cfg.notifOn?'actif':'inactif'); }catch(e){ return 'inactif'; } }
-async function natifActiver(){ try{ const p=await LN.requestPermissions(); if(p.display!=='granted'){ await pushMajEtat(); return toast('Notifications refusées : autorise-les dans Réglages → Notifications → NIYYA',4000); } S.cfg.notifOn=true; cfgTouch(); await planifierLocal(); await pushMajEtat(); render(); toast('🔔 Notifications activées'); }catch(e){ toast('Activation impossible : '+esc(e.message||e),5000); } }
-async function natifTest(){ try{ await LN.schedule({notifications:[{id:1999998,title:'🕌 Test de l\'adhan',body:"C'est l'heure de la prière. Qu'Allah l'accepte. 🤲",schedule:{at:new Date(Date.now()+5000)},sound:'adhan.caf',extra:{tag:'priere-dhuhr'}}]}); toast('📨 Test dans 5 secondes : verrouille ton téléphone pour l\'entendre',4000); }catch(e){ toast('Échec du test',3000); } }
+async function natifActiver(){ try{ const p=await LN.requestPermissions(); if(p.display!=='granted'){ await pushMajEtat(); return toast('Notifications refusées : autorise-les dans Réglages → Notifications → NIYYA',4000); } S.cfg.notifOn=true; S.cfg.exactRefuse=false; cfgTouch(); await planifierLocal(); await pushMajEtat(); render(); toast('🔔 Notifications activées'); }catch(e){ toast('Activation impossible : '+esc(e.message||e),5000); } }
+async function natifTest(){ try{ await LN.schedule({notifications:[{id:1999998,title:'🕌 Test de l\'adhan',body:"C'est l'heure de la prière. Qu'Allah l'accepte. 🤲",schedule:{at:new Date(Date.now()+5000),allowWhileIdle:true},sound:'adhan.caf',channelId:'adhan',smallIcon:'ic_stat_niyya',extra:{tag:'priere-dhuhr'}}]}); toast('📨 Test dans 5 secondes : verrouille ton téléphone pour l\'entendre',4000); }catch(e){ toast('Échec du test',3000); } }
 function natifBrancher(){
   if(!LN||natifBrancher.ok) return; natifBrancher.ok=true;
   LN.addListener('localNotificationActionPerformed',a=>{ const x=(a&&a.notification&&a.notification.extra)||{}; S.clicCorps=x.corps||''; const t=x.tag||'jour'; ouvrir(cibleDeTag(t)||'jour'); });
