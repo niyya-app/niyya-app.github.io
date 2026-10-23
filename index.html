@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-082936'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-083345'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1696,7 +1696,7 @@ function render(){
   const head=`
   <div class="top">
     <div class="brand"><div class="logo" style="font-family:'Amiri',serif;font-size:1.25rem;padding-bottom:4px">نية</div>
-      <div style="min-width:0"><h1>Salam <span>${esc(S.cfg.nom)}</span></h1><p><b style="color:var(--indigo);letter-spacing:.08em">NIYYA</b> · ${hijri(S.sel)}</p></div></div>
+      <div style="min-width:0"><h1>Salam <span>${esc(S.cfg.nom)}</span></h1><p><b style="color:var(--indigo);letter-spacing:.08em">NIYYA</b> · <span style="cursor:pointer;text-decoration:underline dotted" onclick="go('calendrier')">${hijri(S.sel)}</span></p></div></div>
     <div class="row" style="gap:8px;flex:none">${syncPill()}${true?'':`<button class="gearbtn ${S.view==='bilan'?'on':''}" onclick="go('bilan')" aria-label="Bilan" title="Bilan">📊</button><button class="gearbtn ${S.view==='reglages'?'on':''}" onclick="go('reglages')" aria-label="Réglages" title="Réglages">⚙️</button>`}</div>
   </div>
   ${['jour','din','tabac'].includes(S.view)?`
@@ -1706,7 +1706,7 @@ function render(){
     ${isT?'':`<button class="back" onclick="setDay(today())">Aujourd'hui</button>`}
     <button onclick="shiftDay(1)" ${isT?'disabled':''} aria-label="Jour suivant">›</button>
   </div>`:''}`;
-  const v={plus:vPlus,apprendre:vApprendre,jour:vJour,din:vDin,noms:vNoms,voyage:vCitadelleVoyage,citadelle:vCitadelle,coran:vCoran,qibla:vQibla,tabac:vTabac,bilan:vBilan,reglages:vReglages}[S.view]();
+  const v={plus:vPlus,calendrier:vCalendrier,apprendre:vApprendre,jour:vJour,din:vDin,noms:vNoms,voyage:vCitadelleVoyage,citadelle:vCitadelle,coran:vCoran,qibla:vQibla,tabac:vTabac,bilan:vBilan,reglages:vReglages}[S.view]();
   const alerte = S.sync==='invalid' ? `<div class="hero" style="background:linear-gradient(135deg,#ef4444,#be123c);margin-bottom:14px"><div class="h-lbl">⚠️ Ta session a expiré</div><div class="h-sub" style="margin:6px 0 10px">Tes saisies sont gardées sur cet appareil et seront envoyées dès que tu te reconnectes.</div><button class="btn" style="background:#fff;color:#be123c;border:none" onclick="deconnexion(true)">Me reconnecter</button></div>` : '';
   document.body.classList.toggle('ramadan',estRamadan(S.sel));
   if(S.view==='apprendre') setTimeout(apBrancher,30);
@@ -3524,11 +3524,77 @@ function apVerifier(){
   render(); setTimeout(apBrancher,50);
 }
 /* ---------- ☰ Plus : les rubriques moins fréquentes ---------- */
-const DANS_PLUS=['plus','apprendre','citadelle','voyage','tabac','bilan','reglages'];
+const DANS_PLUS=['plus','calendrier','apprendre','citadelle','voyage','tabac','bilan','reglages'];
 function vPlus(){
-  const T=[['bilan','📊','Bilan','Score, semaine, poids','k-violet'],['apprendre','✍️','Apprendre','L\'alphabet arabe','k-sky'],['citadelle','🛡️','Citadelle','Invocations du musulman','k-teal'],
+  const T=[['calendrier','📅','Calendrier','Mois hégiriens, dates clés','k-emerald'],['bilan','📊','Bilan','Score, semaine, poids','k-violet'],['apprendre','✍️','Apprendre','L\'alphabet arabe','k-sky'],['citadelle','🛡️','Citadelle','Invocations du musulman','k-teal'],
     ...(S.cfg.fumeur?[['tabac','🚭','Tabac','Mon programme','k-sunset']]:[]),['don','💚','Don','Soutenir NIYYA','k-emerald'],['inviter','💌','Inviter','Partager NIYYA','k-pink'],['reglages','⚙️','Réglages','Profil, rappels, essentiels','k-magenta']];
   return `<div class="panel"><h2><span class="ico">☰</span>Plus</h2><div class="tiles">${T.map(([k,i,t,st,g])=>`<button class="tile on ptile ${g}" onclick="${k==='don'?'ouvrirDons()':k==='inviter'?'inviter()':`go('${k}')`}"><span class="t-ico">${i}</span><b>${t}</b><small>${st}</small></button>`).join('')}</div></div>`;
+}
+// ===== Calendrier islamique (mois hégiriens + dates clés, sources vérifiées) =====
+const MOIS_H=[['Mouharram','مُحَرَّم'],['Safar','صَفَر'],['Rabîʿ al-awwal','رَبِيع الأَوَّل'],['Rabîʿ ath-thânî','رَبِيع الآخِر'],['Joumâdâ al-oûlâ','جُمَادَى الأُولَى'],['Joumâdâ al-âkhira','جُمَادَى الآخِرَة'],['Rajab','رَجَب'],['Chaʿbân','شَعْبَان'],['Ramadan','رَمَضَان'],['Chawwal','شَوَّال'],['Dhou al-Qiʿda','ذُو القَعْدَة'],['Dhou al-Hijja','ذُو الحِجَّة']];
+const EVT_H=[
+  [1,1,'🌙','Nouvel an hégirien','« Le meilleur jeûne après le Ramadan est celui du mois d’Allah, al-Mouharram. »','Muslim n° 1163, d’après Abou Hourayra'],
+  [1,9,'🤲','Tasouʿa (9 Mouharram)','« Si je suis encore en vie l’an prochain, je jeûnerai certainement le neuvième [jour]. »','Muslim n° 1134, d’après Ibn ʿAbbâs'],
+  [1,10,'🤲','Achoura (10 Mouharram)','« J’espère d’Allah que le jeûne de Achoura efface les péchés de l’année passée. »','Muslim n° 1162, d’après Abou Qatada'],
+  [8,1,'🌱','Mois de Chaʿbân','ʿÂ’icha a dit : « Je ne l’ai vu jeûner un mois entier qu’en Ramadan, et je ne l’ai vu jeûner dans aucun mois plus qu’en Chaʿbân. »','Al-Boukhari n° 1969, d’après ʿÂ’icha'],
+  [9,1,'🌙','Début du Ramadan','« Celui qui jeûne le Ramadan avec foi et en espérant la récompense, ses péchés passés lui sont pardonnés. »','Al-Boukhari n° 2014, d’après Abou Hourayra'],
+  [9,21,'✨','Les 10 dernières nuits','« Cherchez la nuit du Destin dans les nuits impaires des dix dernières nuits du Ramadan. »','Al-Boukhari n° 2017, d’après ʿÂ’icha'],
+  [10,1,'🎉','Aïd al-Fitr','Le Prophète ﷺ a prescrit la zakat al-fitr et a ordonné qu’elle soit donnée avant que les gens ne sortent pour la prière de l’Aïd.','Al-Boukhari n° 1503, d’après Ibn ʿOmar'],
+  [10,2,'🤲','6 jours de Chawwal','« Celui qui jeûne le Ramadan puis le fait suivre de six jours de Chawwal, c’est comme s’il avait jeûné toute l’année. »','Muslim n° 1164, d’après Abou Ayyoub'],
+  [12,1,'🕋','10 premiers jours de Dhou al-Hijja','« Il n’y a pas de jours où les bonnes œuvres sont meilleures que celles de ces jours-ci. »','Al-Boukhari n° 969, d’après Ibn ʿAbbâs'],
+  [12,9,'⛰️','Jour de ʿArafat','« J’espère d’Allah que le jeûne du jour de ʿArafat efface les péchés de l’année passée et de l’année à venir. »','Muslim n° 1162, d’après Abou Qatada'],
+  [12,10,'🐑','Aïd al-Adha','Le Prophète ﷺ a interdit de jeûner deux jours : le jour où l’on rompt le jeûne (Aïd al-Fitr) et le jour où l’on mange de son sacrifice (Aïd al-Adha).','Al-Boukhari n° 1990 et Muslim n° 1137, d’après ʿOmar']
+];
+function evtDuJour(k){ const h=hijriParts(k); return EVT_H.filter(e=>e[0]===h.m&&e[1]===h.j); }
+function joursMoisH(off){
+  let k=today(); k=addDays(k,-(hijriParts(k).j-1));
+  for(let i=0;i<Math.abs(off);i++){ k=off>0?addDays(k,32):addDays(k,-2); k=addDays(k,-(hijriParts(k).j-1)); }
+  const m=hijriParts(k).m, L=[]; while(hijriParts(k).m===m&&L.length<31){ L.push(k); k=addDays(k,1); } return L;
+}
+function prochainsEvts(){
+  const out=[], vu={}; let k=today();
+  for(let i=0;i<390;i++,k=addDays(k,1)){ for(const e of evtDuJour(k)){ const c=e[0]+'-'+e[1]; if(!vu[c]){ vu[c]=1; out.push([k,i,e]); } } }
+  return out;
+}
+const _fmtG=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+function vCalendrier(){
+  const off=S.calOff||0, L=joursMoisH(off), h0=hijriParts(L[0]), mois=MOIS_H[h0.m-1]||['',''], auj=today(), sel=S.calJour&&L.includes(S.calJour)?S.calJour:(L.includes(auj)?auj:null);
+  const g=k=>dateOf(k), gm=k=>g(k).toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
+  const vide=(g(L[0]).getDay()+6)%7;
+  const cell=k=>{ const h=hijriParts(k), ev=evtDuJour(k), blanc=h.j>=13&&h.j<=15, ram=h.m===9;
+    const bg=k===auj?'background:var(--indigo);color:#fff':ev.length?'background:#fef3c7':blanc?'background:#f1f5f9':ram?'background:color-mix(in srgb,var(--violet) 10%,var(--card))':'';
+    return `<button onclick="S.calJour='${k}';render()" style="border:${k===sel?'2px solid var(--indigo)':'1px solid var(--line,#e5e7eb)'};border-radius:10px;padding:4px 0;min-height:48px;font:inherit;cursor:pointer;color:inherit;background:var(--card);${bg}">
+      <div style="font-weight:800;font-size:1rem">${h.j}</div><div style="font-size:.62rem;opacity:.75;font-weight:700">${g(k).getDate()===1||k===L[0]?g(k).getDate()+' '+gm(k):g(k).getDate()}</div><div style="font-size:.7rem;line-height:1">${ev.length?ev[0][2]:blanc?'⚪':''}</div></button>`; };
+  const det=sel?(()=>{ const h=hijriParts(sel), ev=evtDuJour(sel), j=jeunesDuJour(sel);
+    return `<div class="coach mt" style="font-size:.85rem"><b>${h.j} ${esc(mois[0])} ${h.a} H</b> · ${esc(_fmtG.format(g(sel)))}
+      ${ev.map(e=>`<div style="margin-top:6px">${e[2]} <b>${esc(e[3])}</b></div>`).join('')}
+      ${j.interdit?`<div style="margin-top:6px">🚫 Jour de l’Aïd : pas de jeûne ce jour-là.</div>`:j.liste.length?`<div style="margin-top:6px">🤲 Jeûne recommandé : ${j.liste.map(x=>esc(x[0])).join(' · ')}</div>`:''}</div>`; })():'';
+  const P=prochainsEvts();
+  return `<div class="hero k-emerald">
+    <div class="h-lbl">📅 Calendrier islamique</div>
+    <div class="h-big" style="font-size:1.6rem">${esc(hijri(auj))}</div>
+    <div class="h-sub">${esc(_fmtG.format(g(auj)))}</div></div>
+  <div class="panel mt">
+    <div class="row" style="justify-content:space-between;align-items:center;gap:8px">
+      <button class="btn sm" onclick="S.calOff=(S.calOff||0)-1;S.calJour=null;render()">‹</button>
+      <div style="text-align:center"><b style="font-size:1.1rem">${esc(mois[0])} ${h0.a}</b><div style="font-family:'Amiri',serif;font-size:1.2rem">${mois[1]}</div>
+        <div class="muted" style="font-size:.72rem;font-weight:700">${g(L[0]).getDate()} ${gm(L[0])} → ${g(L[L.length-1]).getDate()} ${gm(L[L.length-1])} ${g(L[L.length-1]).getFullYear()}</div></div>
+      <button class="btn sm" onclick="S.calOff=(S.calOff||0)+1;S.calJour=null;render()">›</button></div>
+    ${off?`<div style="text-align:center;margin-top:6px"><button class="btn sm" onclick="S.calOff=0;S.calJour=null;render()">Revenir à aujourd’hui</button></div>`:''}
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;text-align:center">
+      ${['L','M','M','J','V','S','D'].map(x=>`<div class="muted" style="font-size:.7rem;font-weight:800">${x}</div>`).join('')}
+      ${'<div></div>'.repeat(vide)}${L.map(cell).join('')}</div>
+    <div class="muted" style="font-size:.7rem;font-weight:700;margin-top:8px">Gros chiffre = jour hégirien · petit = date habituelle · ⚪ jours blancs (13, 14, 15) · touche un jour pour le détail</div>
+    ${det}
+  </div>
+  <div class="panel mt"><h2><span class="ico">⭐</span>Prochaines dates</h2>
+    ${P.map(([k,n,e],i)=>`<div style="padding:10px 0;border-top:${i?'1px solid var(--line,#e5e7eb)':'none'};cursor:pointer" onclick="S.calEvt=S.calEvt===${i}?null:${i};render()">
+      <div class="row" style="justify-content:space-between;gap:8px;align-items:center"><div><b>${e[2]} ${esc(e[3])}</b><div class="muted" style="font-size:.76rem;font-weight:700">${esc(_fmtG.format(g(k)))}</div></div>
+      <span class="btn sm" style="white-space:nowrap">${n===0?'Aujourd’hui':n===1?'Demain':'J-'+n}</span></div>
+      ${S.calEvt===i?`<div class="coach" style="margin-top:8px;font-size:.84rem"><div style="font-weight:700">${esc(e[4])}</div><div class="muted" style="font-size:.72rem;font-weight:700;margin-top:4px">${esc(e[5])}</div></div>`:''}
+    </div>`).join('')}
+    <p class="muted" style="font-size:.72rem;font-weight:600;margin-top:10px">Dates calculées (calendrier Umm al-Qura) : elles peuvent varier d’un jour selon l’observation de la lune. Ta mosquée annonce un autre jour ? Décale d’un jour dans ⚙️ Réglages.</p>
+  </div>`;
 }
 function vCitadelle(){
   const T=themesCit(), i=citIdx(), th=T[i];
@@ -3891,7 +3957,7 @@ async function checkUpdate(){
 
 /* ---------- Autotest (utilisé avant chaque publication : page#autotest) ---------- */
 async function autotest(){
-  const err=[]; const vues=['jour','din','noms','coran','qibla','tabac','voyage','citadelle','bilan','reglages','apprendre'];
+  const err=[]; const vues=['jour','din','noms','coran','qibla','tabac','voyage','citadelle','bilan','reglages','apprendre','plus','calendrier'];
   const profils=[
     {nom:'Fumeur',onb:true,fumeur:true,tabac:{debut:addDays(today(),-10),base:20,prix:12,pas:2,premiereBase:'08:00',premierePas:15},lieu:{nom:'Caen',lat:49.18,lon:-0.37},priere:{methode:'uoif'}},
     {nom:'NonFumeur',onb:true,fumeur:false,travail:{debut:'09:00',fin:'18:00',mode:'aucun'},poidsBut:'prendre',poidsObj:70,lieu:{nom:'Lyon',lat:45.76,lon:4.83},priere:{methode:'mwl'}},
