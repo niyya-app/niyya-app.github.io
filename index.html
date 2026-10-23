@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-104048'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-104203'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3996,13 +3996,13 @@ async function planifierLocal(){
     const att=await LN.getPending(); if(att.notifications&&att.notifications.length) await LN.cancel({notifications:att.notifications.map(n=>({id:n.id}))});
     if(!S.cfg.notifOn) return;
     const tz=lieuTz(), off=S.cfg.notifOff||[], Q=await quotLocal(), maintenant=Date.now(), L=[];
-    const sonAdhan=(S.cfg.adhanSon||'adhan')==='adhan'?'adhan.caf':undefined;
+    const sonDe=pk=>sonPriere(pk)==='adhan'?'adhan.caf':undefined; // sinon : bip normal du téléphone
     const ajoute=(k,slot,min,title,body,tag,son)=>{ const at=dateTz(k,min,tz); if(at.getTime()>maintenant+30e3) L.push({id:idNotif(k,slot),title,body,schedule:{at,allowWhileIdle:true},sound:son,extra:{tag,corps:body}}); };
     for(let i=0;i<10;i++){
       const k=addDays(jourIn(tz),i), t=timesOf(k), q=Q[k]||{};
       if(!dispOf(k)||S.cfg.dispPauseAdhan===false) NOTIF_PRIERES.forEach(([pk,nom],j)=>{ if(off.includes(pk)) return; const p=PRAYERS.find(x=>x.k===pk), v=(q.v||[])[j];
         const vendredi=dateOf(k).getDay()===5&&pk==='dhuhr';
-        ajoute(k,j,t[p.i],`🕌 ${vendredi?'Joumouʿa':nom} — ${hm(t[p.i])}`,"C'est l'heure de la prière. Qu'Allah l'accepte. 🤲"+(v?`\n📖 « ${v[0]} » — ${v[1]}`:''),'priere-'+pk,sonAdhan); });
+        ajoute(k,j,t[p.i],`🕌 ${vendredi?'Joumouʿa':nom} — ${hm(t[p.i])}`,"C'est l'heure de la prière. Qu'Allah l'accepte. 🤲"+(v?`\n📖 « ${v[0]} » — ${v[1]}`:''),'priere-'+pk,sonDe(pk)); });
       if(!off.includes('hadith')&&q.h) ajoute(k,5,8*60,'📜 Hadith du jour',`« ${q.h[0]} »\n— ${q.h[1]}`,'hadith');
       if(!off.includes('mindset')&&q.m) ajoute(k,6,10*60,'💡 Mindset du jour',`« ${q.m[0]} »\n— ${q.m[1]}`,'mindset');
       if(!off.includes('calendrier')){ const c=rappelCalendrierLocal(k); if(c) ajoute(k,7,20*60+30,c[0],c[1],'calendrier'); }
@@ -4016,11 +4016,13 @@ async function planifierLocal(){
     diagNotif('programmées : '+garde.length);
   }catch(e){ diagNotif('programmation : '+(e.message||e)); }
 }
+const sonPriere=pk=>((S.cfg.adhanSons||{})[pk])||'adhan';
+function choisirSon(pk,v){ S.cfg.adhanSons=Object.assign({},S.cfg.adhanSons,{[pk]:v}); cfgTouch(); planifierBientot(); render(); }
 const jourRempli=k=>{ const d=S.jours[k]; return !!(d&&d.u); };
 let _planT=null; function planifierBientot(){ if(!LN) return; clearTimeout(_planT); _planT=setTimeout(planifierLocal,1500); }
 async function natifEtat(){ if(!LN) return 'non'; try{ const p=await LN.checkPermissions(); return p.display==='denied'?'refus':(p.display==='granted'&&S.cfg.notifOn?'actif':'inactif'); }catch(e){ return 'inactif'; } }
 async function natifActiver(){ try{ const p=await LN.requestPermissions(); if(p.display!=='granted'){ await pushMajEtat(); return toast('Notifications refusées : autorise-les dans Réglages → Notifications → NIYYA',4000); } S.cfg.notifOn=true; cfgTouch(); await planifierLocal(); await pushMajEtat(); render(); toast('🔔 Notifications activées'); }catch(e){ toast('Activation impossible : '+esc(e.message||e),5000); } }
-async function natifTest(){ try{ await LN.schedule({notifications:[{id:1999998,title:'🕌 Test de l\'adhan',body:"C'est l'heure de la prière. Qu'Allah l'accepte. 🤲",schedule:{at:new Date(Date.now()+5000)},sound:(S.cfg.adhanSon||'adhan')==='adhan'?'adhan.caf':undefined,extra:{tag:'priere-dhuhr'}}]}); toast('📨 Test dans 5 secondes : verrouille ton téléphone pour l\'entendre',4000); }catch(e){ toast('Échec du test',3000); } }
+async function natifTest(){ try{ await LN.schedule({notifications:[{id:1999998,title:'🕌 Test de l\'adhan',body:"C'est l'heure de la prière. Qu'Allah l'accepte. 🤲",schedule:{at:new Date(Date.now()+5000)},sound:'adhan.caf',extra:{tag:'priere-dhuhr'}}]}); toast('📨 Test dans 5 secondes : verrouille ton téléphone pour l\'entendre',4000); }catch(e){ toast('Échec du test',3000); } }
 function natifBrancher(){
   if(!LN||natifBrancher.ok) return; natifBrancher.ok=true;
   LN.addListener('localNotificationActionPerformed',a=>{ const x=(a&&a.notification&&a.notification.extra)||{}; S.clicCorps=x.corps||''; const t=x.tag||'jour'; ouvrir(cibleDeTag(t)||'jour'); });
@@ -4085,7 +4087,7 @@ function notifPanel(){
     : e==='actif'?`<p style="font-weight:800;color:var(--emerald-d)">✅ Activées : tu es prévenu à l'heure exacte de l'adhan.</p>
         <label class="f">Prières à notifier</label><div class="opt">${NOTIF_PRIERES.map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
         <label class="f">Rappels du jour</label><div class="opt">${[['hadith','📜 Hadith du jour · 8 h'],['mindset','💡 Phrase mindset · 10 h'],['recap','📊 Récap de la semaine · dim. 20 h'],['soir','🌙 Rappel à 21 h si rien coché'],['calendrier','📅 Dates islamiques · la veille à 20 h 30']].map(([k,l])=>`<button class="${off.includes(k)?'':'on'}" onclick="notifBascule('${k}')">${l}</button>`).join('')}</div>
-        ${NATIF?`<label class="f">Son de l'adhan</label><div class="opt">${[['adhan','🕌 Adhan (30 s)'],['defaut','🔔 Son normal']].map(([k,l])=>`<button class="${(S.cfg.adhanSon||'adhan')===k?'on':''}" onclick="S.cfg.adhanSon='${k}';cfgTouch();planifierBientot();render()">${l}</button>`).join('')}</div>`:''}
+        ${NATIF?`<label class="f">Son de chaque prière</label>${NOTIF_PRIERES.filter(([k])=>!off.includes(k)).map(([k,l])=>`<div class="row" style="justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px"><b style="min-width:70px">${l}</b><div class="opt" style="flex:1">${[['adhan','🕌 Adhan'],['bip','🔔 Bip']].map(([v,t])=>`<button class="${sonPriere(k)===v?'on':''}" onclick="choisirSon('${k}','${v}')">${t}</button>`).join('')}</div></div>`).join('')}<p class="muted" style="font-size:.74rem;font-weight:600">L'adhan dure 30 secondes (limite de l'iPhone). Le bouton test joue l'adhan.</p>`:''}
         <div class="row mt" style="flex-wrap:wrap"><button class="btn" onclick="testerNotif()">📨 Envoyer un test</button><button class="btn sm" onclick="desactiverNotifs()">Désactiver</button></div>
         <details class="mt" ontoggle="if(this.open&&!_dernierSW) lireDernierSW().then(()=>{ if(_dernierSW) render(); })"${_dernierSW?' open':''}><summary class="muted" style="font-size:.75rem;font-weight:700;cursor:pointer">🔧 Derniers clics sur une notification</summary><div class="muted" style="font-size:.7rem;font-family:ui-monospace,monospace;white-space:pre-wrap;margin-top:6px">Dernier toucher reçu par le téléphone : ${esc(_dernierSW||'aucun pour l\'instant')}
 ${esc(diagTexte().join('\n')||'(aucun clic traité par l\'appli)')}</div></details>`
