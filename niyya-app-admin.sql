@@ -85,8 +85,6 @@ begin
         'minutes', round(extract(epoch from now() - e.dernier_tick)/60), 'envoyes_jour', case when e.jour = aujourd then e.envoyes_jour else 0 end,
         'echecs_jour', case when e.jour = aujourd then e.echecs_jour else 0 end, 'derniere_erreur', e.derniere_erreur) from public.niyya_push_etat e where e.id = 1),
     'abonnes_notifs', (select count(*) from public.niyya_push where actif),
-    -- uniquement des totaux hommes / femmes (aucune autre information)
-    'genres', jsonb_build_object('h', (select count(*) from public.niyya_profils where data->>'genre'='h'), 'f', (select count(*) from public.niyya_profils where data->>'genre'='f')),
     'villes', coalesce((select jsonb_agg(jsonb_build_object('ville', v, 'nb', n) order by n desc) from (
         select regexp_replace(coalesce(p.data->'lieu'->>'nom','—'),'\s*\(\d+\)$','') v, count(*) n
         from public.niyya_profils p group by 1 order by 2 desc limit 15) t), '[]'::jsonb),
@@ -120,7 +118,7 @@ begin
   if coalesce(auth.jwt()->>'email','') <> 'hestia14000@gmail.com' then
     raise exception 'Réservé à l''administrateur' using errcode = '42501';
   end if;
-  return public.niyya_admin_data();
+  return public.niyya_admin_data() || jsonb_build_object('genres', jsonb_build_object('h', (select count(*) from public.niyya_profils where data->>'genre'='h'), 'f', (select count(*) from public.niyya_profils where data->>'genre'='f'))); -- totaux hommes / femmes uniquement
 end $$;
 
 -- 4) Accès par LIEN SECRET (#k=…) : seule l'empreinte SHA-256 de la clé est stockée, jamais la clé
@@ -136,7 +134,7 @@ begin
      or not exists (select 1 from public.niyya_admin_acces a where a.empreinte = encode(sha256(convert_to(p_cle,'UTF8')),'hex')) then
     raise exception 'Lien d''accès invalide' using errcode = '42501';
   end if;
-  return public.niyya_admin_data();
+  return public.niyya_admin_data() || jsonb_build_object('genres', jsonb_build_object('h', (select count(*) from public.niyya_profils where data->>'genre'='h'), 'f', (select count(*) from public.niyya_profils where data->>'genre'='f'))); -- totaux hommes / femmes uniquement
 end $$;
 
 revoke all on function public.niyya_admin_data() from public, anon, authenticated;
