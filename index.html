@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-093436'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-094714'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1751,22 +1751,25 @@ function demanderGenre(){
     <p class="muted" style="font-size:.74rem;margin-top:10px">Cette information reste dans ton compte. Tu pourras la changer dans ⚙️ Réglages.</p>`);
   return true;
 }
-async function proposerRappels(force){
-  const C=S.cfg; const e=await pushMajEtat(); if(e==='actif'||e==='non') return;
+function rappelSuite(){ const f=S._apresRappel; S._apresRappel=null; if(f) setTimeout(f,350); }
+async function proposerRappels(force,apres){
+  const C=S.cfg; S._apresRappel=apres||null; const e=await pushMajEtat(); if(e==='actif'||e==='non'){ rappelSuite(); return; }
+  const onb=!!apres, plusTard=onb?`<button onclick="closeSheet();rappelSuite()" style="all:unset;display:block;width:100%;text-align:center;margin-top:14px;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer">Plus tard</button>`:`<button class="btn mt" onclick="closeSheet();rappelSuite()">Plus tard</button>`;
   if(!force){ const p=C.rappelPropose||{n:0,d:''}; if(p.n>=3 || (p.d && addDays(p.d,3)>today())) return; C.rappelPropose={n:p.n+1,d:today()}; cfgTouch(); }
   const iphoneAInstaller = e==='ios';
-  openSheet(iphoneAInstaller?`<h2 style="margin:0 0 4px">📱 Installe NIYYA sur ton iPhone</h2>
+  openSheet(iphoneAInstaller?`${onb?'<div class="muted" style="font-size:.74rem;font-weight:800;letter-spacing:.06em">DERNIÈRE ÉTAPE</div>':''}<h2 style="margin:0 0 4px">📱 Installe NIYYA sur ton iPhone</h2>
       <div class="sub">C'est indispensable pour recevoir l'adhan et les rappels. 20 secondes :</div>
       <div class="checks" style="margin-top:12px;gap:10px;font-weight:600;line-height:1.45">
         <div><b>1.</b> En bas de Safari, touche le bouton <b>Partager</b> <span style="display:inline-block;border:1.5px solid currentColor;border-radius:6px;padding:0 6px">⬆️</span></div>
         <div><b>2.</b> Fais défiler et choisis <b>« Sur l'écran d'accueil »</b> ➕</div>
         <div><b>3.</b> Touche <b>Ajouter</b>, puis ouvre NIYYA <b>depuis la nouvelle icône</b>.</div>
-        <div><b>4.</b> L'appli te proposera alors d'activer les rappels 🔔</div>
+        <div><b>4.</b> ⚠️ Dans l'icône, <b>reconnecte-toi une fois</b> avec ton e-mail et ton mot de passe (l'icône et Safari sont séparés).</div>
+        <div><b>5.</b> Active alors les rappels 🔔 : c'est fait pour de bon.</div>
       </div>
       <p class="muted" style="font-size:.75rem;margin-top:10px">Tu es dans WhatsApp ou un autre appli ? Ouvre d'abord le lien dans <b>Safari</b> (bouton ⋯ → « Ouvrir dans Safari »).</p>
-      <button class="btn pri mt" onclick="closeSheet()">Compris</button>`
-    : e==='refus'?`<h2 style="margin:0 0 4px">🔕 Notifications bloquées</h2><div class="sub">Pour recevoir l'adhan : Réglages de ton téléphone → Notifications → NIYYA → Autoriser.</div><button class="btn mt" onclick="closeSheet()">OK</button>`
-    :`<h2 style="margin:0 0 4px">🔔 Active tes rappels</h2>
+      <button class="btn pri mt" onclick="closeSheet();rappelSuite()">Compris</button>`
+    : e==='refus'?`<h2 style="margin:0 0 4px">🔕 Notifications bloquées</h2><div class="sub">Pour recevoir l'adhan : Réglages de ton téléphone → Notifications → NIYYA → Autoriser.</div><button class="btn mt" onclick="closeSheet();rappelSuite()">OK</button>`
+    :`${onb?'<div class="muted" style="font-size:.74rem;font-weight:800;letter-spacing:.06em">DERNIÈRE ÉTAPE</div>':''}<h2 style="margin:0 0 4px">🔔 Active tes rappels</h2>
       <div class="sub">Chaque jour, à l'heure exacte :</div>
       <div class="checks" style="margin-top:10px;gap:6px;font-weight:600">
         <div>🕌 L'adhan de chaque prière, avec un verset du Coran</div>
@@ -1774,7 +1777,7 @@ async function proposerRappels(force){
         <div>📊 Ton récap de la semaine le dimanche soir</div>
       </div>
       <p class="muted" style="font-size:.75rem;margin-top:8px">Tu choisis ensuite ce que tu veux garder dans ⚙️ → 🔔.</p>
-      <button class="btn pri mt" onclick="closeSheet();activerNotifs()">🔔 Activer les rappels</button><button class="btn mt" onclick="closeSheet()">Plus tard</button>`);
+      <button class="btn pri mt" onclick="closeSheet();activerNotifs().then(rappelSuite)">🔔 Activer les rappels</button>${plusTard}`);
 }
 async function inviter(){
   const url='https://niyya-app.github.io/'+(S.uid?'?p='+S.uid.slice(0,8):''), texte=`Salam ! J'utilise NIYYA pour mes prières, le Coran et mes bonnes habitudes. C'est gratuit, sans pub, et chacun garde ses données pour lui. Essaie : ${url}`;
@@ -2073,7 +2076,7 @@ function vJour(){
       <label class="f">Ce que je peux améliorer demain</label>
       <textarea rows="2" oninput="setTxt('ameliorer',this.value)" placeholder="Ex. Ne pas fumer avant le sport">${esc(d.ameliorer)}</textarea>`:''}
     </div>`;
-  return `
+  return `${bandeauNotif()}
   <div class="grid g2">
     ${!S.scoreOpen?`<button onclick="S.scoreOpen=true;render()" style="all:unset;box-sizing:border-box;display:block;cursor:pointer;width:100%" aria-label="Voir mon score du jour"><div class="hero k-violet" style="margin:0">
       <div class="row" style="justify-content:space-between;align-items:center;gap:10px"><div><div class="h-lbl">⭐ Score du jour</div><div class="h-sub" style="font-size:.9rem;margin-top:4px">Touche pour voir ton score</div></div><span style="font-size:1.4rem;font-weight:800">▾</span></div>
@@ -2756,6 +2759,7 @@ function vAuth(){
       <button class="btn pri" id="authBtn" type="submit">${titre}</button>
       </form>
       ${st==='login'?`<button class="btn" onclick="S.authEmail=document.getElementById('authEmail').value;S.authStep='reset';render()">Mot de passe oublié ?</button>`:''}
+      ${estIOS()&&!estInstallee()?`<div class="coach" style="font-size:.8rem;font-weight:600;margin-top:12px;line-height:1.5">📱 <b>Sur iPhone, installe d'abord NIYYA</b> pour recevoir l'adhan : bouton Partager ⬆️ → « Sur l'écran d'accueil », puis crée ton compte depuis l'icône.</div>`:''}
       <p class="muted" style="font-size:.78rem;font-weight:600;margin-top:12px">💡 Sur iPhone, accepte d'enregistrer le mot de passe dans le trousseau : tu n'auras plus jamais à le retaper.</p>`
     : st==='reset'?`
       <p style="font-weight:700;font-size:.9rem">Indique ton e-mail : tu recevras un lien pour choisir un nouveau mot de passe.</p>
@@ -2954,7 +2958,7 @@ function finirOnb(){
   if(C.fumeur){ C.tabac.base=Math.max(1,Math.round(num('onbCig')??20)); C.tabac.prix=num('onbPrix')??12.5; C.tabac.debut=today();
     C.tabac.pas=Math.max(1,Math.round(C.tabac.base/10)); }
   try{ const pr=localStorage.getItem('nya_parrain'); if(pr && !C.parrain && pr!==String(S.uid||'').slice(0,8)) C.parrain=pr; }catch(e){}
-  C.consent=new Date().toISOString(); C.onb=true; cfgTouch(); S.view='jour'; render(); window.scrollTo({top:0}); setTimeout(()=>essChoisir(null,true),500);
+  C.consent=new Date().toISOString(); C.onb=true; cfgTouch(); S.view='jour'; render(); window.scrollTo({top:0}); setTimeout(()=>proposerRappels(true,()=>essChoisir(null,true)),500); // étape notifications (la plus importante pour revenir), puis les essentiels
   toast(`Bienvenue ${esc(nom)} 🌙`,2600);
 }
 
@@ -3941,13 +3945,18 @@ const estInstallee=()=>(window.matchMedia&&matchMedia('(display-mode: standalone
 function b64uVersOctets(s){ const p='='.repeat((4-s.length%4)%4), b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from([...b].map(c=>c.charCodeAt(0))); }
 async function swEnregistrer(){ try{ if('serviceWorker' in navigator) await navigator.serviceWorker.register(SW_PATH); }catch(e){} }
 async function pushAbonnement(){ try{ if(!('serviceWorker' in navigator)) return null; const r=await navigator.serviceWorker.getRegistration(); return r&&r.pushManager?await r.pushManager.getSubscription():null; }catch(e){ return null; } }
+function bandeauNotif(){
+  const e=S.pushEtat; if(!S.cfg.onb||S.sel!==today()||(e!=='inactif'&&e!=='ios')) return '';
+  return `<button onclick="proposerRappels(true)" style="all:unset;box-sizing:border-box;display:flex;gap:10px;align-items:center;width:100%;cursor:pointer;margin-bottom:12px;padding:12px 14px;border-radius:16px;background:#fff7ed;border:1.5px solid #fdba74;color:#7c2d12">
+    <span style="font-size:1.5rem">${e==='ios'?'📱':'🔔'}</span><span style="flex:1;font-weight:700;font-size:.88rem;line-height:1.35">${e==='ios'?'Installe NIYYA sur ton écran d\'accueil pour recevoir l\'adhan':'Active l\'adhan et tes rappels : tu ne rateras plus une prière'}</span><span style="font-weight:800">›</span></button>`;
+}
 async function pushMajEtat(){
   let e;
   if(estIOS()&&!estInstallee()) e='ios';
   else if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)) e='non';
   else if(Notification.permission==='denied') e='refus';
   else e=(await pushAbonnement())?'actif':'inactif';
-  if(e!==S.pushEtat){ S.pushEtat=e; if(S.view==='reglages') render(); }
+  if(e!==S.pushEtat){ S.pushEtat=e; if((S.view==='reglages'||S.view==='jour')&&!document.activeElement?.matches('input,textarea')) render(); }
   return e;
 }
 function pushParams(){
