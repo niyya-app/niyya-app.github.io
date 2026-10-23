@@ -127,6 +127,7 @@ function vDash(){
     <div class="kpi k4"><span>📅 Actifs 7 jours</span><b>${D.actifs_7j}</b><small>${D.actifs_30j} sur 30 jours</small></div>
     <div class="kpi k5"><span>📱 Ouvertures depuis l'icône</span><b>${appli30}</b><small>30 j · ${web30} depuis le navigateur</small></div>
     <div class="kpi k6"><span>👆 Clics sur les onglets</span><b>${clics30}</b><small>sur 30 jours</small></div>
+    <div class="kpi k1"><span>👨 Hommes · 👩 Femmes</span><b>${(D.genres||{}).h??0} · ${(D.genres||{}).f??0}</b><small>${Math.max(0,(D.comptes||0)-((D.genres||{}).h||0)-((D.genres||{}).f||0))} sans réponse</small></div>
   </div>
   ${(()=>{ const U=D.utilisateurs||[], n=U.length||1, R=D.robot;
     const etapes=[['👤 Inscrits',U.length],['✅ Questionnaire fini',U.filter(u=>u.questionnaire).length],['📝 1re journée remplie',U.filter(u=>u.jours>0).length],['🔔 Notifications activées',U.filter(u=>u.notifs).length],['📱 Installée sur l\'écran d\'accueil',U.filter(u=>u.icone).length]];

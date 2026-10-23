@@ -85,6 +85,8 @@ begin
         'minutes', round(extract(epoch from now() - e.dernier_tick)/60), 'envoyes_jour', case when e.jour = aujourd then e.envoyes_jour else 0 end,
         'echecs_jour', case when e.jour = aujourd then e.echecs_jour else 0 end, 'derniere_erreur', e.derniere_erreur) from public.niyya_push_etat e where e.id = 1),
     'abonnes_notifs', (select count(*) from public.niyya_push where actif),
+    -- uniquement des totaux hommes / femmes (aucune autre information)
+    'genres', jsonb_build_object('h', (select count(*) from public.niyya_profils where data->>'genre'='h'), 'f', (select count(*) from public.niyya_profils where data->>'genre'='f')),
     'villes', coalesce((select jsonb_agg(jsonb_build_object('ville', v, 'nb', n) order by n desc) from (
         select regexp_replace(coalesce(p.data->'lieu'->>'nom','—'),'\s*\(\d+\)$','') v, count(*) n
         from public.niyya_profils p group by 1 order by 2 desc limit 15) t), '[]'::jsonb),
