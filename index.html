@@ -416,7 +416,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-091722'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261023-091807'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3559,7 +3559,7 @@ function quizDuJour(){ const k=today(); return quizPioche('m',5,rngDe(parseInt(k
 function quizLancer(mode){
   if(mode==='jour'){ const d=J(today()); if(d.quiz&&d.quiz.fin){ S.qz={mode:'jour',L:quizDuJour(),i:0,j:[{nom:'Moi',pts:0}],tour:0,revoir:true}; } else S.qz={mode:'jour',L:quizDuJour(),i:0,j:[{nom:'Moi',pts:0}],tour:0}; }
   else { const C=S.cfg.quizFam||{}; const noms=(C.noms||[]).filter(x=>x.trim()); if(noms.length<1){ toast('Ajoute au moins un joueur'); return; }
-    const parJ=+C.n||5; S.qz={mode:'fam',L:quizPioche(C.niv||'m',parJ*noms.length,rngDe(Date.now())),i:0,j:noms.map(x=>({nom:x.trim(),pts:0})),tour:0}; }
+    const parJ=[1,3,5].includes(+C.n)?+C.n:5; S.qz={mode:'fam',L:quizPioche(C.niv||'m',parJ*noms.length,rngDe(Date.now())),i:0,j:noms.map(x=>({nom:x.trim(),pts:0})),tour:0}; }
   S.qz.rep=null; render(); window.scrollTo({top:0});
 }
 function quizRepondre(x){
@@ -3594,7 +3594,7 @@ function vQuiz(){
       <div class="h-sub">${z.mode==='jour'?'Reviens demain pour 5 nouvelles questions in châ\' Allâh':'Qu\'Allah vous bénisse et augmente votre science'}</div></div>
     <div class="panel mt">${z.mode==='fam'?cl.map((p,i)=>`<div class="row" style="justify-content:space-between;padding:10px 0;border-top:${i?'1px solid var(--line,#e5e7eb)':'none'}"><b>${i===0&&p.pts>0?'🏆 ':''}${esc(p.nom)}</b><b>${p.pts}/${parJ}</b></div>`).join(''):`<p style="margin:0;font-weight:700">${z.revoir?'':'📖 Ton quiz compte comme une bonne action aujourd\'hui : « J\'ai appris quelque chose sur ma religion ».'}</p>`}
       <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${z.mode==='fam'?`<button class="btn green" onclick="quizLancer('fam')">🔁 Rejouer</button>`:''}<button class="btn" onclick="S.qz=null;render()">Retour au quiz</button></div></div>`; }
-  const d=J(today()), fait=d.quiz&&d.quiz.fin, C=Object.assign({noms:['',''],niv:'m',n:5},S.cfg.quizFam);
+  const d=J(today()), fait=d.quiz&&d.quiz.fin, C=Object.assign({noms:['',''],niv:'m',n:5},S.cfg.quizFam); if(![1,3,5].includes(+C.n)) C.n=5;
   return `<div class="hero k-violet"><div class="h-lbl">🎯 Quiz</div><div class="h-big" style="font-size:1.6rem">Teste ta science</div>
     <div class="h-sub">Questions sur le Coran, les prophètes, la vie du Prophète ﷺ… chaque réponse donne sa source.</div></div>
   <div class="panel mt"><h2><span class="ico">🎯</span>Quiz du jour</h2>
@@ -3606,7 +3606,7 @@ function vQuiz(){
     ${C.noms.map((x,i)=>`<div class="row" style="gap:6px;margin-bottom:6px"><input class="inp" style="flex:1" placeholder="Prénom ${i+1}" value="${esc(x)}" oninput="quizFamMaj('nom',[${i},this.value])">${C.noms.length>1?`<button class="btn sm" onclick="quizFamMaj('moins',${i})">✕</button>`:''}</div>`).join('')}
     ${C.noms.length<8?`<button class="btn sm" onclick="quizFamMaj('plus')">+ Ajouter un joueur</button>`:''}
     <label class="f" style="margin-top:12px">Niveau</label><div class="opt">${[['e','🧒 Enfants'],['a','🧔 Adultes'],['m','Mélange']].map(([k,l])=>`<button class="${C.niv===k?'on':''}" onclick="quizFamMaj('niv','${k}')">${l}</button>`).join('')}</div>
-    <label class="f" style="margin-top:12px">Questions par joueur</label><div class="opt">${[3,5,10].map(n=>`<button class="${+C.n===n?'on':''}" onclick="quizFamMaj('n',${n})">${n}</button>`).join('')}</div>
+    <label class="f" style="margin-top:12px">Questions par joueur</label><div class="opt">${[1,3,5].map(n=>`<button class="${+C.n===n?'on':''}" onclick="quizFamMaj('n',${n})">${n}</button>`).join('')}</div>
     <button class="btn green" style="width:100%;margin-top:14px" onclick="quizLancer('fam')">▶ Lancer la partie</button></div>
   <p class="muted" style="font-size:.72rem;font-weight:600;margin-top:12px">${QUIZ_Q.length} questions écrites et vérifiées (Coran trad. Hamidullah, Al-Boukhari, Muslim) + questions sur les 99 noms et la Citadelle. Les sujets où les savants divergent sont volontairement évités.</p>`;
 }
