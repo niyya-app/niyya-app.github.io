@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-100334'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-101257'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2028,7 +2028,7 @@ function heroPriere(){
   const minis=PRAYERS.map(p=>{
     const st=d.p[p.k]; const cls=st==='heure'||st==='mosquee'?'done':st==='retard'?'late':st==='manquee'?'miss':'';
     return `<button class="pmini ${cls} ${np&&np.p.k===p.k&&np.k===S.sel?'next':''}" onclick="cyclePrayer('${p.k}')">${p.n}<small>${hm(t[p.i])}</small></button>`;}).join('');
-  const essai=S.email===ADMIN_EMAIL; // essai : choix de la couleur de la carte (compte admin seulement)
+  const essai=true; // choix de la couleur de la carte (blanc par défaut)
   const coul=essai?(S.cfg.heroCouleur||'blanc'):'k-emerald', blanc=coul==='blanc';
   const palette=essai&&S.paletteOuverte?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:'';
   return `<div class="hero ${blanc?'k-emerald blanc':coul}">
@@ -2209,7 +2209,7 @@ function vJour(){
       ${!d.sport?`<button class="btn sm mt" onclick="toggle('repos')">${d.repos?'✓ Jour de repos sportif':'😴 Marquer jour de repos'}</button>`:''}`:''}
     </div>
   </div>
-  ${S.email===ADMIN_EMAIL?deuxDeroul:''}
+  ${deuxDeroul}
   <div class="grid g2 mt">
     <div class="panel">
       <button onclick="deroul('prio')" style="all:unset;display:block;width:100%;cursor:pointer">
@@ -2249,7 +2249,6 @@ function vJour(){
     </div>
   </div>
   <div class="grid g2 mt">
-    ${S.email===ADMIN_EMAIL?'':sunnahCarte}
     ${hr>=17||S.sel!==today()?soir:!S.ouv.jt?`<div class="panel"><button onclick="deroul('jt')" style="all:unset;display:block;width:100%;cursor:pointer"><h2><span class="ico">🗓️</span>Ma journée type<span class="cnt">▾</span></h2><div class="sub" style="margin-bottom:2px">Prochaine étape : ${esc(nextPrayer().p.n)} à ${hm(nextPrayer().at%1440)} · touche pour ouvrir</div></button></div>`:`<div class="panel">${true?`<button onclick="deroul('jt')" style="all:unset;float:right;cursor:pointer;font-weight:800" aria-label="Replier">▴</button>`:''}<h2><span class="ico">🗓️</span>Ma journée type</h2>
       <div class="kv"><span>Fajr · adhkar · Coran</span><b>${hm(timesOf(S.sel)[0])}</b></div>
       <div class="kv"><span>Sport · préparation</span><b>matin</b></div>
@@ -2258,7 +2257,6 @@ function vJour(){
       ${travailMode()==='fixe'?`<div class="kv"><span>Fin de journée pro</span><b>${esc(S.cfg.travail.fin)}</b></div>`:''}
       <div class="kv"><span>Famille · Maghrib · Isha · bilan</span><b>${hm(timesOf(S.sel)[4])} · ${hm(timesOf(S.sel)[5])}</b></div></div>`}
   </div>
-  ${S.email===ADMIN_EMAIL?'':aimeCarte}
   ${hr>=17||S.sel!==today()?'':`<div class="mt">${soir}</div>`}
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
