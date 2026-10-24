@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-105402'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-105619'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3943,17 +3943,20 @@ function jeunePanel(){
   const dem=jeunesDuJour(addDays(k,1));
   let prochain=''; if(!J0.liste.length){ for(let i=1;i<=10;i++){ const x=jeunesDuJour(addDays(k,i)); if(x.liste.length){ prochain=`${fmtLong(addDays(k,i))} : ${x.liste[0][0]}`; break; } } }
   const qa=qadaRestant();
+  const ouv=S.ouv.jeune, resume=J0.interdit?'🎉 '+J0.interdit+' : on ne jeûne pas':d.jeuneNafl?'✓ Jeûné aujourd\'hui · touche pour relire':J0.liste.length?'Recommandé aujourd\'hui : '+esc(J0.liste.map(x=>x[0]).join(', ')):dem.liste.length?'🌙 Demain : '+esc(dem.liste.map(x=>x[0]).join(', ')):'Touche pour ouvrir';
   return `<div class="panel mt">
-    <h2><span class="ico">🍽️</span>Jeûne surérogatoire</h2>
-    ${J0.interdit?`<div class="coach">🎉 Aujourd'hui c'est l'<b>${J0.interdit}</b> : jour de fête, on ne jeûne pas.<div style="font-size:.74rem;color:var(--muted);margin-top:6px">📜 Le Prophète ﷺ a interdit de jeûner les deux jours de l'Aïd. <span class="tag">Al-Boukhari n° 1991, d'après Abou Saʿid</span></div></div>`
+    <button onclick="deroul('jeune')" style="all:unset;display:block;width:100%;cursor:pointer">
+    <h2><span class="ico">🍽️</span>Jeûne surérogatoire<span class="cnt">${d.jeuneNafl?'✓ ':''}<span style="display:inline-block;transition:.2s;transform:rotate(${ouv?180:0}deg)">▾</span></span></h2>
+    ${ouv?'':`<div class="sub" style="margin-bottom:2px">${resume}</div>`}</button>
+    ${!ouv?'':J0.interdit?`<div class="coach">🎉 Aujourd'hui c'est l'<b>${J0.interdit}</b> : jour de fête, on ne jeûne pas.<div style="font-size:.74rem;color:var(--muted);margin-top:6px">📜 Le Prophète ﷺ a interdit de jeûner les deux jours de l'Aïd. <span class="tag">Al-Boukhari n° 1991, d'après Abou Saʿid</span></div></div>`
     : J0.liste.length?`<div class="sub">Aujourd'hui, le jeûne est recommandé :</div>${J0.liste.map(x=>`<div class="coach" style="margin-top:8px;background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0"><b>${esc(x[0])}</b><div style="font-size:.76rem;color:var(--muted);font-weight:600;margin-top:4px">📜 ${esc(x[1])} <span class="tag">${esc(x[2])}</span></div></div>`).join('')}
       <button class="ck ${d.jeuneNafl?'on':''} mt" onclick="toggle('jeuneNafl')"><span class="box"></span>J'ai jeûné aujourd'hui <span class="tag" style="margin-left:auto">+10 points</span></button>`
     : `<div class="sub">Pas de jeûne recommandé particulier aujourd'hui.${prochain?' Prochain : <b>'+esc(prochain)+'</b>.':''} Tu peux quand même jeûner et le noter.</div>
       <button class="ck ${d.jeuneNafl?'on':''} mt" onclick="toggle('jeuneNafl')"><span class="box"></span>J'ai jeûné aujourd'hui <span class="tag" style="margin-left:auto">+10 points</span></button>`}
-    ${!J0.interdit?`<div class="kv mt"><span>Jeûnes surérogatoires ce mois-ci</span><b>${jeunesMois(k)}</b></div>`:''}
-    ${hadithJeune()}
-    ${dem.liste.length&&!J0.interdit?`<p style="font-size:.8rem;font-weight:700;margin-top:10px">🌙 Demain : jeûne recommandé (${esc(dem.liste.map(x=>x[0]).join(', '))}). Pense au suhur !</p>`:''}
-    ${qa?`<div class="row mt" style="flex-wrap:wrap"><span style="font-weight:800;font-size:.86rem">🌙 Jeûnes de Ramadan à rattraper : ${qa}</span><span class="sp"></span><button class="btn sm" onclick="qadaFait()">+1 jour rattrapé</button></div>`:''}
+    ${ouv&&!J0.interdit?`<div class="kv mt"><span>Jeûnes surérogatoires ce mois-ci</span><b>${jeunesMois(k)}</b></div>`:''}
+    ${ouv?hadithJeune():''}
+    ${ouv&&dem.liste.length&&!J0.interdit?`<p style="font-size:.8rem;font-weight:700;margin-top:10px">🌙 Demain : jeûne recommandé (${esc(dem.liste.map(x=>x[0]).join(', '))}). Pense au suhur !</p>`:''}
+    ${ouv&&qa?`<div class="row mt" style="flex-wrap:wrap"><span style="font-weight:800;font-size:.86rem">🌙 Jeûnes de Ramadan à rattraper : ${qa}</span><span class="sp"></span><button class="btn sm" onclick="qadaFait()">+1 jour rattrapé</button></div>`:''}
   </div>`;
 }
 
