@@ -70,8 +70,8 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 /* ---------- Entête ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
-.hpal-btn{right:104px!important}
-.hpal{display:flex;gap:8px;flex-wrap:wrap;margin:36px 0 12px;padding:10px;border-radius:16px;background:rgba(255,255,255,.22)}
+.hpal-bas{display:flex;justify-content:flex-end;margin-top:10px}.hpal-btn{border:none;background:rgba(255,255,255,.2);color:inherit;border-radius:100px;padding:5px 11px;font-weight:800;font-size:.72rem;cursor:pointer}.hero.blanc .hpal-btn{background:var(--card2,#f1f5f9);color:var(--muted)}
+.hpal{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0 0;padding:10px;border-radius:16px;background:rgba(255,255,255,.22)}
 .hero.blanc .hpal{background:var(--card2,#f1f5f9)}
 .hpal-pt{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.18)}
 .hpal-pt.blanc{background:#fff;border-color:#cbd5e1}
@@ -443,7 +443,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-093545'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-093722'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2003,9 +2003,7 @@ function heroPriere(){
   const coul=essai?(S.cfg.heroCouleur||'blanc'):'k-emerald', blanc=coul==='blanc';
   const palette=essai&&S.paletteOuverte?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:'';
   return `<div class="hero ${blanc?'k-emerald blanc':coul}">
-    ${essai?`<button class="qbtn hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()" aria-label="Changer la couleur">🎨</button>`:''}
     <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
-    ${palette}
     <div class="h-lbl" style="padding-right:80px">🕌 ${isT?'Prochaine prière':'Prières du jour'} · ${esc(lieuNom())}</div>
     ${isT?`<div class="h-big tnum"><span id="npName">${np.p.n}</span> <span id="npCount" style="font-size:1.25rem;font-weight:700;opacity:.95"></span></div>
     <div class="h-sub">Adhan ${hm(np.at%1440)}${iqamaDe(np.p.k)!=null?` · Iqama ${hm((np.at+iqamaDe(np.p.k))%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${JUMUA.join(' / ')}`:''}</div>`
@@ -2013,7 +2011,7 @@ function heroPriere(){
     ${dispOf(S.sel)?`<div style="margin-top:10px;background:rgba(255,255,255,.18);border-radius:16px;padding:12px">
         <b>🌸 Période de dispense</b><div class="h-sub" style="margin-top:4px">Tu obéis à Allah en t'abstenant de prier. Tes points de prière restent au maximum${estRamadan(S.sel)?' · ce jour de jeûne sera à rattraper':''}.</div>
         <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${dispEnCours()&&S.sel===today()?'<button class="btn sm" style="background:#fff;color:#047857;border:none" onclick="dispTerminer()">✓ Ma période est terminée</button>':''}<button class="btn sm" style="background:rgba(255,255,255,.22);color:#fff;border:none" onclick="dispInfo()">En savoir plus</button></div></div>`
-      :`<div class="prow big">${minis}</div>${estFemme()&&!dispEnCours()&&S.sel>=addDays(today(),-7)?`<button class="btn sm" style="margin-top:8px;background:rgba(255,255,255,.18);color:#fff;border:none" onclick="dispCommencer()">🌸 Je suis en période de dispense</button>`:''}`}
+      :`<div class="prow big">${minis}</div>${essai?`<div class="hpal-bas"><button class="hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()">🎨 ${S.paletteOuverte?'Fermer':'Couleur'}</button></div>${palette}`:''}${estFemme()&&!dispEnCours()&&S.sel>=addDays(today(),-7)?`<button class="btn sm" style="margin-top:8px;background:rgba(255,255,255,.18);color:#fff;border:none" onclick="dispCommencer()">🌸 Je suis en période de dispense</button>`:''}`}
   </div>`;
 }
 function prieresGrandes(d,t,np){
