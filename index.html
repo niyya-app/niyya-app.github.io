@@ -460,7 +460,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-184016'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-184123'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2330,14 +2330,12 @@ function vAccueil(){
   const coul=S.cfg.heroCouleur||'blanc', blanc=coul==='blanc';
   const at=np.at%1440, iq=iqamaDe(np.p.k);
   return `<div class="hero acc ${blanc?'k-emerald blanc':coul}">
-    <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
-    <div class="h-lbl" style="padding-right:80px">🕌 Prochaine prière · ${esc(lieuNom())}</div>
+    <div class="h-lbl">🕌 Prochaine prière · ${esc(lieuNom())}</div>
     <div class="h-big tnum" style="font-size:3rem;line-height:1.1;margin-top:4px"><span id="npName">${np.p.n}</span></div>
     <div id="npCount" class="tnum" style="font-size:1.35rem;font-weight:800;opacity:.95"></div>
     <div class="h-sub" style="font-size:1rem">Adhan ${hm(at)}${iq!=null?` · Iqama ${hm((at+iq)%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${mosq().jumua.join(' / ')}`:''}</div>
-    ${dispOf(S.sel)?`<div class="h-sub" style="margin-top:10px">🌸 Période de dispense : tes points de prière restent au maximum.</div>`:prieresGrandes(d,t,np)}
-    <div class="hpal-bas"><button class="hpal-btn" onclick="go('jour')">Ma journée ›</button></div>
   </div>
+  <div class="panel mt">${prieresDetail()}</div>
   ${hadMindCartes('h')}
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
@@ -2366,16 +2364,11 @@ function dispInfo(){ openSheet(`<h2 style="margin:0 0 6px">🌸 Période de disp
 const prayCount=k=>{ const d=S.jours[k]; return d?PRAYERS.filter(p=>['heure','mosquee','retard'].includes((d.p||{})[p.k])).length:0; };
 
 /* ---------- Dîn ---------- */
-function vDin(){
+// 🕌 « Mes prières » détaillées (statuts, iqama, Qibla) : sur l'Accueil, ou dans Dîn
+function prieresDetail(){
   const d=J(), t=timesOf(S.sel), isT=S.sel===today(), fri=dateOf(S.sel).getDay()===5;
-  const m=nowMin(); const cur=isT?prevPrayer(m,t):null;
-  const sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
-  const moisSad=monthSadaqa(S.sel);
-  const reg=prayerReg(30);
-  return `
-  <div class="grid g2">
-    <div class="panel">
-      <h2><span class="ico">🕌</span>Mes prières<span class="cnt">${dispOf(S.sel)?'🌸':prayCount(S.sel)+'/5'}</span></h2>
+  const cur=isT?prevPrayer(nowMin(),t):null;
+  return `      <h2><span class="ico">🕌</span>Mes prières<span class="cnt">${dispOf(S.sel)?'🌸':prayCount(S.sel)+'/5'}</span></h2>
       ${dispOf(S.sel)?'<div class="coach" style="font-size:.82rem">🌸 Période de dispense : pas besoin de noter tes prières, tes points restent au maximum. <button class="btn sm" onclick="dispInfo()">En savoir plus</button>'+(dispEnCours()&&S.sel===today()?' <button class="btn sm green" onclick="dispTerminer()">✓ Ma période est terminée</button>':'')+'</div>':''}
       ${estFemme()&&!dispEnCours()&&S.sel>=addDays(today(),-7)?'<button class="btn" style="width:100%;margin-bottom:8px;background:#fdf2f8;color:#9d174d;border:1px solid #fbcfe8" onclick="dispCommencer()">🌸 Je suis en période de dispense</button>':''}
       <div class="sub">${isHsc()?mosq().nom+', '+mosq().ville:esc(S.cfg.lieu.nom||'')+' · '+esc((METHODES[S.cfg.priere.methode]||METHODES.uoif).l)} · Chourouq ${hm(t[1])}</div>
@@ -2386,7 +2379,18 @@ function vDin(){
           <small>${isHsc()&&p.k==='dhuhr'&&fri?`Khotba ${mosq().jumua.join(' / ')} · Dhuhr ${hm(t[p.i])}`:iqamaDe(p.k)!=null?`Iqama ${hm((t[p.i]+iqamaDe(p.k))%1440)}`:'Adhan'}</small></div>
         <div class="hr tnum">${hm(t[p.i])}</div>
         <div class="seg">${PSTAT.map(s=>`<button class="s-${s.k} ${d.p[p.k]===s.k?'on':''}" onclick="setPrayer('${p.k}','${s.k}')">${s.l}</button>`).join('')}</div>
-      </div>`).join('')}
+      </div>`).join('')}`;
+}
+function vDin(){
+  const d=J(), t=timesOf(S.sel), isT=S.sel===today(), fri=dateOf(S.sel).getDay()===5;
+  const m=nowMin(); const cur=isT?prevPrayer(m,t):null;
+  const sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
+  const moisSad=monthSadaqa(S.sel);
+  const reg=prayerReg(30);
+  return `
+  <div class="grid g2">
+    <div class="panel">
+${accOk()?'':prieresDetail()}
   ${(()=>{ const i=S.nomI??(dayOfYear(S.sel)%99), n=NOMS[i]; return `
       <div class="quote k-magenta nomjour mt">
         <span class="q-tag">✨ Nom du jour · ${i+1}/99</span>
