@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-112551'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-113416'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2097,7 +2097,7 @@ const ESS_CAT={
   rsSoir:{i:'🌃',t:'Pas de réseaux sociaux le soir',s:'',g:'k-magenta'}
 };
 const ESS_LEGACY=['sport','coran','lecture','famille','adhM','adhS']; // cases historiques, enregistrées comme avant (d.sport, d.coran…)
-const essNb=()=>S.email===ADMIN_EMAIL?Math.min(6,Math.max(3,+S.cfg.essNb||6)):6; // essai : nombre d'essentiels au choix (compte admin seulement)
+const essNb=()=>Math.min(6,Math.max(3,+S.cfg.essNb||6)); // nombre d'essentiels au choix (3 à 6)
 const essTous=()=>{ const L=(S.cfg.ess||ESS_LEGACY).slice(0,6); while(L.length<6) L.push(ESS_LEGACY.find(x=>!L.includes(x))||'marche'); return L; };
 const essSlots=()=>essTous().slice(0,essNb());
 function essNombre(n){ S.cfg.essNb=n; cfgTouch(); render(); essChoisir(); }
@@ -2114,7 +2114,7 @@ function essChoisir(slot,accueil){
   const L=essSlots();
   if(slot==null){
     openSheet(`<h2 style="margin:0 0 4px">✅ ${accueil?'Choisis tes '+essNb()+' essentiels':'Mes '+essNb()+' essentiels'}</h2><div class="sub">${accueil?'Les habitudes que tu veux tenir chaque jour. Garde celles-ci ou touche une case pour la remplacer (tu pourras changer plus tard).':'Touche une case pour la remplacer. 6 cases, chacune vaut autant dans le score.'}</div>
-      ${S.email===ADMIN_EMAIL?`<label class="f" style="margin-top:10px">Combien d'essentiels par jour ?</label><div class="opt">${[3,4,5,6].map(n=>`<button class="${essNb()===n?'on':''}" onclick="essNombre(${n})">${n}</button>`).join('')}</div>`:''}
+      ${true?`<label class="f" style="margin-top:10px">Combien d'essentiels par jour ?</label><div class="opt">${[3,4,5,6].map(n=>`<button class="${essNb()===n?'on':''}" onclick="essNombre(${n})">${n}</button>`).join('')}</div>`:''}
       <div class="checks" style="margin-top:12px">${L.map((id,i)=>{ const c=essInfo(id); return `<button class="ck" onclick="essChoisir(${i})" style="justify-content:space-between"><span>${esc(c.i||'✅')} <b>${esc(c.t)}</b></span><span class="muted">Changer ›</span></button>`; }).join('')}</div>
       <button class="btn ${accueil?'pri':''} mt" onclick="${accueil?'closeSheet();setTimeout(()=>proposerRappels(true),300)':'closeSheet()'}">${accueil?'C\'est bon, on continue':'Fermer'}</button>`); return;
   }
@@ -2340,7 +2340,7 @@ function vDin(){
         <div class="bar"><div style="width:${Math.min(100,d.istighfar)}%"></div></div>
         <div class="h-sub" style="margin-top:6px">Objectif : 100 par jour, comme le Prophète ﷺ</div>
       </div>${'</div>'}
-      ${(()=>{ const SPI=[['coran','📖 Coran — 20 minutes'],['adhM','☀️ Adhkar du matin (invocations)'],['adhS','🌙 Adhkar du soir (invocations)']]; const spiK=S.email===ADMIN_EMAIL?['coran','adhM','adhS'].filter(k=>!essSlots().includes(k)):['coran','adhM','adhS']; if(!spiK.length) return ''; return `
+      ${(()=>{ const SPI=[['coran','📖 Coran — 20 minutes'],['adhM','☀️ Adhkar du matin (invocations)'],['adhS','🌙 Adhkar du soir (invocations)']]; const spiK=['coran','adhM','adhS'].filter(k=>!essSlots().includes(k)); if(!spiK.length) return ''; return `
       <div class="panel mt">
         <button onclick="deroul('spi')" style="all:unset;display:block;width:100%;cursor:pointer">
         <h2><span class="ico">📖</span>Spiritualité du jour<span class="cnt">${spiK.filter(k=>d[k]).length}/${spiK.length} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv.spi?180:0}deg)">▾</span></span></h2>
@@ -3066,6 +3066,7 @@ function finirOnb(){
   if(C.fumeur){ C.tabac.base=Math.max(1,Math.round(num('onbCig')??20)); C.tabac.prix=num('onbPrix')??12.5; C.tabac.debut=today();
     C.tabac.pas=Math.max(1,Math.round(C.tabac.base/10)); }
   try{ const pr=localStorage.getItem('nya_parrain'); if(pr && !C.parrain && pr!==String(S.uid||'').slice(0,8)) C.parrain=pr; }catch(e){}
+  if(!C.essNb) C.essNb=4; // nouveaux inscrits : 4 essentiels par défaut
   C.consent=new Date().toISOString(); C.onb=true; cfgTouch(); S.view='jour'; render(); window.scrollTo({top:0}); setTimeout(()=>proposerRappels(true,()=>essChoisir(null,true)),500); // étape notifications (la plus importante pour revenir), puis les essentiels
   toast(`Bienvenue ${esc(nom)} 🌙`,2600);
 }
