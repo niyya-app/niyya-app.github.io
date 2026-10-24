@@ -70,6 +70,12 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 /* ---------- Entête ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
+.hpal-btn{right:104px!important}
+.hpal{display:flex;gap:8px;flex-wrap:wrap;margin:36px 0 12px;padding:10px;border-radius:16px;background:rgba(255,255,255,.22)}
+.hero.blanc .hpal{background:var(--card2,#f1f5f9)}
+.hpal-pt{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.hpal-pt.blanc{background:#fff;border-color:#cbd5e1}
+.hpal-pt.on{outline:3px solid #fde047;outline-offset:2px}
 .hero.blanc{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:0 10px 30px rgba(15,23,42,.08)}
 .hero.blanc .h-lbl,.hero.blanc .h-sub{color:var(--muted);opacity:1}
 .hero.blanc .qbtn{background:#ecfdf5;color:#047857}
@@ -437,7 +443,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-093306'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-093545'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1985,15 +1991,21 @@ function ring(score,size){
   return `<div class="ring" style="width:${size}px;height:${size}px"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="10"/>
     <circle cx="50" cy="50" r="${r}" fill="none" stroke="#fde047" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><b class="tnum">${score}</b></div>`;
 }
+const HERO_COULEURS=[['blanc','Blanc'],['k-emerald','Vert'],['k-violet','Violet'],['k-sky','Bleu'],['k-teal','Turquoise'],['k-pink','Rose'],['k-magenta','Magenta'],['k-sunset','Coucher de soleil'],['k-gold','Or']];
+function choisirCouleurHero(k){ S.cfg.heroCouleur=k; S.paletteOuverte=false; cfgTouch(); render(); }
 function heroPriere(){
   const d=J(), t=timesOf(S.sel), isT=S.sel===today();
   const np=isT?nextPrayer():null;
   const minis=PRAYERS.map(p=>{
     const st=d.p[p.k]; const cls=st==='heure'||st==='mosquee'?'done':st==='retard'?'late':st==='manquee'?'miss':'';
     return `<button class="pmini ${cls} ${np&&np.p.k===p.k&&np.k===S.sel?'next':''}" onclick="cyclePrayer('${p.k}')">${p.n}<small>${hm(t[p.i])}</small></button>`;}).join('');
-  const blanc=S.email===ADMIN_EMAIL; // essai style « fond blanc + photo » (compte admin seulement)
-  return `<div class="hero k-emerald${blanc?' blanc':''}">
+  const essai=S.email===ADMIN_EMAIL; // essai : choix de la couleur de la carte (compte admin seulement)
+  const coul=essai?(S.cfg.heroCouleur||'blanc'):'k-emerald', blanc=coul==='blanc';
+  const palette=essai&&S.paletteOuverte?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:'';
+  return `<div class="hero ${blanc?'k-emerald blanc':coul}">
+    ${essai?`<button class="qbtn hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()" aria-label="Changer la couleur">🎨</button>`:''}
     <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
+    ${palette}
     <div class="h-lbl" style="padding-right:80px">🕌 ${isT?'Prochaine prière':'Prières du jour'} · ${esc(lieuNom())}</div>
     ${isT?`<div class="h-big tnum"><span id="npName">${np.p.n}</span> <span id="npCount" style="font-size:1.25rem;font-weight:700;opacity:.95"></span></div>
     <div class="h-sub">Adhan ${hm(np.at%1440)}${iqamaDe(np.p.k)!=null?` · Iqama ${hm((np.at+iqamaDe(np.p.k))%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${JUMUA.join(' / ')}`:''}</div>`
