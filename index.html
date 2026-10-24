@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-113957'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-114010'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1972,8 +1972,8 @@ function poidsCarte(){
   const L=poidsListe(), dep=(S.cfg.poidsDepart&&+S.cfg.poidsDepart.v)||(L[0]&&L[0][1])||null, cur=L.length?L[L.length-1][1]:dep;
   const fr=x=>x.toFixed(1).replace('.',',').replace(',0',''), o=S.ouv.poids, tot=dep?Math.abs(dep-obj):0;
   const fait=dep&&cur?(but==='prendre'?cur-dep:but==='perdre'?dep-cur:0):0, pct=tot?Math.max(0,Math.min(100,Math.round(fait/tot*100))):0;
-  const fleche={perdre:'⬇️',prendre:'⬆️',garder:'⚖️'}[but];
-  const titre=but==='garder'?`Garder ${fr(obj)} kg`:`Objectif ${but==='perdre'?'−':'+'}${fr(tot)} kg`;
+  const fleche={perdre:'🔥',prendre:'💪',garder:'⚖️'}[but];
+  const titre=`Mon défi forme <span style="font-weight:700;color:var(--muted);font-size:.85em">· ${but==='garder'?'garder '+fr(obj)+' kg':(but==='perdre'?'−':'+')+fr(tot)+' kg'}</span>`;
   const resume=!cur?'Fais ta première pesée · touche pour ouvrir':but==='garder'?(poidsTexte(cur)||fr(cur)+' kg'):(fait>=tot?'🎉 Objectif atteint !':(fait>0?`déjà ${but==='perdre'?'−':'+'}${fr(fait)} kg ✓ · `:'')+`encore ${fr(Math.max(0,tot-fait))} kg`);
   const derniere=L.length?L[L.length-1][0]:null, jours=derniere?Math.round((dateOf(today())-dateOf(derniere))/864e5):null;
   const c=conseilPoids(today()), v=L.slice(-12);
