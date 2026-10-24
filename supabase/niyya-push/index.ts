@@ -136,9 +136,12 @@ async function recap(uid: string, jour: string) {
   const sem = (jours || []).filter((j: any) => j.jour >= debut), avant = (jours || []).filter((j: any) => j.jour < debut);
   if (!sem.length) return null;
   let prieres = 0, mosquee = 0, sport = 0, coran = 0, essN = 0;
-  // les 6 essentiels choisis par l'utilisateur (par défaut : sport, Coran, lecture, famille, adhkar matin/soir)
+  // les essentiels choisis par l'utilisateur : 3 à 6 (essNb), comme essSlots() dans l'appli
   const HIST = ["sport", "coran", "lecture", "famille", "adhM", "adhS"];
+  const nbE = Math.min(6, Math.max(3, +prof?.data?.essNb || 6));
   const ess: string[] = (Array.isArray(prof?.data?.ess) ? prof.data.ess : HIST).slice(0, 6);
+  while (ess.length < 6) ess.push(HIST.find((x) => !ess.includes(x)) || "marche");
+  ess.length = nbE;
   for (const j of sem) {
     for (const id of ess) { const d = j.data || {}; if (HIST.includes(id) ? (id === "sport" ? (d.sport || d.repos) : d[id]) : d.essX?.[id]) essN++; }
     const p = (j.data && j.data.p) || {};
@@ -147,7 +150,7 @@ async function recap(uid: string, jour: string) {
     if (j.data?.coran) coran++;
   }
   const detail = [ess.includes("sport") ? `🏃 Sport : ${sport} j` : "", ess.includes("coran") ? `📖 Coran : ${coran} j` : ""].filter(Boolean).join(" · ");
-  const lignes = [`🕌 ${prieres}/35 prières${mosquee ? ` (${mosquee} à la mosquée)` : ""}`, `✅ Essentiels : ${essN}/${sem.length * 6}`];
+  const lignes = [`🕌 ${prieres}/35 prières${mosquee ? ` (${mosquee} à la mosquée)` : ""}`, `✅ Essentiels : ${essN}/${sem.length * nbE}`];
   if (detail) lignes.push(detail);
   if (prof?.data?.fumeur) {
     const moy = (l: any[]) => l.length ? l.reduce((s, j) => s + ((j.data?.cig || []).length), 0) / l.length : null;
@@ -155,6 +158,27 @@ async function recap(uid: string, jour: string) {
     if (m1 != null) {
       const diff = m0 != null ? Math.round(m1 - m0) : 0;
       lignes.push(`🚭 ${Math.round(m1)} cigarettes/jour${m0 != null && diff !== 0 ? ` (${diff > 0 ? "+" : "−"}${Math.abs(diff)} vs semaine passée)` : ""}`);
+    }
+  }
+  // 🎯 Défi forme : dernière pesée, chemin parcouru depuis le départ, reste à faire
+  const obj = +prof?.data?.poidsObj || 0;
+  if (obj) {
+    const pes = (l: any[]) => l.filter((j) => +j.data?.poids > 0).sort((a, b) => a.jour < b.jour ? -1 : 1).map((j) => +j.data.poids);
+    const ps = pes(sem), pa = pes(avant), fr = (x: number) => (Math.round(x * 10) / 10).toString().replace(".", ",");
+    const dep = +prof?.data?.poidsDepart?.v || 0;
+    const but = prof?.data?.poidsBut || (dep ? (obj > dep ? "prendre" : obj < dep ? "perdre" : "garder") : "perdre");
+    const ico = ({ perdre: "🎯", prendre: "💪", garder: "⚖️" } as Record<string, string>)[but] || "🎯";
+    if (!ps.length) lignes.push(`${ico} Défi forme : pense à ta pesée de la semaine`);
+    else {
+      const cur = ps[ps.length - 1], prec = pa.length ? pa[pa.length - 1] : null;
+      const var7 = prec != null && Math.abs(cur - prec) >= 0.1 ? ` (${cur > prec ? "+" : "−"}${fr(Math.abs(cur - prec))} kg en 1 semaine)` : "";
+      let suite = "";
+      if (but === "garder") suite = Math.abs(cur - obj) <= 1 ? " · objectif tenu ✓" : ` · objectif ${fr(obj)} kg`;
+      else if (dep) {
+        const tot = Math.abs(dep - obj), fait = but === "prendre" ? cur - dep : dep - cur;
+        suite = fait >= tot ? " · objectif atteint 🎉" : ` · encore ${fr(Math.max(0, tot - fait))} kg`;
+      }
+      lignes.push(`${ico} Défi forme : ${fr(cur)} kg${var7}${suite}`);
     }
   }
   lignes.push(prieres >= 30 ? "Superbe semaine, mashaAllah 🌟" : "Chaque pas compte, qu'Allah t'accorde la constance 🤲");

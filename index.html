@@ -360,6 +360,12 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .ayah .pg{display:inline-block;font-size:.66rem;font-weight:800;color:var(--muted);margin-left:6px}
 .ayah.mark{background:color-mix(in srgb,var(--amber) 13%,transparent);border-radius:14px}
 .ayah.mark .bm{opacity:1}
+.ayah.lit{background:color-mix(in srgb,var(--emerald) 12%,transparent);border-radius:14px;box-shadow:inset 3px 0 0 var(--emerald)}
+.ayah .pl{position:absolute;left:2px;top:46px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;font-size:.8rem;padding:4px 7px;cursor:pointer;color:var(--emerald)}
+#qplayer{position:fixed;left:10px;right:10px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:31;display:none;align-items:center;gap:8px;padding:8px 10px;border-radius:18px;
+  background:linear-gradient(135deg,#047857,#10b981);color:#fff;box-shadow:0 10px 30px rgba(4,120,87,.35)}
+#qplayer.on{display:flex}#qplayer button{border:none;background:rgba(255,255,255,.2);color:#fff;border-radius:12px;min-width:38px;height:38px;font-size:1rem;cursor:pointer}
+#qplayer .qi{flex:1;min-width:0;font-size:.78rem;font-weight:800;line-height:1.25;cursor:pointer}#qplayer .qi small{display:block;opacity:.85;font-weight:700}
 .bism{font-family:'Amiri Quran','Amiri',serif;text-align:center;font-size:1.8rem;margin:8px 0 4px;direction:rtl}
 .gearbtn{border:1px solid var(--line);background:var(--card);border-radius:12px;width:40px;height:40px;flex:none;font-size:1.15rem;cursor:pointer;box-shadow:var(--sh);display:grid;place-items:center}
 .gearbtn.on{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-color:transparent}
@@ -432,7 +438,7 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 <div class="wrap" id="app"></div>
 <script src="vendor/supabase.min.js"></script>
 <script src="vendor/adhan.umd.min.js"></script>
-<nav class="nav" id="nav"></nav>
+<div id="qplayer"></div><nav class="nav" id="nav"></nav>
 <div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
 
@@ -448,7 +454,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-125623'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-131012'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1772,6 +1778,7 @@ function render(){
   // pages ouvertes depuis ☰ Plus : petit bouton de retour en haut (le menu du bas reste toujours là)
   const retourPlus=DANS_PLUS.includes(S.view) && S.view!=='plus' && !(S.view==='apprendre'&&_ap.i!=null) ? `<button class="btn sm" style="margin-bottom:10px" onclick="go('plus')">‹ Menu</button>` : '';
   app.innerHTML=head+alerte+retourPlus+(S.view==='jour'?carteBienvenue():'')+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
+  if(window.QA&&QA.n&&S.view==='coran'&&QC.n===QA.n&&!QA.bism){ const e=document.getElementById('ay'+(QA.i+1)); if(e) e.classList.add('lit'); } // verset en cours de récitation
   tick();
 }
 // Clic sur une notification noté par le service worker (fiable même si l'appli était déjà ouverte)
@@ -3202,7 +3209,7 @@ async function chargerSourate(n){
   if(!r){ r=await fetch(url); if(!r.ok) throw new Error('serveur indisponible'); try{ if(c) await c.put(url,r.clone()); }catch(e){} }
   const j=await r.json(); const [A,F]=j.data;
   const ar=A.ayahs.map((a,i)=>{ let t=a.text.replace(/^\uFEFF/,''); if(n!==1 && i===0){ const w=t.split(/\s+/); if(w.length>4 && w[0].startsWith('بِسْمِ')) t=w.slice(4).join(' '); } return t; });
-  return { ar, fr:F.ayahs.map(a=>a.text), page:A.ayahs.map(a=>a.page||null), juz:A.ayahs.map(a=>a.juz||null) };
+  return { ar, num:A.ayahs.map(a=>a.number), fr:F.ayahs.map(a=>a.text), page:A.ayahs.map(a=>a.page||null), juz:A.ayahs.map(a=>a.juz||null) };
 }
 function ouvrirSourate(n,verset){
   QC.n=n; QC.data=null; QC.err=null; QC.goto=verset||null; render(); window.scrollTo({top:0});
@@ -3230,6 +3237,33 @@ function suivreLecture(){
 }
 window.addEventListener('scroll',suivreLecture,{passive:true});
 function taille(d){ const z=Math.min(1.6,Math.max(.8,(S.cfg.qz||1)+d)); S.cfg.qz=Math.round(z*10)/10; cfgTouch(); render(); }
+// 🎧 Récitation audio (test admin) : Mishary Al-Afasy, 128 kbps, un fichier par verset (CDN alquran.cloud / islamic.network)
+const QAUD=num=>`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${num}.mp3`;
+var QA={ n:null, i:0, num:null, joue:false, bism:false, el:null };
+const audioOk=()=>S.email===ADMIN_EMAIL;
+function qaEl(){ if(QA.el) return QA.el; const a=new Audio(); a.preload='auto';
+  a.addEventListener('ended',()=>{ if(QA.bism){ QA.bism=false; return qaJouer(); } if(QA.i<QA.num.length-1){ QA.i++; qaJouer(); } else { QA.joue=false; qaMaj(); toast('✅ Fin de la sourate'); } });
+  a.addEventListener('error',()=>{ QA.joue=false; qaMaj(); toast('Récitation indisponible, vérifie ta connexion'); });
+  return QA.el=a; }
+function ecouter(i){ const D=QC.data; if(!D||!D.num) return; const a=qaEl();
+  QA.n=QC.n; QA.num=D.num; QA.i=i||0; QA.joue=true;
+  QA.bism=QA.i===0&&QA.n!==1&&QA.n!==9; // la basmala avant le 1er verset (sauf Al-Fâtiha et At-Tawba)
+  qaJouer(); }
+function qaJouer(){ const a=qaEl(); a.src=QAUD(QA.bism?1:QA.num[QA.i]); a.play().catch(()=>{ QA.joue=false; qaMaj(); }); QA.joue=true; qaMaj(); qaSuivre();
+  try{ if('mediaSession' in navigator){ navigator.mediaSession.metadata=new MediaMetadata({title:`${SURATES[QA.n-1][2]} · verset ${QA.i+1}`,artist:'Mishary Al-Afasy',album:'NIYYA · Le Saint Coran',artwork:[{src:'niyya-logo-512.png',sizes:'512x512',type:'image/png'}]});
+    navigator.mediaSession.setActionHandler('play',qaPause); navigator.mediaSession.setActionHandler('pause',qaPause);
+    navigator.mediaSession.setActionHandler('nexttrack',()=>qaSaut(1)); navigator.mediaSession.setActionHandler('previoustrack',()=>qaSaut(-1)); } }catch(e){} }
+function qaPause(){ const a=qaEl(); if(QA.joue){ a.pause(); QA.joue=false; } else { a.play().catch(()=>{}); QA.joue=true; } qaMaj(); }
+function qaSaut(d){ if(!QA.num) return; QA.bism=false; QA.i=Math.max(0,Math.min(QA.num.length-1,QA.i+d)); qaJouer(); }
+function qaStop(){ if(QA.el){ QA.el.pause(); QA.el.removeAttribute('src'); } QA.n=null; QA.joue=false; qaMaj(); }
+function qaSuivre(){ document.querySelectorAll('.ayah.lit').forEach(e=>e.classList.remove('lit'));
+  if(S.view!=='coran'||QC.n!==QA.n||QA.bism) return; const el=document.getElementById('ay'+(QA.i+1)); if(el){ el.classList.add('lit'); el.scrollIntoView({block:'center',behavior:'smooth'}); } }
+function qaMaj(){ const b=document.getElementById('qplayer'); if(!b) return;
+  if(!QA.n){ b.classList.remove('on'); b.innerHTML=''; document.querySelectorAll('.ayah.lit').forEach(e=>e.classList.remove('lit')); return; }
+  b.classList.add('on');
+  b.innerHTML=`<button onclick="qaSaut(-1)" aria-label="Verset précédent">⏮</button><button onclick="qaPause()" aria-label="Lecture ou pause">${QA.joue?'⏸':'▶️'}</button><button onclick="qaSaut(1)" aria-label="Verset suivant">⏭</button>
+    <div class="qi" onclick="go('coran');if(QC.n!==QA.n)ouvrirSourate(QA.n,QA.i+1)">🎧 ${esc(SURATES[QA.n-1][2])}<small>${QA.bism?'Basmala':'Verset '+(QA.i+1)+' / '+QA.num.length} · Al-Afasy</small></div>
+    <button onclick="qaStop()" aria-label="Arrêter">✕</button>`; }
 function vCoran(){
   const L=S.cfg.lecture, z=S.cfg.qz||1, dT=J(today());
   if(!QC.n){
@@ -3250,7 +3284,7 @@ function vCoran(){
   }
   const n=QC.n, s=SURATES[n-1], D=QC.data;
   return `<div class="qbar"><button class="btn sm" onclick="QC.n=null;render();window.scrollTo({top:0})">← Sourates</button><span class="sp"></span>
-      <button class="btn sm" onclick="taille(-.1)" aria-label="Texte plus petit">A−</button><button class="btn sm" onclick="taille(.1)" aria-label="Texte plus grand">A+</button></div>
+      ${audioOk()&&QC.data?`<button class="btn sm green" onclick="ecouter(0)">🎧 Écouter</button>`:''}<button class="btn sm" onclick="taille(-.1)" aria-label="Texte plus petit">A−</button><button class="btn sm" onclick="taille(.1)" aria-label="Texte plus grand">A+</button></div>
     <div class="hero k-emerald" style="text-align:center">
       <div class="h-lbl">Sourate ${n} · ${s[4]==='M'?'mecquoise':'médinoise'} · ${s[3]} versets</div>
       <div class="h-big" style="font-family:'Amiri Quran','Amiri',serif;font-size:2.4rem;line-height:1.6">${s[0]}</div>
@@ -3261,7 +3295,7 @@ function vCoran(){
       <div class="coach" style="font-size:.8rem;margin-bottom:8px">🔖 Touche le marque-page à côté d'un verset pour noter où tu t'arrêtes. Ta dernière lecture (📍) est aussi gardée toute seule.</div>
       ${n!==1&&n!==9?`<div class="bism">${BISM}</div>`:''}
       ${D.ar.map((a,i)=>`<div class="ayah ${L&&L.s===n&&L.a===i+1?'mark':''}" id="ay${i+1}">
-        <button class="bm" onclick="marquer(${i+1})" title="Marquer ma lecture ici" aria-label="Marquer ma lecture au verset ${i+1}">🔖</button>
+        <button class="bm" onclick="marquer(${i+1})" title="Marquer ma lecture ici" aria-label="Marquer ma lecture au verset ${i+1}">🔖</button>${audioOk()?`<button class="pl" onclick="ecouter(${i})" aria-label="Écouter à partir du verset ${i+1}">▶</button>`:''}
         <div class="ar">${a} <span class="fin">﴿${arNum(i+1)}﴾</span></div>
         <div class="tr"><b>${i+1}.</b> ${esc(D.fr[i]||'')}${D.page&&D.page[i]?`<span class="pg">p. ${D.page[i]}${D.juz&&D.juz[i]?' · juz '+D.juz[i]:''}</span>`:''}</div></div>`).join('')}`}
     </div>
