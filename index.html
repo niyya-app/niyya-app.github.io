@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-112109'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-112551'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2113,7 +2113,7 @@ function essToggle(id){ const d=J(); d.essX=d.essX||{}; d.essX[id]=!d.essX[id]; 
 function essChoisir(slot,accueil){
   const L=essSlots();
   if(slot==null){
-    openSheet(`<h2 style="margin:0 0 4px">✅ ${accueil?'Choisis tes '+essNb()+' essentiels':'Mes '+essNb()+' essentiels'}</h2><div class="sub">${accueil?'Les 6 habitudes que tu veux tenir chaque jour. Garde celles-ci ou touche une case pour la remplacer (tu pourras changer plus tard).':'Touche une case pour la remplacer. 6 cases, chacune vaut autant dans le score.'}</div>
+    openSheet(`<h2 style="margin:0 0 4px">✅ ${accueil?'Choisis tes '+essNb()+' essentiels':'Mes '+essNb()+' essentiels'}</h2><div class="sub">${accueil?'Les habitudes que tu veux tenir chaque jour. Garde celles-ci ou touche une case pour la remplacer (tu pourras changer plus tard).':'Touche une case pour la remplacer. 6 cases, chacune vaut autant dans le score.'}</div>
       ${S.email===ADMIN_EMAIL?`<label class="f" style="margin-top:10px">Combien d'essentiels par jour ?</label><div class="opt">${[3,4,5,6].map(n=>`<button class="${essNb()===n?'on':''}" onclick="essNombre(${n})">${n}</button>`).join('')}</div>`:''}
       <div class="checks" style="margin-top:12px">${L.map((id,i)=>{ const c=essInfo(id); return `<button class="ck" onclick="essChoisir(${i})" style="justify-content:space-between"><span>${esc(c.i||'✅')} <b>${esc(c.t)}</b></span><span class="muted">Changer ›</span></button>`; }).join('')}</div>
       <button class="btn ${accueil?'pri':''} mt" onclick="${accueil?'closeSheet();setTimeout(()=>proposerRappels(true),300)':'closeSheet()'}">${accueil?'C\'est bon, on continue':'Fermer'}</button>`); return;
@@ -2207,7 +2207,7 @@ function vJour(){
       ${S.ouv.ess?`<div class="tiles">
         ${essSlots().map(id=>essTile(id)).join('')}
       </div>
-      <button class="btn sm mt" onclick="essChoisir()">✏️ Choisir mes 6 essentiels</button>
+      <button class="btn sm mt" onclick="essChoisir()">✏️ Choisir mes essentiels</button>
       <div class="fruits ${(d.fruits||0)>=5?'ok':''}"><div><b>🍎 5 fruits & légumes par jour</b><small>${d.fruits||0}/5 aujourd'hui${(d.fruits||0)>=5?' · objectif atteint':''}</small></div>
         <div class="fr">${['🍎','🍌','🍊','🥕','🍇'].map((f,i)=>`<button class="${i<(d.fruits||0)?'on':''}" onclick="fruit(${i+1})" aria-label="${i+1} fruit${i?'s':''}">${f}</button>`).join('')}</div></div>
       <div class="fruits eau ${(d.eau||0)>=6?'ok':''}"><div><b>💧 Boire 1,5 L d'eau</b><small>${litres(d.eau)} L sur 1,5 L · 1 verre = 25 cl${(d.eau||0)>=6?' · objectif atteint':''}</small></div>
@@ -2531,7 +2531,7 @@ function setPer(n){ S.statsPer=n; render(); }
 function openDay(k){ S.sel=k; render(); }
 
 /* ---------- Réglages ---------- */
-const POIDS_UI={prieres:'Prières',tabac:'Tabac',essentiels:'Mes 6 essentiels',bonnes:'Bonnes actions',business:'Business',fruits:'Fruits',eau:'Eau'};
+const POIDS_UI={prieres:'Prières',tabac:'Tabac',essentiels:'Mes essentiels',bonnes:'Bonnes actions',business:'Business',fruits:'Fruits',eau:'Eau'};
 function vReglages(){
   const C=S.cfg, T=C.tabac, W=C.poids, totW=Object.keys(POIDS_UI).filter(k=>k!=='tabac'||C.fumeur).reduce((a,k)=>a+(+(W[k]??(k==='essentiels'?35:0))||0),0);
   const num=(path,val,step)=>`<input class="inp" type="number" step="${step||1}" value="${val}" onchange="setCfg('${path}',this.value,true)">`;
