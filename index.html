@@ -460,7 +460,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-183525'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-183747'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2031,7 +2031,7 @@ function ouvrir(cible){
   try{ sessionStorage.setItem('nya_ouvrir',JSON.stringify({cible,corps:S.clicCorps||'',t:Date.now()})); }catch(e){}
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
   S.sel=today(); S.mindIdx=cible==='mindset'?(dayOfYear(today())*7)%MINDSET.length:null; S.hadIdx=null; // la notification de 10 h montre la phrase du matin
-  go(cible==='recap'?'bilan':cible==='calendrier'?'calendrier':accOk()&&cible!=='soir'?'accueil':'jour');
+  go(cible==='recap'?'bilan':cible==='calendrier'?'calendrier':accOk()&&cible!=='soir'&&cible!=='mindset'?'accueil':'jour');
   if(/^priere-/.test(cible)){ const c0=S.clicCorps, k=cible; S.clicCorps=''; corpsRecent(k,c0).then(c=>versetPriere(k.slice(7),c)); }
   else if(cible==='calendrier'){ const c0=S.clicCorps; S.clicCorps=''; corpsRecent('calendrier',c0).then(corps=>{ if(!corps) return;
     openSheet(`<h2 style="margin:0 0 4px">📅 Calendrier islamique</h2><div style="margin-top:10px;font-weight:700;line-height:1.55;white-space:pre-line">${esc(corps)}</div><button class="btn pri mt" onclick="closeSheet()">Voir le calendrier</button>`); }); }
@@ -2232,7 +2232,7 @@ function vJour(){
     </div>`;
   const mouh=true; // Mouhâsaba du soir pour tous
   const soir=mouh?mouhasabaCarte(d):soirAncien;
-  return `${bandeauNotif()}
+  return `${accOk()?`<div style="margin-bottom:14px">${hadMindCartes('m')}</div>`:''}${bandeauNotif()}
   ${mouh?intentionMatin():''}
   <div class="grid g2">
     ${!S.scoreOpen?`<button onclick="S.scoreOpen=true;render()" style="all:unset;box-sizing:border-box;display:block;cursor:pointer;width:100%" aria-label="Voir mon score du jour"><div class="hero k-violet" style="margin:0">
@@ -2296,24 +2296,22 @@ function vJour(){
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
 // 📜💡 Hadith du jour + phrase du jour (accueil, ou Aujourd'hui)
-function hadMindCartes(){
+function hadMindCartes(q){ // q : 'h' hadith seul, 'm' phrase seule, sinon les deux
   const di=dayOfYear(S.sel), h=HADITHS[S.hadIdx??(di%HADITHS.length)];
   const mi=S.mindIdx??mindDuMoment(S.sel), m=MINDSET[mi], b=BOOKS[m[0]];
-  return `  <div class="grid g2 mt">
-    <div class="quote k-emerald" id="cHadith">
+  const H=`<div class="quote k-emerald" id="cHadith">
       <span class="q-tag">📜 Hadith du jour${h[4]?' · '+esc(h[4]):''}</span>
       <p>« ${esc(h[0])} »</p>
       ${h[3]&&S.hadAr?`<div class="ar" style="margin-top:10px">${esc(h[3])}</div>`:''}
       <div class="src" style="flex-wrap:wrap">D'après ${esc(h[2])} · ${esc(h[1])}<button onclick="nextHadith()">Un autre ↻</button></div>
       ${h[3]?`<button class="chip" style="border:none;color:#fff;cursor:pointer;margin-top:8px" onclick="S.hadAr=!S.hadAr;render()">${S.hadAr?'Masquer':'Voir'} le texte arabe</button>`:''}
       <div style="font-size:.66rem;opacity:.8;margin-top:8px">Sens en français proposé par NIYYA, vérifié sur le texte arabe.${h[4]?' Thème inspiré des chapitres de Riyad as-Salihin (imam An-Nawawi).':''} Référence pour retrouver le hadith : sunnah.com ou ton recueil.</div>
-    </div>
-    <div class="quote ${b.c}" id="cMindset">
+    </div>`, M=`<div class="quote ${b.c}" id="cMindset">
       <span class="q-tag">💡 Mindset ${S.sel===today()&&new Date().getHours()>=14?'de l\'après-midi':'du matin'}</span>
       <p>${esc(m[1])}</p>
       <div class="src">D'après ${b.a?esc(b.t):'« '+esc(b.t)+' »'}<button onclick="nextMind()">Une autre ↻</button></div>
-    </div>
-  </div>`;
+    </div>`;
+  return q==='h'?`<div class="mt">${H}</div>`:q==='m'?`<div class="mb">${M}</div>`:`<div class="grid g2 mt">${H}${M}</div>`;
 }
 // 🏠 Accueil (TEST admin) : juste les prières en grand, le hadith et la phrase du jour ; le reste est dans Aujourd'hui
 const accOk=()=>S.email===ADMIN_EMAIL;
@@ -2331,7 +2329,7 @@ function vAccueil(){
     ${dispOf(S.sel)?`<div class="h-sub" style="margin-top:10px">🌸 Période de dispense : tes points de prière restent au maximum.</div>`:prieresGrandes(d,t,np)}
     <div class="hpal-bas"><button class="hpal-btn" onclick="go('jour')">Ma journée ›</button></div>
   </div>
-  ${hadMindCartes()}
+  ${hadMindCartes('h')}
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
 function sportWeek(k){ // séances du lundi au dimanche
