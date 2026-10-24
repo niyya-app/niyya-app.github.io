@@ -448,7 +448,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-121339'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-121631'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3691,24 +3691,30 @@ function plusClic(k){ if(_plusLong){ _plusLong=false; return; } if(S.plusEdit) r
   if(k==='boutique') return openSheet(`<div style="text-align:center"><div style="font-size:3rem">🛍️</div><h2 style="margin:6px 0">La boutique NIYYA arrive bientôt</h2><div class="sub">Tapis de prière, livres, misbaha… une sélection pensée pour ta pratique.<br>In châ' Allâh, très bientôt ici.</div><button class="btn pri mt" onclick="closeSheet()">J'ai hâte !</button></div>`);
   go(k); }
 let _pdrag=null, _pdragT=null, _pdragXY=null, _pdragOn=false;
-// pendant un glissement, on bloque le défilement de la page (sinon le défilement reste libre)
-document.addEventListener('touchmove',e=>{ if(_pdragOn) e.preventDefault(); },{passive:false});
-function plusDragDebut(e,el){
-  _pdrag=el; _pdragOn=false; _pdragXY=[e.clientX,e.clientY]; clearTimeout(_pdragT);
-  _pdragT=setTimeout(()=>{ if(_pdrag!==el) return; _pdragOn=true; el.classList.add('pdrag'); try{ el.setPointerCapture(e.pointerId); }catch(x){} vib(); },220); // court appui = prise de la tuile
-  el.onpointermove=ev=>{
-    if(!_pdragOn){ if(Math.hypot(ev.clientX-_pdragXY[0],ev.clientY-_pdragXY[1])>8){ clearTimeout(_pdragT); _pdrag=null; } return; } // le doigt bouge tout de suite = défilement
-    if(ev.clientY<90) window.scrollBy(0,-14); else if(ev.clientY>innerHeight-140) window.scrollBy(0,14); // défilement auto près des bords
-    const sous=document.elementFromPoint(ev.clientX,ev.clientY); const cible=sous&&sous.closest('#plusTiles > [data-k]'); if(!cible||cible===_pdrag) return;
-    const box=_pdrag.parentNode, L=[...box.children], i=L.indexOf(_pdrag), j=L.indexOf(cible); box.insertBefore(_pdrag, i<j?cible.nextSibling:cible); vib(); };
-  el.onpointerup=el.onpointercancel=()=>{ clearTimeout(_pdragT); el.onpointermove=null; if(_pdragOn){ el.classList.remove('pdrag'); S.cfg.plusOrdre=[...document.querySelectorAll('#plusTiles > [data-k]')].map(x=>x.dataset.k); cfgTouch(); } _pdragOn=false; _pdrag=null; };
-}
+// tactile (iPhone) : un court appui prend la tuile ; sinon le doigt fait défiler la page
+function pdStart(el,x,y){ _pdrag=el; _pdragOn=false; _pdragXY=[x,y]; clearTimeout(_pdragT);
+  _pdragT=setTimeout(()=>{ if(_pdrag!==el) return; _pdragOn=true; el.classList.add('pdrag'); vib(); },250); }
+function pdMove(x,y){
+  if(!_pdrag) return false;
+  if(!_pdragOn){ if(Math.hypot(x-_pdragXY[0],y-_pdragXY[1])>10){ clearTimeout(_pdragT); _pdrag=null; } return false; }
+  if(y<90) window.scrollBy(0,-14); else if(y>innerHeight-140) window.scrollBy(0,14);
+  const sous=document.elementFromPoint(x,y); const cible=sous&&sous.closest('#plusTiles > [data-k]');
+  if(cible&&cible!==_pdrag){ const box=_pdrag.parentNode, L=[...box.children], i=L.indexOf(_pdrag), j=L.indexOf(cible); box.insertBefore(_pdrag, i<j?cible.nextSibling:cible); vib(); }
+  return true; }
+function pdEnd(){ clearTimeout(_pdragT); if(_pdragOn&&_pdrag){ _pdrag.classList.remove('pdrag'); S.cfg.plusOrdre=[...document.querySelectorAll('#plusTiles > [data-k]')].map(x=>x.dataset.k); cfgTouch(); } _pdragOn=false; _pdrag=null; }
+document.addEventListener('touchmove',e=>{ if(!_pdrag) return; const t=e.touches[0]; if(pdMove(t.clientX,t.clientY)) e.preventDefault(); },{passive:false});
+document.addEventListener('touchend',pdEnd); document.addEventListener('touchcancel',pdEnd);
+function plusTouch(e,el){ const t=e.touches[0]; pdStart(el,t.clientX,t.clientY); }
+// souris (ordinateur)
+function plusDragDebut(e,el){ if(e.pointerType!=='mouse') return; pdStart(el,e.clientX,e.clientY);
+  const mv=ev=>pdMove(ev.clientX,ev.clientY), up=()=>{ pdEnd(); removeEventListener('pointermove',mv); removeEventListener('pointerup',up); };
+  addEventListener('pointermove',mv); addEventListener('pointerup',up); }
 function plusMove(k,dir){ const L=plusTuiles().map(x=>x[0]); const i=L.indexOf(k), j=i+dir; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; S.cfg.plusOrdre=L; cfgTouch(); vib(); render(); }
 function vPlus(){
   const T=plusTuiles(), ed=!!S.plusEdit;
   return `<div class="panel"><h2><span class="ico">☰</span>Plus${ed?`<span class="cnt"><button class="btn sm green" onclick="S.plusEdit=false;render();toast('✅ Ordre enregistré')">Terminé</button></span>`:''}</h2>
     ${ed?`<div class="coach" style="font-size:.82rem;margin-bottom:10px">✋ Appuie un instant sur une tuile, puis fais-la glisser. Tu peux défiler normalement pour voir les autres. Touche <b>Terminé</b> à la fin.</div>`:''}
-    <div class="tiles" id="plusTiles">${T.map(([k,i,t,st,g],n)=>`<div data-k="${k}" style="position:relative" ${ed?'onpointerdown="plusDragDebut(event,this)"':''}><button class="tile on ptile ${g} ${ed?'pbouge':''}" style="width:100%;-webkit-touch-callout:none;user-select:none" onpointerdown="plusDown()" onpointerup="plusUp()" onpointerleave="plusUp()" oncontextmenu="return false" onclick="plusClic('${k}')"><span class="t-ico">${i}</span><b>${t}</b><small>${st}</small></button>
+    <div class="tiles" id="plusTiles">${T.map(([k,i,t,st,g],n)=>`<div data-k="${k}" style="position:relative" ${ed?'ontouchstart="plusTouch(event,this)" onpointerdown="plusDragDebut(event,this)"':''}><button class="tile on ptile ${g} ${ed?'pbouge':''}" style="width:100%;-webkit-touch-callout:none;user-select:none" onpointerdown="plusDown()" onpointerup="plusUp()" onpointerleave="plusUp()" oncontextmenu="return false" onclick="plusClic('${k}')"><span class="t-ico">${i}</span><b>${t}</b><small>${st}</small></button>
 </div>`).join('')}</div>
     ${S.email===ADMIN_EMAIL&&!ed?`<div class="muted" style="font-size:.72rem;font-weight:600;text-align:center;margin-top:10px">Astuce : reste appuyé sur une tuile pour changer l'ordre.</div>`:''}</div>`;
 }
