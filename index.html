@@ -456,7 +456,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-140340'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-141408'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2067,13 +2067,11 @@ const HERO_COULEURS=[['blanc','Blanc'],['k-emerald','Vert'],['k-violet','Violet'
 function choisirCouleurHero(k){ S.cfg.heroCouleur=k; S.paletteOuverte=false; cfgTouch(); render(); }
 function heroPriere(){
   const d=J(), t=timesOf(S.sel), isT=S.sel===today();
-  const plusHoraires=S.email===ADMIN_EMAIL; // TEST : Chourouk + iqama dans la carte des prières
-  const sansIqama=plusHoraires&&PRAYERS.every(p=>iqamaDe(p.k)==null);
+  const plusHoraires=S.email===ADMIN_EMAIL; // TEST : Chourouk dans la carte des prières
   const np=isT?nextPrayer():null;
   const minis=PRAYERS.map(p=>{
     const st=d.p[p.k]; const cls=st==='heure'||st==='mosquee'?'done':st==='retard'?'late':st==='manquee'?'miss':'';
-    const iq=plusHoraires?iqamaDe(p.k):null;
-    const b=`<button class="pmini ${cls} ${np&&np.p.k===p.k&&np.k===S.sel?'next':''}" onclick="cyclePrayer('${p.k}')">${p.n}<small>${hm(t[p.i])}</small>${iq!=null?`<small class="iq">iq. ${hm((t[p.i]+iq)%1440)}</small>`:''}</button>`;
+    const b=`<button class="pmini ${cls} ${np&&np.p.k===p.k&&np.k===S.sel?'next':''}" onclick="cyclePrayer('${p.k}')">${p.n}<small>${hm(t[p.i])}</small></button>`;
     return plusHoraires&&p.k==='fajr'?b+`<div class="pmini sun" title="Lever du soleil : fin du temps de Fajr">Chourouk<small>${hm(t[1])}</small></div>`:b;}).join('');
   const essai=true; // choix de la couleur de la carte (blanc par défaut)
   const coul=essai?(S.cfg.heroCouleur||'blanc'):'blanc', blanc=coul==='blanc';
@@ -2087,7 +2085,7 @@ function heroPriere(){
     ${dispOf(S.sel)?`<div style="margin-top:10px;background:rgba(255,255,255,.18);border-radius:16px;padding:12px">
         <b>🌸 Période de dispense</b><div class="h-sub" style="margin-top:4px">Tu obéis à Allah en t'abstenant de prier. Tes points de prière restent au maximum${estRamadan(S.sel)?' · ce jour de jeûne sera à rattraper':''}.</div>
         <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${dispEnCours()&&S.sel===today()?'<button class="btn sm" style="background:#fff;color:#047857;border:none" onclick="dispTerminer()">✓ Ma période est terminée</button>':''}<button class="btn sm" style="background:rgba(255,255,255,.22);color:#fff;border:none" onclick="dispInfo()">En savoir plus</button></div></div>`
-      :`<div class="prow big">${minis}</div>${sansIqama?`<button class="hpal-btn" style="margin-top:8px" onclick="go('reglages');setTimeout(()=>{const e=document.getElementById('rPriere');if(e)e.scrollIntoView({block:'start'})},80)">🕌 Ajouter l'iqama de ma mosquée</button>`:''}${essai?`<div class="hpal-bas"><button class="hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()">🎨 ${S.paletteOuverte?'Fermer':'Couleur'}</button></div>${palette}`:''}${estFemme()&&!dispEnCours()&&S.sel>=addDays(today(),-7)?`<button class="btn sm" style="margin-top:8px;background:rgba(255,255,255,.18);color:#fff;border:none" onclick="dispCommencer()">🌸 Je suis en période de dispense</button>`:''}`}
+      :`<div class="prow big">${minis}</div>${essai?`<div class="hpal-bas"><button class="hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()">🎨 ${S.paletteOuverte?'Fermer':'Couleur'}</button></div>${palette}`:''}${estFemme()&&!dispEnCours()&&S.sel>=addDays(today(),-7)?`<button class="btn sm" style="margin-top:8px;background:rgba(255,255,255,.18);color:#fff;border:none" onclick="dispCommencer()">🌸 Je suis en période de dispense</button>`:''}`}
   </div>`;
 }
 function prieresGrandes(d,t,np){
