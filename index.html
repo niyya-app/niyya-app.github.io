@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-110356'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-110559'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2313,6 +2313,16 @@ function vDin(){
       </div>`; })()}
       ${naflPanel()}
       ${jeunePanel()}
+      <div class="panel mt">
+        <h2><span class="ico">💚</span>Sadaqa & zakat<span class="cnt">${sad?sad+' € ce jour':''}</span></h2>
+        <div class="sub">${moisSad} € donnés ce mois-ci · ${yearSadaqa()} € depuis le 1er janvier</div>
+        <div class="row" style="gap:8px">
+          <input class="inp" id="sadM" type="number" inputmode="decimal" placeholder="Montant €" style="width:110px">
+          <input class="inp" id="sadN" type="text" placeholder="Pour qui / quoi (facultatif)">
+          <button class="btn green" onclick="addSad()">+</button>
+        </div>
+        ${d.sadaqa.map((x,i)=>`<div class="kv"><span>${esc(x.n||'Sadaqa')}</span><b>${esc(x.m)} € <button class="btn sm" onclick="delSad(${i})" aria-label="Supprimer">✕</button></b></div>`).join('')}
+      </div>
     </div>
     <div>${cartesDhikr(d)+'<div style="display:none">'}
       <div class="hero k-teal">
@@ -2333,16 +2343,6 @@ function vDin(){
         ${!S.ouv.spi?'':`<div class="checks" style="margin-top:8px">
           ${[['coran','📖 Coran — 20 minutes'],['adhM','☀️ Adhkar du matin (invocations)'],['adhS','🌙 Adhkar du soir (invocations)']].map(([k,l])=>`<button class="ck ${d[k]?'on':''}" onclick="toggle('${k}')"><span class="box"></span>${l}</button>`).join('')}
         </div>`}
-      </div>
-      <div class="panel mt">
-        <h2><span class="ico">💚</span>Sadaqa & zakat<span class="cnt">${sad?sad+' € ce jour':''}</span></h2>
-        <div class="sub">${moisSad} € donnés ce mois-ci · ${yearSadaqa()} € depuis le 1er janvier</div>
-        <div class="row" style="gap:8px">
-          <input class="inp" id="sadM" type="number" inputmode="decimal" placeholder="Montant €" style="width:110px">
-          <input class="inp" id="sadN" type="text" placeholder="Pour qui / quoi (facultatif)">
-          <button class="btn green" onclick="addSad()">+</button>
-        </div>
-        ${d.sadaqa.map((x,i)=>`<div class="kv"><span>${esc(x.n||'Sadaqa')}</span><b>${esc(x.m)} € <button class="btn sm" onclick="delSad(${i})" aria-label="Supprimer">✕</button></b></div>`).join('')}
       </div>
     </div>
   </div>
