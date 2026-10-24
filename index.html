@@ -460,7 +460,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-184721'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-184952'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2067,7 +2067,7 @@ async function versetPriere(k,corps){
     <p style="margin:12px 0 0;font-weight:700">C'est l'heure de la prière. Qu'Allah l'accepte. 🤲</p>
     <button class="btn pri mt" onclick="closeSheet()">Fermer</button>`);
 }
-function go(v){ S.scoreOpen=false; S.ouv={}; S.plusEdit=false; if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
+function go(v){ if(v==='accueil') S.sel=today(); S.scoreOpen=false; S.ouv={}; S.plusEdit=false; if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
 function setDay(k){ S.sel=k>today()?today():k; render(); }
 function shiftDay(n){ setDay(addDays(S.sel,n)); }
 
@@ -2325,8 +2325,8 @@ function hadMindCartes(q){ // q : 'h' hadith seul, 'm' phrase seule, sinon les d
 // 🏠 Accueil (TEST admin) : juste les prières en grand, le hadith et la phrase du jour ; le reste est dans Aujourd'hui
 const accOk=()=>S.email===ADMIN_EMAIL;
 function vAccueil(){
-  if(S.sel!==today()) S.sel=today();
-  const d=J(), t=timesOf(S.sel), np=nextPrayer();
+  if(!S._accJour){ S._accJour=true; S.sel=today(); } // à l'ouverture : aujourd'hui
+  const np=nextPrayer(), isT=S.sel===today();
   const coul=S.cfg.heroCouleur||'blanc', blanc=coul==='blanc';
   const at=np.at%1440, iq=iqamaDe(np.p.k);
   return `<div class="hero acc ${blanc?'k-emerald blanc':coul}">
@@ -2337,7 +2337,14 @@ function vAccueil(){
     <div class="hpal-bas"><button class="hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()">🎨 ${S.paletteOuverte?'Fermer':'Couleur'}</button></div>
     ${S.paletteOuverte?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:''}
   </div>
-  <div class="panel mt">${prieresDetail()}</div>
+  <div class="panel mt">
+    <div class="row" style="align-items:center;gap:8px;margin-bottom:10px">
+      <button class="btn sm" onclick="shiftDay(-1)" aria-label="Jour précédent">‹</button>
+      <div style="flex:1;text-align:center;font-weight:800;font-size:.9rem">${isT?'Aujourd\'hui':esc(fmtLong(S.sel))}${isT?'':'<div class="muted" style="font-size:.72rem;font-weight:700">Tu rattrapes une journée passée</div>'}</div>
+      ${isT?'<button class="btn sm" disabled style="opacity:.35" aria-label="Jour suivant">›</button>':`<button class="btn sm" onclick="shiftDay(1)" aria-label="Jour suivant">›</button>`}
+    </div>
+    ${isT?'':`<button class="btn sm green" style="width:100%;margin-bottom:10px" onclick="setDay(today())">↩ Revenir à aujourd'hui</button>`}
+    ${prieresDetail()}</div>
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
 function sportWeek(k){ // séances du lundi au dimanche
@@ -3051,7 +3058,7 @@ let _villeT=null;
 function lieuForm(){
   const P=S.cfg.priere;
   return `<label class="f">Méthode de calcul</label>
-    <select class="inp" onchange="S.cfg.priere.methode=this.value;cfgTouch();render()">${Object.entries(METHODES).filter(([k])=>k!=='maryam'||S.email===ADMIN_EMAIL||P.methode==='maryam').map(([k,m])=>`<option value="${k}" ${P.methode===k?'selected':''}>${esc(m.l)}</option>`).join('')}</select>
+    <select class="inp" onchange="S.cfg.priere.methode=this.value;cfgTouch();render()">${Object.entries(METHODES).map(([k,m])=>`<option value="${k}" ${P.methode===k?'selected':''}>${esc(m.l)}</option>`).join('')}</select>
     ${(()=>{ const L=S.cfg.lieu||{}; const horsFr=L.lat!=null&&!(L.lat>41&&L.lat<51.5&&L.lon>-5.5&&L.lon<9.8); return horsFr&&P.methode!=='mwl'?`<p style="font-size:.76rem;font-weight:700;color:#b45309;margin-top:6px">🌍 Tu es hors de France : la méthode « Ligue islamique mondiale » est la plus utilisée à l'étranger.</p>`:''; })()}
     <label class="f">Ma ville</label>
     <input class="inp" id="villeIn" placeholder="Ex. Caen, Lyon, Bruxelles…" value="${esc(S.cfg.lieu.nom||'')}" oninput="chercherVille(this.value)" autocomplete="off">
