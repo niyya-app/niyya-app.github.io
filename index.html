@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-104508'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-104741'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2251,16 +2251,7 @@ function vJour(){
       <div class="src">D'après ${b.a?esc(b.t):'« '+esc(b.t)+' »'}<button onclick="nextMind()">Une autre ↻</button></div>
     </div>
   </div>
-  <div class="grid g2 mt">
-    ${hr>=17||S.sel!==today()?soir:!S.ouv.jt?`<div class="panel"><button onclick="deroul('jt')" style="all:unset;display:block;width:100%;cursor:pointer"><h2><span class="ico">🗓️</span>Ma journée type<span class="cnt">▾</span></h2><div class="sub" style="margin-bottom:2px">Prochaine étape : ${esc(nextPrayer().p.n)} à ${hm(nextPrayer().at%1440)} · touche pour ouvrir</div></button></div>`:`<div class="panel">${true?`<button onclick="deroul('jt')" style="all:unset;float:right;cursor:pointer;font-weight:800" aria-label="Replier">▴</button>`:''}<h2><span class="ico">🗓️</span>Ma journée type</h2>
-      <div class="kv"><span>Fajr · adhkar · Coran</span><b>${hm(timesOf(S.sel)[0])}</b></div>
-      <div class="kv"><span>Sport · préparation</span><b>matin</b></div>
-      ${travailMode()==='fixe'?`<div class="kv"><span>Début de journée pro · 3 priorités</span><b>${esc(S.cfg.travail.debut)}</b></div>`:`<div class="kv"><span>${travailMode()==='aucun'?'Mes 3 priorités du jour':'Journée pro · 3 priorités'}</span><b>matin</b></div>`}
-      <div class="kv"><span>Dhuhr · Asr</span><b>${hm(timesOf(S.sel)[2])} · ${hm(timesOf(S.sel)[3])}</b></div>
-      ${travailMode()==='fixe'?`<div class="kv"><span>Fin de journée pro</span><b>${esc(S.cfg.travail.fin)}</b></div>`:''}
-      <div class="kv"><span>Famille · Maghrib · Isha · bilan</span><b>${hm(timesOf(S.sel)[4])} · ${hm(timesOf(S.sel)[5])}</b></div></div>`}
-  </div>
-  ${hr>=17||S.sel!==today()?'':`<div class="mt">${soir}</div>`}
+  <div class="mt">${soir}</div>
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
 function sportWeek(k){ // séances du lundi au dimanche
@@ -2556,9 +2547,8 @@ function vReglages(){
       <label class="f">Prénom</label><input class="inp" value="${esc(C.nom)}" onchange="setCfg('nom',this.value)">
       ${true?`<label class="f">Je suis</label><div class="opt">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${C.genre===g?'on':''}" onclick="setCfg('genre','${g}');render()">${l}</button>`).join('')}</div>
       ${C.genre==='f'?`<label class="f">🌸 Pendant la période de dispense</label><div class="opt">${[[true,'🔕 Mettre l\'adhan en pause'],[false,'🔔 Garder l\'adhan']].map(([v,l])=>`<button class="${(C.dispPauseAdhan!==false)===v?'on':''}" onclick="S.cfg.dispPauseAdhan=${v};cfgTouch();render()">${l}</button>`).join('')}</div>`:''}`:''}
-      <label class="f">Horaires de travail</label>
-      <div class="opt">${[['fixe','⏰ Horaires fixes'],['variable','🔀 Horaires variables'],['aucun','🏡 Je ne travaille pas']].map(([m,l])=>`<button class="${travailMode()===m?'on':''}" onclick="choixTravail('${m}')">${l}</button>`).join('')}</div>
-      ${travailMode()==='fixe'?`<div class="row mt"><input class="inp" type="time" value="${esc(C.travail.debut)}" onchange="setCfg('travail.debut',this.value)"><span class="muted">→</span><input class="inp" type="time" value="${esc(C.travail.fin)}" onchange="setCfg('travail.fin',this.value)"></div>`:''}
+      <label class="f">Mon activité</label>
+      <div class="opt">${[['fixe','💼 Je travaille'],['aucun','🏡 Je ne travaille pas']].map(([m,l])=>`<button class="${travailMode()===m?'on':''}" onclick="choixTravail('${m}')">${l}</button>`).join('')}</div>
       <label class="f">Apparence</label>
       <select class="inp" onchange="setCfg('theme',this.value);applyTheme()">${[['auto','Automatique (comme le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${C.theme===v?'selected':''}>${l}</option>`).join('')}</select>
       <label class="f">Séances de sport visées par semaine</label>${num('sportSemaine',C.sportSemaine)}
@@ -3048,9 +3038,6 @@ function vOnb(){
       <label class="f" style="margin-top:0">Ton prénom</label>
       <input class="inp" id="onbNom" value="${esc(C.nom||'')}" placeholder="Prénom" autocomplete="given-name">
       ${lieuForm()}
-      <label class="f">Mes horaires de travail</label>
-      <div class="opt" id="onbTrav">${[['fixe','⏰ Fixes'],['variable','🔀 Variables'],['aucun','🏡 Je ne travaille pas']].map(([m,l])=>`<button class="${(ONB.travail||'fixe')===m?'on':''}" onclick="ONB.travail='${m}';document.querySelectorAll('#onbTrav button').forEach(b=>b.classList.toggle('on',b===this));document.getElementById('onbHeures').classList.toggle('hide','${m}'!=='fixe')">${l}</button>`).join('')}</div>
-      <div class="row mt ${(ONB.travail||'fixe')==='fixe'?'':'hide'}" id="onbHeures"><input class="inp" id="onbDeb" type="time" value="${esc(C.travail.debut)}"><span class="muted">→</span><input class="inp" id="onbFin" type="time" value="${esc(C.travail.fin)}"></div>
       <label class="f">Séances de sport visées par semaine</label>
       <input class="inp" id="onbSport" type="number" min="0" max="14" value="${C.sportSemaine}">
       <div class="grid g2" style="gap:8px">
@@ -3077,7 +3064,7 @@ function finirOnb(){
   const nom=v('onbNom').value.trim(); if(!nom) return toast('Indique ton prénom');
   if(S.cfg.lieu.lat==null && S.cfg.priere.methode!=='hsc') return toast('Choisis ta ville pour les horaires de prière',3000);
   if(!v('onbOk').checked) return toast('Coche la case d\'accord pour continuer',3000);
-  const C=S.cfg; C.nom=nom; C.travail={debut:v('onbDeb').value||'09:00',fin:v('onbFin').value||'18:00',mode:ONB.travail||'fixe'}; C.poidsBut=ONB.poidsBut||'perdre'; if(ONB.genre) C.genre=ONB.genre;
+  const C=S.cfg; C.nom=nom; C.travail=Object.assign({debut:'09:00',fin:'18:00',mode:'fixe'},C.travail); C.poidsBut=ONB.poidsBut||'perdre'; if(ONB.genre) C.genre=ONB.genre;
   C.sportSemaine=Math.max(0,Math.round(num('onbSport')??3));
   const pd=num('onbPoids'), po=num('onbObj'); C.poidsObj=po; C.poidsDepart=pd?{k:today(),v:pd}:null;
   if(pd){ J(today()).poids=pd; touch(today()); }
