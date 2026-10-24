@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-101447'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-103301'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2167,7 +2167,7 @@ function vJour(){
     <div class="coach" style="background:color-mix(in srgb,var(--violet) 10%,var(--card));border-color:#c4b5fd"><b>Allah aime ${esc(ALLAH_AIME[aimeIdx()][0])}</b><br>🎯 ${esc(ALLAH_AIME[aimeIdx()][3])}${versetAime(aimeIdx())}
       <button class="ck ${d.aime?'on':''}" style="margin-top:8px" onclick="toggle('aime')"><span class="box"></span>Je l'ai appliqué</button></div>
   </div>`;
-  const soir=`<div class="panel">
+  const soirAncien=`<div class="panel">
       <button onclick="deroul('soir')" style="all:unset;display:block;width:100%;cursor:pointer">
       <h2><span class="ico">🌙</span>Bilan du soir<span class="cnt">${soirFait?'✓ ':''}<span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['soir']?180:0}deg)">▾</span></span></h2>
       <div class="sub" style="margin-bottom:${S.ouv.soir?0:2}px">${S.ouv.soir?'Deux questions, trente secondes.':soirFait?'✓ Rempli · touche pour relire ou modifier':'Deux questions, trente secondes. Touche pour ouvrir.'}</div></button>
@@ -2176,7 +2176,10 @@ function vJour(){
       <label class="f">Ce que je peux améliorer demain</label>
       <textarea rows="2" oninput="setTxt('ameliorer',this.value)" placeholder="Ex. Ne pas fumer avant le sport">${esc(d.ameliorer)}</textarea>`:''}
     </div>`;
+  const mouh=S.email===ADMIN_EMAIL; // essai Mouhâsaba (compte admin seulement)
+  const soir=mouh?mouhasabaCarte(d):soirAncien;
   return `${bandeauNotif()}
+  ${mouh?intentionMatin():''}
   <div class="grid g2">
     ${!S.scoreOpen?`<button onclick="S.scoreOpen=true;render()" style="all:unset;box-sizing:border-box;display:block;cursor:pointer;width:100%" aria-label="Voir mon score du jour"><div class="hero k-violet" style="margin:0">
       <div class="row" style="justify-content:space-between;align-items:center;gap:10px"><div><div class="h-lbl">⭐ Score du jour</div><div class="h-sub" style="font-size:.9rem;margin-top:4px">Touche pour voir ton score</div></div><span style="font-size:1.4rem;font-weight:800">▾</span></div>
@@ -2695,6 +2698,41 @@ function baPOubli(k){
 function ba(i){ const d=J(); if(!d.baIds) d.baIds=baJour(S.sel); d.ba[i]=!d.ba[i]; vib(); touch(); render(); if(d.ba[i]&&baNb(d)===9) toast('🌟 9/9 bonnes actions, qu\'Allah accepte'); }
 function prioOk(i){ const d=J(); d.prio[i].ok=!d.prio[i].ok; vib(); touch(); render(); }
 function prioTxt(i,v){ J().prio[i].t=v; touch(); }
+// 🌙 Mouhâsaba du soir (examen de soi) : humeur · 3 bienfaits · intention pour demain, retrouvée le lendemain matin
+const HUMEURS=[['😔','Difficile'],['😐','Moyenne'],['🙂','Bonne'],['😄','Super']];
+const BIENFAITS=['🫀 La santé','👨‍👩‍👧 Ma famille','🕌 Une prière','💼 Mon travail','🍽️ Un bon repas','🤝 Un ami','🏠 Un toit','📖 Le Coran','☀️ Une belle journée','🛌 Le repos'];
+function setHumeur(n){ const d=J(); d.humeur=d.humeur===n?null:n; touch(); render(); }
+function toggleBienfait(t){ const d=J(); const L=(d.bienfaits||[]).slice(); const i=L.indexOf(t); if(i>=0) L.splice(i,1); else L.push(t); d.bienfaits=L; touch(); render(); if(i<0&&L.length===3) toast('🤲 Al-hamdou lillâh pour ces bienfaits',2500); }
+function mouhFaite(d){ return !!(d.humeur||(d.bienfaits||[]).length||(d.intention||'').trim()); }
+function mouhasabaCarte(d){
+  const o=S.ouv.soir, fait=mouhFaite(d), nb=(d.bienfaits||[]).length;
+  const persos=(d.bienfaits||[]).filter(t=>!BIENFAITS.includes(t));
+  return `<div class="panel">
+    <button onclick="deroul('soir')" style="all:unset;display:block;width:100%;cursor:pointer">
+    <h2><span class="ico">🌙</span>Ma Mouhâsaba du soir<span class="cnt">${fait?'✓ ':''}<span style="display:inline-block;transition:.2s;transform:rotate(${o?180:0}deg)">▾</span></span></h2>
+    <div class="sub" style="margin-bottom:${o?0:2}px">${o?'L\'examen de soi, en 30 secondes.':fait?`${d.humeur?HUMEURS[d.humeur-1][0]+' · ':''}${nb} bienfait${nb>1?'s':''}${(d.intention||'').trim()?' · intention fixée':''} · touche pour relire`:'Faire le point, remercier Allah, choisir une intention pour demain.'}</div></button>
+    ${o?`
+    <label class="f">1. Ma journée</label>
+    <div class="row" style="gap:8px">${HUMEURS.map(([e,l],i)=>`<button class="btn" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;font-size:1.5rem;${d.humeur===i+1?'border:2px solid #10b981;background:#ecfdf5':''}" onclick="setHumeur(${i+1})" aria-label="${l}">${e}<small style="font-size:.62rem;font-weight:800;color:var(--muted)">${l}</small></button>`).join('')}</div>
+    <label class="f" style="margin-top:14px">2. 3 bienfaits dont je remercie Allah <span class="muted" style="font-weight:700">(${nb}/3)</span></label>
+    <div class="row" style="gap:6px;flex-wrap:wrap">${BIENFAITS.concat(persos).map(t=>`<button class="btn sm" style="${(d.bienfaits||[]).includes(t)?'background:#10b981;color:#fff;border-color:#10b981':''}" onclick="toggleBienfait(${esc(JSON.stringify(t))})">${esc(t)}</button>`).join('')}</div>
+    <div class="row" style="gap:6px;margin-top:8px"><input class="inp" id="bienfaitLibre" style="flex:1" placeholder="Autre bienfait…" maxlength="40"><button class="btn sm" onclick="const i=document.getElementById('bienfaitLibre');if(i.value.trim()){toggleBienfait(i.value.trim())}">+ Ajouter</button></div>
+    <div class="muted" style="font-size:.72rem;font-weight:600;margin-top:6px">« Si vous êtes reconnaissants, très certainement J'augmenterai [Mes bienfaits] pour vous. » (Coran 14:7)</div>
+    <label class="f" style="margin-top:14px">3. Mon intention pour demain</label>
+    <input class="inp" maxlength="90" placeholder="Ex. Prier Fajr à la mosquée, appeler ma mère…" value="${esc(d.intention||'')}" oninput="setTxt('intention',this.value)">
+    <div class="muted" style="font-size:.72rem;font-weight:600;margin-top:6px">🌅 Tu la retrouveras demain matin en haut de ta journée.</div>`:''}
+  </div>`;
+}
+function intentionMatin(){
+  if(S.sel!==today()) return '';
+  const hier=S.jours[addDays(today(),-1)], t=hier&&(hier.intention||'').trim(); if(!t) return '';
+  const d=J(), ok=!!d.intTenue;
+  return `<div class="panel" style="margin-bottom:12px;border:1.5px solid ${ok?'#10b981':'#c4b5fd'};background:${ok?'#ecfdf5':'color-mix(in srgb,var(--violet) 6%,var(--card))'}">
+    <div style="font-size:.74rem;font-weight:800;color:var(--muted)">🎯 TON INTENTION D'HIER SOIR</div>
+    <div style="font-weight:800;font-size:1.05rem;margin:4px 0 10px">${esc(t)}</div>
+    <button class="ck ${ok?'on':''}" onclick="toggle('intTenue')"><span class="box"></span>${ok?'Intention tenue, al-hamdou lillâh 🤲':'Je l\'ai tenue'}</button>
+  </div>`;
+}
 function setTxt(k,v){ J()[k]=v; touch(); }
 /* ---------- 📿 Compteurs : istighfar + dhikr (récompenses = points + hadith) ---------- */
 const DHIKRS={
