@@ -443,7 +443,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-093722'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-094557'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2113,6 +2113,12 @@ function vJour(){
   const mi=S.mindIdx??mindDuMoment(S.sel); const m=MINDSET[mi]; const b=BOOKS[m[0]];
   const hr=new Date().getHours();
   const soirFait=!!((d.reussite||'').trim()||(d.ameliorer||'').trim());
+  const aimeCarte=`  <div class="panel mt">
+    <h2><span class="ico">🤍</span>Ce qu'Allah aime</h2>
+    <div class="sub">Un verset par jour, et une façon concrète de l'appliquer.</div>
+    <div class="coach" style="background:color-mix(in srgb,var(--violet) 10%,var(--card));border-color:#c4b5fd"><b>Allah aime ${esc(ALLAH_AIME[aimeIdx()][0])}</b><br>🎯 ${esc(ALLAH_AIME[aimeIdx()][3])}
+      <button class="ck ${d.aime?'on':''}" style="margin-top:8px" onclick="toggle('aime')"><span class="box"></span>Je l'ai appliqué</button></div>
+  </div>`;
   const soir=`<div class="panel">
       <button onclick="deroul('soir')" style="all:unset;display:block;width:100%;cursor:pointer">
       <h2><span class="ico">🌙</span>Bilan du soir<span class="cnt">${soirFait?'✓ ':''}<span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['soir']?180:0}deg)">▾</span></span></h2>
@@ -2137,6 +2143,7 @@ function vJour(){
     </div>`}
     ${heroPriere()}
   </div>
+  ${S.email===ADMIN_EMAIL?aimeCarte:''}
   <div class="grid g2 mt">
     ${S.cfg.fumeur?heroTabac():''}
     <div class="panel" ${S.cfg.fumeur?'':'style="grid-column:1/-1"'}>
@@ -2209,12 +2216,7 @@ function vJour(){
       ${travailMode()==='fixe'?`<div class="kv"><span>Fin de journée pro</span><b>${esc(S.cfg.travail.fin)}</b></div>`:''}
       <div class="kv"><span>Famille · Maghrib · Isha · bilan</span><b>${hm(timesOf(S.sel)[4])} · ${hm(timesOf(S.sel)[5])}</b></div></div>`}
   </div>
-  <div class="panel mt">
-    <h2><span class="ico">🤍</span>Ce qu'Allah aime</h2>
-    <div class="sub">Un verset par jour, et une façon concrète de l'appliquer.</div>
-    <div class="coach" style="background:color-mix(in srgb,var(--violet) 10%,var(--card));border-color:#c4b5fd"><b>Allah aime ${esc(ALLAH_AIME[aimeIdx()][0])}</b><br>🎯 ${esc(ALLAH_AIME[aimeIdx()][3])}
-      <button class="ck ${d.aime?'on':''}" style="margin-top:8px" onclick="toggle('aime')"><span class="box"></span>Je l'ai appliqué</button></div>
-  </div>
+  ${S.email===ADMIN_EMAIL?'':aimeCarte}
   ${hr>=17||S.sel!==today()?'':`<div class="mt">${soir}</div>`}
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
