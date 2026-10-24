@@ -448,7 +448,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-122915'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-123314'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1750,7 +1750,7 @@ function render(){
   nav.classList.remove('hide');
   if(S.view==='tabac' && !S.cfg.fumeur) S.view='jour';
   const menuPlus=true; // menu à 5 onglets + ☰ Plus pour tout le monde (19/10)
-  document.getElementById('nav').innerHTML=(menuPlus?[['jour','🏠','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['qibla','🧭','Qibla'],['plus','☰','Plus']]:[...VIEWS]).filter(([k])=>k!=='tabac'||S.cfg.fumeur).map(([k,i,l])=>`<button class="${S.view===k||(S.view==='noms'&&k==='din')||(S.view==='voyage'&&k==='citadelle')||(menuPlus&&k==='plus'&&DANS_PLUS.includes(S.view))?'on':''}" onclick="${k==='don'?'ouvrirDons()':`go('${k}')`}"><i>${i}</i>${l}</button>`).join('');
+  document.getElementById('nav').innerHTML=(menuPlus?[['jour','🏠','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['qibla','🧭','Qibla'],['plus','☰','Menu']]:[...VIEWS]).filter(([k])=>k!=='tabac'||S.cfg.fumeur).map(([k,i,l])=>`<button class="${S.view===k||(S.view==='noms'&&k==='din')||(S.view==='voyage'&&k==='citadelle')||(menuPlus&&k==='plus'&&DANS_PLUS.includes(S.view))?'on':''}" onclick="${k==='don'?'ouvrirDons()':`go('${k}')`}"><i>${i}</i>${l}</button>`).join('');
   const isT=S.sel===today();
   const head=`
   <div class="top">
@@ -1770,7 +1770,7 @@ function render(){
   document.body.classList.toggle('ramadan',estRamadan(S.sel));
   if(S.view==='apprendre') setTimeout(apBrancher,30);
   // pages ouvertes depuis ☰ Plus : petit bouton de retour en haut (le menu du bas reste toujours là)
-  const retourPlus=DANS_PLUS.includes(S.view) && S.view!=='plus' && !(S.view==='apprendre'&&_ap.i!=null) ? `<button class="btn sm" style="margin-bottom:10px" onclick="go('plus')">‹ Plus</button>` : '';
+  const retourPlus=DANS_PLUS.includes(S.view) && S.view!=='plus' && !(S.view==='apprendre'&&_ap.i!=null) ? `<button class="btn sm" style="margin-bottom:10px" onclick="go('plus')">‹ Menu</button>` : '';
   app.innerHTML=head+alerte+retourPlus+(S.view==='jour'?carteBienvenue():'')+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
   tick();
 }
@@ -3690,21 +3690,28 @@ function plusClic(k){ if(_plusLong){ _plusLong=false; return; } if(S.plusEdit) r
   if(k==='don') return ouvrirDons(); if(k==='inviter') return inviter(); if(k==='contact') return nousContacter();
   if(k==='boutique') return openSheet(`<div style="text-align:center"><div style="font-size:3rem">🛍️</div><h2 style="margin:6px 0">La boutique NIYYA arrive bientôt</h2><div class="sub">In châ' Allâh, très bientôt ici.</div><button class="btn pri mt" style="width:100%" onclick="closeSheet()">J'ai hâte !</button></div>`);
   go(k); }
-let _pdrag=null, _pdragT=null, _pdragXY=null, _pdragOn=false, _pdSwap=0;
-// tactile (iPhone) : un court appui prend la tuile ; sinon le doigt fait défiler la page
-function pdStart(el,x,y){ _pdrag=el; _pdragOn=false; _pdragXY=[x,y]; clearTimeout(_pdragT);
-  _pdragT=setTimeout(()=>{ if(_pdrag!==el) return; _pdragOn=true; el.classList.add('pdrag'); vib(); },3000); }
+// Rangement du menu : 1) on touche une tuile pour la sélectionner (contour vert), 2) on la fait glisser.
+// Pas d'appui long (l'iPhone coupe le geste au bout d'une demi-seconde) ; les autres tuiles laissent défiler la page.
+let _pdrag=null, _pdSel=null, _pdXY=null, _pdOn=false, _pdBouge=false, _pdSwap=0;
+function pdStart(el,x,y){ _pdrag=el; _pdXY=[x,y]; _pdBouge=false; _pdOn=(el.dataset.k===_pdSel); }
 function pdMove(x,y){
   if(!_pdrag) return false;
-  if(!_pdragOn){ if(Math.hypot(x-_pdragXY[0],y-_pdragXY[1])>22){ clearTimeout(_pdragT); _pdrag=null; } return false; }
+  if(Math.hypot(x-_pdXY[0],y-_pdXY[1])>10) _pdBouge=true;
+  if(!_pdOn) return false; // tuile non sélectionnée : la page défile
   if(y<70) window.scrollBy(0,-6); else if(y>innerHeight-110) window.scrollBy(0,6); // défilement auto doux près des bords
   const sous=document.elementFromPoint(x,y); const cible=sous&&sous.closest('#plusTiles > [data-k]');
   // on n'échange que si le doigt est bien au centre de l'autre tuile, et pas plus d'un échange toutes les 0,4 s
-  if(cible&&cible!==_pdrag&&Date.now()-(_pdSwap||0)>400){ const R=cible.getBoundingClientRect(); if(Math.abs(x-(R.left+R.width/2))>R.width*.3||Math.abs(y-(R.top+R.height/2))>R.height*.3) return true; _pdSwap=Date.now(); const box=_pdrag.parentNode, L=[...box.children], i=L.indexOf(_pdrag), j=L.indexOf(cible); box.insertBefore(_pdrag, i<j?cible.nextSibling:cible); vib(); }
+  if(cible&&cible!==_pdrag&&Date.now()-_pdSwap>400){ const R=cible.getBoundingClientRect(); if(Math.abs(x-(R.left+R.width/2))>R.width*.3||Math.abs(y-(R.top+R.height/2))>R.height*.3) return true; _pdSwap=Date.now(); const box=_pdrag.parentNode, L=[...box.children], i=L.indexOf(_pdrag), j=L.indexOf(cible); box.insertBefore(_pdrag, i<j?cible.nextSibling:cible); vib(); }
   return true; }
-function pdEnd(){ clearTimeout(_pdragT); if(_pdragOn&&_pdrag){ _pdrag.classList.remove('pdrag'); S.cfg.plusOrdre=[...document.querySelectorAll('#plusTiles > [data-k]')].map(x=>x.dataset.k); cfgTouch(); } _pdragOn=false; _pdrag=null; }
+function pdEnd(){
+  if(!_pdrag) return;
+  if(_pdOn&&_pdBouge){ S.cfg.plusOrdre=[...document.querySelectorAll('#plusTiles > [data-k]')].map(x=>x.dataset.k); cfgTouch(); }
+  else if(!_pdBouge){ // simple touche : sélectionne / désélectionne
+    document.querySelectorAll('#plusTiles > .pdrag').forEach(x=>x.classList.remove('pdrag'));
+    _pdSel=(_pdSel===_pdrag.dataset.k)?null:_pdrag.dataset.k; if(_pdSel){ _pdrag.classList.add('pdrag'); vib(); } }
+  _pdOn=false; _pdrag=null; }
 document.addEventListener('touchmove',e=>{ if(!_pdrag) return; const t=e.touches[0]; if(pdMove(t.clientX,t.clientY)) e.preventDefault(); },{passive:false});
-document.addEventListener('touchend',pdEnd); document.addEventListener('touchcancel',()=>{ if(_pdragOn) pdEnd(); });
+document.addEventListener('touchend',pdEnd); document.addEventListener('touchcancel',()=>{ _pdOn=false; _pdrag=null; });
 function plusTouch(e,el){ const t=e.touches[0]; pdStart(el,t.clientX,t.clientY); }
 // souris (ordinateur)
 function plusDragDebut(e,el){ if(e.pointerType!=='mouse') return; pdStart(el,e.clientX,e.clientY);
@@ -3713,9 +3720,9 @@ function plusDragDebut(e,el){ if(e.pointerType!=='mouse') return; pdStart(el,e.c
 function plusMove(k,dir){ const L=plusTuiles().map(x=>x[0]); const i=L.indexOf(k), j=i+dir; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; S.cfg.plusOrdre=L; cfgTouch(); vib(); render(); }
 function vPlus(){
   const T=plusTuiles(), ed=!!S.plusEdit;
-  return `<div class="panel"><h2><span class="ico">☰</span>Plus${ed?`<span class="cnt"><button class="btn sm green" onclick="S.plusEdit=false;render();toast('✅ Ordre enregistré')">Terminé</button></span>`:''}</h2>
-    ${ed?`<div class="coach" style="font-size:.82rem;margin-bottom:10px">✋ Reste appuyé 3 secondes sur une tuile, puis fais-la glisser. Tu peux défiler normalement pour voir les autres. Touche <b>Terminé</b> à la fin.</div>`:''}
-    <div class="tiles" id="plusTiles" ${ed?'style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none" oncontextmenu="return false" onselectstart="return false"':''}>${T.map(([k,i,t,st,g],n)=>`<div data-k="${k}" style="position:relative" ${ed?'ontouchstart="plusTouch(event,this)" onpointerdown="plusDragDebut(event,this)"':''}><button class="tile on ptile ${g} ${ed?'pbouge':''}" style="width:100%;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none" onpointerdown="plusDown()" onpointerup="plusUp()" onpointerleave="plusUp()" oncontextmenu="return false" onclick="plusClic('${k}')"><span class="t-ico">${i}</span><b>${t}</b><small>${st}</small></button>
+  return `<div class="panel"><h2><span class="ico">☰</span>Menu${ed?`<span class="cnt"><button class="btn sm green" onclick="S.plusEdit=false;_pdSel=null;render();toast('✅ Ordre enregistré')">Terminé</button></span>`:''}</h2>
+    ${ed?`<div class="coach" style="font-size:.82rem;margin-bottom:10px">👆 <b>Touche</b> une tuile pour la sélectionner (contour vert), puis <b>fais-la glisser</b> à sa place. Le reste de l'écran défile normalement. Touche <b>Terminé</b> à la fin.</div>`:''}
+    <div class="tiles" id="plusTiles" ${ed?'style="-webkit-user-select:none;user-select:none;-webkit-touch-callout:none" oncontextmenu="return false" onselectstart="return false"':''}>${T.map(([k,i,t,st,g],n)=>`<div data-k="${k}" class="${ed&&k===_pdSel?'pdrag':''}" style="position:relative" ${ed?'ontouchstart="plusTouch(event,this)" onpointerdown="plusDragDebut(event,this)"':''}><button class="tile on ptile ${g} ${ed?'pbouge':''}" style="width:100%;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none" onpointerdown="plusDown()" onpointerup="plusUp()" onpointerleave="plusUp()" oncontextmenu="return false" onclick="plusClic('${k}')"><span class="t-ico">${i}</span><b>${t}</b><small>${st}</small></button>
 </div>`).join('')}</div>
     ${S.email===ADMIN_EMAIL&&!ed?`<div class="muted" style="font-size:.72rem;font-weight:600;text-align:center;margin-top:10px">Astuce : reste appuyé sur une tuile pour changer l'ordre.</div>`:''}</div>`;
 }
