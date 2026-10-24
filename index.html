@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-113416'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-113957'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1962,6 +1962,37 @@ const CONSEILS_POIDS={
     ["Mange de ce qui est devant toi, de la main droite, en commençant par Bismillah.","Hadith · Al-Bukhari n° 5376 et Muslim n° 2022"]
   ]
 };
+// ⚖️ Carte « Mon objectif poids » sur Aujourd'hui : conseil du jour, pesée, progression
+function poidsListe(){ return Object.keys(S.jours).filter(k=>S.jours[k]&&+S.jours[k].poids>0).sort().map(k=>[k,+S.jours[k].poids]); }
+function setPoidsJour(){ const v=parseFloat((document.getElementById('poidsJour').value||'').replace(',','.')); if(!(v>20&&v<400)) return toast('Indique ton poids en kg'); const d=S.jours[today()]||J(today()); J(today()).poids=v; if(!S.cfg.poidsDepart){ S.cfg.poidsDepart={k:today(),v}; cfgTouch(); } touch(today()); render(); const L=poidsListe(); toast('⚖️ Pesée enregistrée'); poidsFete(L); }
+function poidsFete(L){ const obj=+S.cfg.poidsObj, dep=S.cfg.poidsDepart&&+S.cfg.poidsDepart.v; if(!obj||!dep||!L.length) return; const cur=L[L.length-1][1], tot=Math.abs(dep-obj); if(!tot) return; const fait=poidsBut()==='prendre'?cur-dep:dep-cur;
+  if(fait>=tot) setTimeout(()=>celebrer('مَا شَاءَ اللَّه','Objectif atteint !','Qu\'Allah te garde en bonne santé'),300); }
+function poidsCarte(){
+  const but=poidsBut(), obj=+S.cfg.poidsObj||null; if(!obj) return '';
+  const L=poidsListe(), dep=(S.cfg.poidsDepart&&+S.cfg.poidsDepart.v)||(L[0]&&L[0][1])||null, cur=L.length?L[L.length-1][1]:dep;
+  const fr=x=>x.toFixed(1).replace('.',',').replace(',0',''), o=S.ouv.poids, tot=dep?Math.abs(dep-obj):0;
+  const fait=dep&&cur?(but==='prendre'?cur-dep:but==='perdre'?dep-cur:0):0, pct=tot?Math.max(0,Math.min(100,Math.round(fait/tot*100))):0;
+  const fleche={perdre:'⬇️',prendre:'⬆️',garder:'⚖️'}[but];
+  const titre=but==='garder'?`Garder ${fr(obj)} kg`:`Objectif ${but==='perdre'?'−':'+'}${fr(tot)} kg`;
+  const resume=!cur?'Fais ta première pesée · touche pour ouvrir':but==='garder'?(poidsTexte(cur)||fr(cur)+' kg'):(fait>=tot?'🎉 Objectif atteint !':(fait>0?`déjà ${but==='perdre'?'−':'+'}${fr(fait)} kg ✓ · `:'')+`encore ${fr(Math.max(0,tot-fait))} kg`);
+  const derniere=L.length?L[L.length-1][0]:null, jours=derniere?Math.round((dateOf(today())-dateOf(derniere))/864e5):null;
+  const c=conseilPoids(today()), v=L.slice(-12);
+  return `<div class="panel">
+    <button onclick="deroul('poids')" style="all:unset;display:block;width:100%;cursor:pointer">
+    <h2><span class="ico">${fleche}</span>${titre}<span class="cnt">${pct&&but!=='garder'?pct+'% ':''}<span style="display:inline-block;transition:.2s;transform:rotate(${o?180:0}deg)">▾</span></span></h2>
+    ${o?'':`<div class="sub" style="margin-bottom:2px">${resume}${jours!=null&&jours>=7?' · ⏰ pèse-toi':''}</div>`}</button>
+    ${o?`
+    <div class="coach" style="font-size:.86rem;line-height:1.5;background:color-mix(in srgb,var(--emerald) 8%,var(--card));border-color:#a7f3d0"><b>🥗 Conseil du jour</b><br>${esc(c[0])}<div class="muted" style="font-size:.7rem;margin-top:4px">Source : ${esc(c[1])}</div></div>
+    ${but!=='garder'&&dep?`<div style="margin-top:12px"><div class="row" style="justify-content:space-between;font-size:.78rem;font-weight:800"><span>Départ ${fr(dep)} kg</span><span>${cur?'Actuel '+fr(cur)+' kg':''}</span><span>Objectif ${fr(obj)} kg</span></div>
+      <div style="height:12px;border-radius:99px;background:var(--card2,#f1f5f9);margin-top:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#10b981,#059669);border-radius:99px"></div></div>
+      <div class="muted" style="font-size:.76rem;font-weight:700;margin-top:6px">${fait>=tot?'🎉 Objectif atteint, mâ châ\' Allâh !':fait>0?`${fr(fait)} kg sur ${fr(tot)} kg · ${pct}% du chemin 💪`:'Chaque petit pas compte.'}</div></div>`:''}
+    ${v.length>1?`<div class="chart" style="height:90px;margin-top:10px">${(()=>{ const lo=Math.min(...v.map(x=>x[1]),obj)-1, hi=Math.max(...v.map(x=>x[1]),obj)+.5; return v.map(([k,p])=>`<div class="col" title="${fmtShort(k)} : ${p} kg"><div class="b" style="height:${(p-lo)/(hi-lo)*100}%;background:linear-gradient(180deg,#34d399,#059669)"></div><div class="x">${fmtShort(k)}</div></div>`).join(''); })()}</div>`:''}
+    <label class="f" style="margin-top:12px">Mon poids ce matin</label>
+    <div class="row"><input class="inp" id="poidsJour" type="number" step="0.1" inputmode="decimal" placeholder="Ex. 78,5" value="${J(today()).poids??''}"><button class="btn green" onclick="setPoidsJour()">Enregistrer</button></div>
+    <div class="muted" style="font-size:.72rem;font-weight:600;margin-top:6px">💡 Pèse-toi une fois par semaine, le matin à jeun, pour suivre la tendance sans te décourager.${jours!=null?' Dernière pesée : '+(jours===0?'aujourd\'hui':jours===1?'hier':'il y a '+jours+' jours')+'.':''}</div>
+    <p class="muted" style="font-size:.66rem;margin-top:6px">Conseils généraux, ils ne remplacent pas l'avis d'un médecin ou d'un diététicien. Objectif modifiable dans ⚙️ Réglages.</p>`:''}
+  </div>`;
+}
 function conseilPoids(k){ const L=CONSEILS_POIDS[poidsBut()]||CONSEILS_POIDS.perdre; return L[dayOfYear(k||today())%L.length]; }
 /* ---------- Travail (fixe / variable / aucun) et objectif de poids (perdre / prendre / garder) ---------- */
 const travailMode=()=>(S.cfg.travail&&S.cfg.travail.mode)||'fixe';
@@ -2216,6 +2247,7 @@ function vJour(){
       ${!d.sport?`<button class="btn sm mt" onclick="toggle('repos')">${d.repos?'✓ Jour de repos sportif':'😴 Marquer jour de repos'}</button>`:''}`:''}
     </div>
   </div>
+  ${S.email===ADMIN_EMAIL&&poidsCarte()?`<div class="mt">${poidsCarte()}</div>`:''}
   ${deuxDeroul}
   <div class="grid g2 mt">
     <div class="panel">
