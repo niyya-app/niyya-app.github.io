@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-114010'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-114408'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1987,9 +1987,9 @@ function poidsCarte(){
       <div style="height:12px;border-radius:99px;background:var(--card2,#f1f5f9);margin-top:6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#10b981,#059669);border-radius:99px"></div></div>
       <div class="muted" style="font-size:.76rem;font-weight:700;margin-top:6px">${fait>=tot?'🎉 Objectif atteint, mâ châ\' Allâh !':fait>0?`${fr(fait)} kg sur ${fr(tot)} kg · ${pct}% du chemin 💪`:'Chaque petit pas compte.'}</div></div>`:''}
     ${v.length>1?`<div class="chart" style="height:90px;margin-top:10px">${(()=>{ const lo=Math.min(...v.map(x=>x[1]),obj)-1, hi=Math.max(...v.map(x=>x[1]),obj)+.5; return v.map(([k,p])=>`<div class="col" title="${fmtShort(k)} : ${p} kg"><div class="b" style="height:${(p-lo)/(hi-lo)*100}%;background:linear-gradient(180deg,#34d399,#059669)"></div><div class="x">${fmtShort(k)}</div></div>`).join(''); })()}</div>`:''}
-    <label class="f" style="margin-top:12px">Mon poids ce matin</label>
+    <label class="f" style="margin-top:12px">Mon poids cette semaine</label>
     <div class="row"><input class="inp" id="poidsJour" type="number" step="0.1" inputmode="decimal" placeholder="Ex. 78,5" value="${J(today()).poids??''}"><button class="btn green" onclick="setPoidsJour()">Enregistrer</button></div>
-    <div class="muted" style="font-size:.72rem;font-weight:600;margin-top:6px">💡 Pèse-toi une fois par semaine, le matin à jeun, pour suivre la tendance sans te décourager.${jours!=null?' Dernière pesée : '+(jours===0?'aujourd\'hui':jours===1?'hier':'il y a '+jours+' jours')+'.':''}</div>
+    <div class="muted" style="font-size:.72rem;font-weight:600;margin-top:6px">💡 Une pesée par semaine suffit : toujours le même jour, le matin à jeun. Le poids varie chaque jour (eau, repas), seule la tendance compte.${jours!=null?' Dernière pesée : '+(jours===0?'aujourd\'hui':jours===1?'hier':'il y a '+jours+' jours')+'.':''}</div>
     <p class="muted" style="font-size:.66rem;margin-top:6px">Conseils généraux, ils ne remplacent pas l'avis d'un médecin ou d'un diététicien. Objectif modifiable dans ⚙️ Réglages.</p>`:''}
   </div>`;
 }
