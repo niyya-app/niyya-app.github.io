@@ -71,7 +71,7 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
 .hero.blanc{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:0 10px 30px rgba(15,23,42,.08);padding-top:12px}
-.hero.blanc .hb-photo{height:132px;border-radius:18px;margin:0 0 14px;background:url(fond-djerba.jpg) center 25%/cover}
+.hero.blanc .hb-photo{height:132px;border-radius:18px;margin:0 0 14px;background:url(fond-quba.jpg) center 88%/cover}
 .hero.blanc .h-lbl,.hero.blanc .h-sub{color:var(--muted);opacity:1}
 .hero.blanc .qbtn{top:22px;right:22px;background:rgba(255,255,255,.9);color:#0f172a}
 .hero.blanc .pmini{background:var(--card2,#f1f5f9);color:var(--ink)}
@@ -438,7 +438,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-092906'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-093151'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1994,7 +1994,7 @@ function heroPriere(){
     return `<button class="pmini ${cls} ${np&&np.p.k===p.k&&np.k===S.sel?'next':''}" onclick="cyclePrayer('${p.k}')">${p.n}<small>${hm(t[p.i])}</small></button>`;}).join('');
   const blanc=S.email===ADMIN_EMAIL; // essai style « fond blanc + photo » (compte admin seulement)
   return `<div class="hero k-emerald${blanc?' blanc':''}">
-    ${blanc?`<div class="hb-photo" role="img" aria-label="Mosquée Satouri, Djerba" title="Photo : Rais67, Wikimedia Commons, CC BY-SA 3.0"></div>`:''}
+    ${blanc?`<div class="hb-photo" role="img" aria-label="Mosquée de Quba, Médine"></div>`:''}
     <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
     <div class="h-lbl" style="padding-right:80px">🕌 ${isT?'Prochaine prière':'Prières du jour'} · ${esc(lieuNom())}</div>
     ${isT?`<div class="h-big tnum"><span id="npName">${np.p.n}</span> <span id="npCount" style="font-size:1.25rem;font-weight:700;opacity:.95"></span></div>
