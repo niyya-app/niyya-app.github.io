@@ -448,7 +448,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-122112'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-122338'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3688,10 +3688,7 @@ function plusDown(){ if(S.email!==ADMIN_EMAIL||S.plusEdit) return; _plusLong=fal
 function plusUp(){ clearTimeout(_plusLp); }
 function plusClic(k){ if(_plusLong){ _plusLong=false; return; } if(S.plusEdit) return;
   if(k==='don') return ouvrirDons(); if(k==='inviter') return inviter(); if(k==='contact') return nousContacter();
-  if(k==='boutique'){ const P=[['🕌','Tapis de prière','Confortables, légers ou de voyage, faciles à emporter.'],['📿','Misbaha (chapelets)','Pour ton dhikr de chaque jour : bois, pierre ou compteur.'],['📖','Corans et livres','Corans, livres de hadiths, de sîra et pour les enfants.'],['🌸','Musc et parfums','Musc, ʿoud et parfums sans alcool.'],['🍯','Produits de la Sunnah','Dattes, miel, nigelle, siwak…'],['🎁','Idées cadeaux','Coffrets pour le Ramadan, l\'Aïd, une naissance…']];
-    return openSheet(`<div style="text-align:center"><div style="font-size:3rem">🛍️</div><h2 style="margin:6px 0">La boutique NIYYA arrive bientôt</h2><div class="sub">Une sélection pensée pour ta pratique au quotidien :</div></div>
-    <div style="margin:14px 0;display:grid;gap:8px">${P.map(([i,t,d])=>`<div style="display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--card2,rgba(0,0,0,.04))"><span style="font-size:1.6rem">${i}</span><b style="text-align:left">${t}</b></div>`).join('')}</div>
-    <div class="sub" style="text-align:center">In châ' Allâh, très bientôt ici.</div><button class="btn pri mt" style="width:100%" onclick="closeSheet()">J'ai hâte !</button>`); }
+  if(k==='boutique') return openSheet(`<div style="text-align:center"><div style="font-size:3rem">🛍️</div><h2 style="margin:6px 0">La boutique NIYYA arrive bientôt</h2><div class="sub">In châ' Allâh, très bientôt ici.</div><button class="btn pri mt" style="width:100%" onclick="closeSheet()">J'ai hâte !</button></div>`);
   go(k); }
 let _pdrag=null, _pdragT=null, _pdragXY=null, _pdragOn=false;
 // tactile (iPhone) : un court appui prend la tuile ; sinon le doigt fait défiler la page
