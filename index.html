@@ -70,6 +70,7 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 /* ---------- Entête ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
+.hero.paysage .pmini:not(.done){background:rgba(4,70,52,.6);backdrop-filter:blur(2px)}
 .logo{width:44px;height:44px;border-radius:14px;flex:none;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.9rem;letter-spacing:.02em;
   background:linear-gradient(135deg,#6366f1,#ec4899);box-shadow:0 8px 18px rgba(99,102,241,.35)}
 .brand h1{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}
@@ -428,7 +429,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261023-171701'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-092312'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1982,7 +1983,8 @@ function heroPriere(){
   const minis=PRAYERS.map(p=>{
     const st=d.p[p.k]; const cls=st==='heure'||st==='mosquee'?'done':st==='retard'?'late':st==='manquee'?'miss':'';
     return `<button class="pmini ${cls} ${np&&np.p.k===p.k&&np.k===S.sel?'next':''}" onclick="cyclePrayer('${p.k}')">${p.n}<small>${hm(t[p.i])}</small></button>`;}).join('');
-  return `<div class="hero k-emerald">
+  const paysage=S.email===ADMIN_EMAIL; // essai d'un fond illustré (compte admin seulement)
+  return `<div class="hero k-emerald${paysage?' paysage':''}"${paysage?` style="background:linear-gradient(100deg,rgba(4,84,62,.8) 0%,rgba(4,84,62,.35) 50%,rgba(4,84,62,0) 85%),linear-gradient(0deg,rgba(4,70,52,.55) 0%,rgba(4,70,52,0) 45%),url(paysage.svg) center 35%/cover"`:''}>
     <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
     <div class="h-lbl" style="padding-right:80px">🕌 ${isT?'Prochaine prière':'Prières du jour'} · ${esc(lieuNom())}</div>
     ${isT?`<div class="h-big tnum"><span id="npName">${np.p.n}</span> <span id="npCount" style="font-size:1.25rem;font-weight:700;opacity:.95"></span></div>

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="ciel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cfe8f3"/>
+      <stop offset="0.55" stop-color="#f3ead7"/>
+      <stop offset="1" stop-color="#ead9b8"/>
+    </linearGradient>
+    <radialGradient id="soleil" cx="0.72" cy="0.28" r="0.35">
+      <stop offset="0" stop-color="#fff7df" stop-opacity="1"/>
+      <stop offset="1" stop-color="#fff7df" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mur" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e9e4da"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#ciel)"/>
+  <rect width="800" height="400" fill="url(#soleil)"/>
+  <!-- collines lointaines -->
+  <path d="M0 270 C120 240 220 255 330 245 C450 232 560 250 680 238 C740 232 780 240 800 238 L800 400 L0 400 Z" fill="#d9cfb8" opacity=".7"/>
+  <!-- bâtiment blanc à coupole -->
+  <g>
+    <rect x="470" y="190" width="190" height="110" fill="url(#mur)"/>
+    <rect x="520" y="150" width="90" height="50" fill="#fbfaf6"/>
+    <path d="M520 152 Q565 92 610 152 Z" fill="#ffffff"/>
+    <rect x="562" y="104" width="6" height="16" fill="#e2c98f"/>
+    <circle cx="565" cy="101" r="4" fill="#e2c98f"/>
+    <rect x="640" y="140" width="22" height="160" fill="#f7f4ee"/>
+    <path d="M638 142 Q651 116 664 142 Z" fill="#ffffff"/>
+    <path d="M495 300 L495 245 Q510 222 525 245 L525 300 Z" fill="#cdbf9f"/>
+    <path d="M545 300 L545 238 Q565 210 585 238 L585 300 Z" fill="#bfae8a"/>
+    <path d="M605 300 L605 245 Q620 222 635 245 L635 300 Z" fill="#cdbf9f"/>
+    <rect x="532" y="166" width="12" height="20" rx="6" fill="#c9b892"/>
+    <rect x="586" y="166" width="12" height="20" rx="6" fill="#c9b892"/>
+    <rect x="470" y="186" width="190" height="6" fill="#f0ebe0"/>
+  </g>
+  <!-- sol -->
+  <path d="M0 300 C200 290 400 296 800 288 L800 400 L0 400 Z" fill="#e4d2ac"/>
+  <path d="M0 330 C250 318 500 326 800 316 L800 400 L0 400 Z" fill="#d8c193"/>
+  <!-- palmiers -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M140 330 C145 270 150 220 162 160" stroke="#8a6a44" stroke-width="9"/>
+    <path d="M240 335 C238 290 236 250 228 205" stroke="#8a6a44" stroke-width="7"/>
+    <path d="M740 330 C735 280 728 240 716 190" stroke="#8a6a44" stroke-width="8"/>
+  </g>
+  <g fill="#4f8a4a">
+    <path d="M162 160 C130 150 100 160 78 182 C110 168 135 166 162 160 Z"/>
+    <path d="M162 160 C150 130 128 112 100 108 C125 125 142 140 162 160 Z"/>
+    <path d="M162 160 C175 128 200 112 228 112 C204 128 186 142 162 160 Z"/>
+    <path d="M162 160 C196 152 226 162 246 186 C214 172 190 166 162 160 Z"/>
+    <path d="M162 160 C160 128 166 102 182 84 C176 112 170 134 162 160 Z"/>
+    <path d="M228 205 C204 196 182 204 166 222 C190 212 208 210 228 205 Z"/>
+    <path d="M228 205 C222 182 206 168 186 164 C204 178 216 190 228 205 Z"/>
+    <path d="M228 205 C240 182 258 172 280 174 C260 184 244 194 228 205 Z"/>
+    <path d="M228 205 C252 200 274 210 288 228 C264 218 248 212 228 205 Z"/>
+    <path d="M716 190 C690 180 664 188 646 208 C672 196 694 194 716 190 Z"/>
+    <path d="M716 190 C708 164 690 148 666 144 C688 160 702 174 716 190 Z"/>
+    <path d="M716 190 C730 164 752 152 778 154 C756 166 736 178 716 190 Z"/>
+    <path d="M716 190 C744 186 770 196 790 216 C762 204 740 198 716 190 Z"/>
+  </g>
+  <g fill="#6aa35d" opacity=".9">
+    <path d="M162 160 C140 140 118 136 96 140 C122 148 142 152 162 160 Z"/>
+    <path d="M716 190 C696 172 676 168 656 170 C680 178 698 184 716 190 Z"/>
+  </g>
+  <!-- buissons -->
+  <ellipse cx="90" cy="335" rx="70" ry="18" fill="#7fae6c" opacity=".8"/>
+  <ellipse cx="420" cy="318" rx="60" ry="12" fill="#8db978" opacity=".7"/>
+  <ellipse cx="760" cy="330" rx="60" ry="16" fill="#7fae6c" opacity=".8"/>
+</svg>
