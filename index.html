@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-111054'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-112109'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1713,7 +1713,7 @@ function scoreOf(k){
   const n=d.cig.length, t=targetOf(k);
   const tv = k<S.cfg.tabac.debut ? 0 : (n<=t?1:Math.max(0,1-(n-t)/5));
   if(S.cfg.fumeur) parts.push({k:'tabac',l:'Tabac',f:tv,txt:`${n}/${t}`});
-  const ne=essFaits(d); parts.push({k:'essentiels',l:'Mes essentiels',f:ne/6,txt:`${ne}/6`}); // 6 cases au choix, même poids chacune
+  const ne=essFaits(d), nbE=essNb(); parts.push({k:'essentiels',l:'Mes essentiels',f:ne/nbE,txt:`${ne}/${nbE}`}); // 6 cases au choix, même poids chacune
   const nb=baNb(d);
   parts.push({k:'bonnes',l:'Bonnes actions',f:nb>=1?1:0,txt:nb?`${nb} ✓`:'—'}); // une seule bonne action suffit, les autres sont du bonus
   parts.push({k:'fruits',l:'Fruits',f:Math.min(5,d.fruits||0)/5,txt:`${d.fruits||0}/5`});
@@ -2097,7 +2097,10 @@ const ESS_CAT={
   rsSoir:{i:'🌃',t:'Pas de réseaux sociaux le soir',s:'',g:'k-magenta'}
 };
 const ESS_LEGACY=['sport','coran','lecture','famille','adhM','adhS']; // cases historiques, enregistrées comme avant (d.sport, d.coran…)
-const essSlots=()=>{ const L=(S.cfg.ess||ESS_LEGACY).slice(0,6); while(L.length<6) L.push(ESS_LEGACY.find(x=>!L.includes(x))||'marche'); return L; };
+const essNb=()=>S.email===ADMIN_EMAIL?Math.min(6,Math.max(3,+S.cfg.essNb||6)):6; // essai : nombre d'essentiels au choix (compte admin seulement)
+const essTous=()=>{ const L=(S.cfg.ess||ESS_LEGACY).slice(0,6); while(L.length<6) L.push(ESS_LEGACY.find(x=>!L.includes(x))||'marche'); return L; };
+const essSlots=()=>essTous().slice(0,essNb());
+function essNombre(n){ S.cfg.essNb=n; cfgTouch(); render(); essChoisir(); }
 const essInfo=id=>ESS_CAT[id]||(S.cfg.essPerso||{})[id]||{i:'✅',t:'Essentiel',s:''};
 const essFait=(d,id)=>ESS_LEGACY.includes(id)?(id==='sport'?!!(d.sport||d.repos):!!d[id]):!!(d.essX&&d.essX[id]);
 const essFaits=d=>essSlots().filter(id=>essFait(d,id)).length;
@@ -2110,7 +2113,8 @@ function essToggle(id){ const d=J(); d.essX=d.essX||{}; d.essX[id]=!d.essX[id]; 
 function essChoisir(slot,accueil){
   const L=essSlots();
   if(slot==null){
-    openSheet(`<h2 style="margin:0 0 4px">✅ ${accueil?'Choisis tes 6 essentiels':'Mes 6 essentiels'}</h2><div class="sub">${accueil?'Les 6 habitudes que tu veux tenir chaque jour. Garde celles-ci ou touche une case pour la remplacer (tu pourras changer plus tard).':'Touche une case pour la remplacer. 6 cases, chacune vaut autant dans le score.'}</div>
+    openSheet(`<h2 style="margin:0 0 4px">✅ ${accueil?'Choisis tes '+essNb()+' essentiels':'Mes '+essNb()+' essentiels'}</h2><div class="sub">${accueil?'Les 6 habitudes que tu veux tenir chaque jour. Garde celles-ci ou touche une case pour la remplacer (tu pourras changer plus tard).':'Touche une case pour la remplacer. 6 cases, chacune vaut autant dans le score.'}</div>
+      ${S.email===ADMIN_EMAIL?`<label class="f" style="margin-top:10px">Combien d'essentiels par jour ?</label><div class="opt">${[3,4,5,6].map(n=>`<button class="${essNb()===n?'on':''}" onclick="essNombre(${n})">${n}</button>`).join('')}</div>`:''}
       <div class="checks" style="margin-top:12px">${L.map((id,i)=>{ const c=essInfo(id); return `<button class="ck" onclick="essChoisir(${i})" style="justify-content:space-between"><span>${esc(c.i||'✅')} <b>${esc(c.t)}</b></span><span class="muted">Changer ›</span></button>`; }).join('')}</div>
       <button class="btn ${accueil?'pri':''} mt" onclick="${accueil?'closeSheet();setTimeout(()=>proposerRappels(true),300)':'closeSheet()'}">${accueil?'C\'est bon, on continue':'Fermer'}</button>`); return;
   }
@@ -2122,7 +2126,7 @@ function essChoisir(slot,accueil){
     <div class="row"><input class="inp" id="essIn" maxlength="40" placeholder="Ex. Pas de sucre, appeler mes parents…" style="flex:1" onkeydown="if(event.key==='Enter')essPerso(${slot})"><button class="btn green" onclick="essPerso(${slot})">OK</button></div>
     <button class="btn mt" onclick="essChoisir()">‹ Retour</button>`);
 }
-function essPoser(slot,id){ const L=essSlots(); L[slot]=id; S.cfg.ess=L; cfgTouch(); render(); essChoisir(); toast('✅ Essentiel mis à jour'); }
+function essPoser(slot,id){ const L=essTous(); L[slot]=id; S.cfg.ess=L; cfgTouch(); render(); essChoisir(); toast('✅ Essentiel mis à jour'); }
 function essPerso(slot){
   const t=((document.getElementById('essIn')||{}).value||'').trim().slice(0,40); if(!t) return toast('Écris ton essentiel');
   const P=S.cfg.essPerso=S.cfg.essPerso||{}; let id=Object.keys(P).find(k=>P[k].t.toLowerCase()===t.toLowerCase());
@@ -2198,7 +2202,7 @@ function vJour(){
     ${S.cfg.fumeur?heroTabac():''}
     <div class="panel" ${S.cfg.fumeur?'':'style="grid-column:1/-1"'}>
       <button onclick="deroul('ess')" style="all:unset;display:block;width:100%;cursor:pointer">
-      <h2><span class="ico">✅</span>Mes essentiels<span class="cnt">${essFaits(d)}/6 <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['ess']?180:0}deg)">▾</span></span></h2>
+      <h2><span class="ico">✅</span>Mes essentiels<span class="cnt">${essFaits(d)}/${essNb()} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['ess']?180:0}deg)">▾</span></span></h2>
       <div class="sub" style="margin-bottom:${S.ouv.ess?0:2}px">${S.ouv.ess?'Un clic = c\'est fait.':`🍎 ${d.fruits||0}/5 · 💧 ${litres(d.eau)} L · touche pour ouvrir`}</div></button>
       ${S.ouv.ess?`<div class="tiles">
         ${essSlots().map(id=>essTile(id)).join('')}
@@ -2336,14 +2340,16 @@ function vDin(){
         <div class="bar"><div style="width:${Math.min(100,d.istighfar)}%"></div></div>
         <div class="h-sub" style="margin-top:6px">Objectif : 100 par jour, comme le Prophète ﷺ</div>
       </div>${'</div>'}
+      ${(()=>{ const SPI=[['coran','📖 Coran — 20 minutes'],['adhM','☀️ Adhkar du matin (invocations)'],['adhS','🌙 Adhkar du soir (invocations)']]; const spiK=S.email===ADMIN_EMAIL?['coran','adhM','adhS'].filter(k=>!essSlots().includes(k)):['coran','adhM','adhS']; if(!spiK.length) return ''; return `
       <div class="panel mt">
         <button onclick="deroul('spi')" style="all:unset;display:block;width:100%;cursor:pointer">
-        <h2><span class="ico">📖</span>Spiritualité du jour<span class="cnt">${['coran','adhM','adhS'].filter(k=>d[k]).length}/3 <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv.spi?180:0}deg)">▾</span></span></h2>
-        ${S.ouv.spi?'':`<div class="sub" style="margin-bottom:2px">${[['coran','📖'],['adhM','☀️'],['adhS','🌙']].map(([k,e])=>e+(d[k]?' ✓':'')).join(' · ')} · touche pour ouvrir</div>`}</button>
+        <h2><span class="ico">📖</span>Spiritualité du jour<span class="cnt">${spiK.filter(k=>d[k]).length}/${spiK.length} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv.spi?180:0}deg)">▾</span></span></h2>
+        ${S.ouv.spi?'':`<div class="sub" style="margin-bottom:2px">${[['coran','📖'],['adhM','☀️'],['adhS','🌙']].filter(([k])=>spiK.includes(k)).map(([k,e])=>e+(d[k]?' ✓':'')).join(' · ')} · touche pour ouvrir</div>`}</button>
         ${!S.ouv.spi?'':`<div class="checks" style="margin-top:8px">
-          ${[['coran','📖 Coran — 20 minutes'],['adhM','☀️ Adhkar du matin (invocations)'],['adhS','🌙 Adhkar du soir (invocations)']].map(([k,l])=>`<button class="ck ${d[k]?'on':''}" onclick="toggle('${k}')"><span class="box"></span>${l}</button>`).join('')}
+          ${SPI.filter(([k])=>spiK.includes(k)).map(([k,l])=>`<button class="ck ${d[k]?'on':''}" onclick="toggle('${k}')"><span class="box"></span>${l}</button>`).join('')}
         </div>`}
       </div>
+`; })()}
     </div>
   </div>
   <div class="grid g2 mt">
