@@ -86,6 +86,10 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .hero.blanc .qbtn{background:#ecfdf5;color:#047857}
 .hero.blanc .pmini{background:var(--card2,#f1f5f9);color:var(--ink)}
 .hero.blanc .pmini.sun{background:transparent;border:1.5px dashed var(--line);color:var(--muted)}
+.hero.blanc .plig{background:var(--card2,#f1f5f9);color:var(--ink)}.hero.blanc .plig .pst{background:rgba(0,0,0,.06)}
+.hero.blanc .plig.done{background:#10b981;color:#fff}.hero.blanc .plig.done .pst{background:rgba(255,255,255,.25)}.hero.blanc .plig.late{background:#f59e0b;color:#fff}
+.hero.blanc .plig.miss{background:#fee2e2;color:#b91c1c}.hero.blanc .plig.next{outline:3px solid #10b981;outline-offset:-3px}.hero.blanc .plig.sun{background:transparent;color:var(--muted)}
+.hero.acc .plig{padding:14px 14px;font-size:1.02rem}.hero.acc .plig b{font-size:1.12rem}.hero.acc .plig .ph{font-size:1.1rem}
 .hero.blanc .pmini.done{background:#10b981;color:#fff}
 .hero.blanc .pmini.late{background:#f59e0b;color:#fff}
 .hero.blanc .pmini.miss{background:#fee2e2;color:#b91c1c}
@@ -456,7 +460,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-141408'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-183525'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1758,7 +1762,7 @@ function render(){
   nav.classList.remove('hide');
   if(S.view==='tabac' && !S.cfg.fumeur) S.view='jour';
   const menuPlus=true; // menu à 5 onglets + ☰ Plus pour tout le monde (19/10)
-  document.getElementById('nav').innerHTML=(menuPlus?[['jour','🏠','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['qibla','🧭','Qibla'],['plus','☰','Menu']]:[...VIEWS]).filter(([k])=>k!=='tabac'||S.cfg.fumeur).map(([k,i,l])=>`<button class="${S.view===k||(S.view==='noms'&&k==='din')||(S.view==='voyage'&&k==='citadelle')||(menuPlus&&k==='plus'&&DANS_PLUS.includes(S.view))?'on':''}" onclick="${k==='don'?'ouvrirDons()':`go('${k}')`}"><i>${i}</i>${l}</button>`).join('');
+  document.getElementById('nav').innerHTML=(accOk()?[['accueil','🏠','Accueil'],['jour','☀️','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['citadelle','🛡️','Citadelle'],['plus','☰','Menu']]:menuPlus?[['jour','🏠','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['qibla','🧭','Qibla'],['plus','☰','Menu']]:[...VIEWS]).filter(([k])=>k!=='tabac'||S.cfg.fumeur).map(([k,i,l])=>`<button class="${S.view===k||(S.view==='noms'&&k==='din')||(S.view==='voyage'&&k==='citadelle')||(menuPlus&&k==='plus'&&DANS_PLUS.includes(S.view)&&!(accOk()&&['citadelle','voyage'].includes(S.view)))||(accOk()&&k==='plus'&&S.view==='qibla')?'on':''}" onclick="${k==='don'?'ouvrirDons()':`go('${k}')`}"><i>${i}</i>${l}</button>`).join('');
   const isT=S.sel===today();
   const head=`
   <div class="top">
@@ -1773,12 +1777,13 @@ function render(){
     ${isT?'':`<button class="back" onclick="setDay(today())">Aujourd'hui</button>`}
     <button onclick="shiftDay(1)" ${isT?'disabled':''} aria-label="Jour suivant">›</button>
   </div>`:''}`;
-  const v={plus:vPlus,quiz:vQuiz,calendrier:vCalendrier,apprendre:vApprendre,jour:vJour,din:vDin,noms:vNoms,voyage:vCitadelleVoyage,citadelle:vCitadelle,coran:vCoran,qibla:vQibla,tabac:vTabac,bilan:vBilan,reglages:vReglages}[S.view]();
+  if(accOk()&&!S._acc){ S._acc=true; if(S.view==='jour'&&S.sel===today()) S.view='accueil'; } // à l'ouverture : l'accueil
+  const v={accueil:vAccueil,plus:vPlus,quiz:vQuiz,calendrier:vCalendrier,apprendre:vApprendre,jour:vJour,din:vDin,noms:vNoms,voyage:vCitadelleVoyage,citadelle:vCitadelle,coran:vCoran,qibla:vQibla,tabac:vTabac,bilan:vBilan,reglages:vReglages}[S.view]();
   const alerte = S.sync==='invalid' ? `<div class="hero" style="background:linear-gradient(135deg,#ef4444,#be123c);margin-bottom:14px"><div class="h-lbl">⚠️ Ta session a expiré</div><div class="h-sub" style="margin:6px 0 10px">Tes saisies sont gardées sur cet appareil et seront envoyées dès que tu te reconnectes.</div><button class="btn" style="background:#fff;color:#be123c;border:none" onclick="deconnexion(true)">Me reconnecter</button></div>` : '';
   document.body.classList.toggle('ramadan',estRamadan(S.sel));
   if(S.view==='apprendre') setTimeout(apBrancher,30);
   // pages ouvertes depuis ☰ Plus : petit bouton de retour en haut (le menu du bas reste toujours là)
-  const retourPlus=DANS_PLUS.includes(S.view) && S.view!=='plus' && !(S.view==='apprendre'&&_ap.i!=null) ? `<button class="btn sm" style="margin-bottom:10px" onclick="go('plus')">‹ Menu</button>` : '';
+  const retourPlus=DANS_PLUS.includes(S.view) && S.view!=='plus' && !(accOk()&&['citadelle','voyage'].includes(S.view)) && !(S.view==='apprendre'&&_ap.i!=null) ? `<button class="btn sm" style="margin-bottom:10px" onclick="go('plus')">‹ Menu</button>` : '';
   app.innerHTML=head+alerte+retourPlus+(S.view==='jour'?carteBienvenue():'')+(S.view==='jour'&&estRamadan(S.sel)?ramadanCarte():'')+v;
   if(window.QA&&QA.n&&S.view==='coran'&&QC.n===QA.n&&!QA.bism){ const e=document.getElementById('ay'+(QA.i+1)); if(e) e.classList.add('lit'); } // verset en cours de récitation
   tick();
@@ -2026,7 +2031,7 @@ function ouvrir(cible){
   try{ sessionStorage.setItem('nya_ouvrir',JSON.stringify({cible,corps:S.clicCorps||'',t:Date.now()})); }catch(e){}
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
   S.sel=today(); S.mindIdx=cible==='mindset'?(dayOfYear(today())*7)%MINDSET.length:null; S.hadIdx=null; // la notification de 10 h montre la phrase du matin
-  go(cible==='recap'?'bilan':cible==='calendrier'?'calendrier':'jour');
+  go(cible==='recap'?'bilan':cible==='calendrier'?'calendrier':accOk()&&cible!=='soir'?'accueil':'jour');
   if(/^priere-/.test(cible)){ const c0=S.clicCorps, k=cible; S.clicCorps=''; corpsRecent(k,c0).then(c=>versetPriere(k.slice(7),c)); }
   else if(cible==='calendrier'){ const c0=S.clicCorps; S.clicCorps=''; corpsRecent('calendrier',c0).then(corps=>{ if(!corps) return;
     openSheet(`<h2 style="margin:0 0 4px">📅 Calendrier islamique</h2><div style="margin-top:10px;font-weight:700;line-height:1.55;white-space:pre-line">${esc(corps)}</div><button class="btn pri mt" onclick="closeSheet()">Voir le calendrier</button>`); }); }
@@ -2096,7 +2101,7 @@ function prieresGrandes(d,t,np){
     const nom=p.k==='dhuhr'&&ven?'Joumouʿa':p.n;
     const h=p.k==='dhuhr'&&ven&&hsc?`Khotba ${JUMUA.join(' / ')}`:`${hm(t[p.i])}${hsc?` · iqama ${hm((t[p.i]+IQAMA)%1440)}`:''}`;
     const ligne=`<button class="plig ${cls} ${np&&np.p.k===p.k&&np.k===S.sel?'next':''}" onclick="choixPriere('${p.k}')"><b>${nom}</b><span class="ph tnum">${h}</span><span class="pst">${st?ST[st]:'Touche ›'}</span></button>`;
-    return p.k==='fajr'?ligne+`<div class="plig sun">☀️ Lever du soleil (fin de Fajr) · <b class="tnum" style="min-width:0">${hm(t[1])}</b></div>`:ligne;
+    return p.k==='fajr'?ligne+`<div class="plig sun">☀️ Chourouk · lever du soleil (fin de Fajr) · <b class="tnum" style="min-width:0">${hm(t[1])}</b></div>`:ligne;
   }).join('');
   return `<div style="margin-top:6px">${lignes}</div>`;
 }
@@ -2241,7 +2246,7 @@ function vJour(){
       </div>
       <div class="chips">${sc.parts.map(p=>`<span class="chip">${p.bonus?({jeune:'🍽️',istighfar:'📿',dhikr:'🤍'}[p.k]||'⭐')+' '+p.l+' +'+p.pts:p.l+' '+p.pts+'/'+p.max}</span>`).join('')}</div>
     </div>`}
-    ${heroPriere()}
+    ${accOk()?'':heroPriere()}
   </div>
   <div class="grid g2 mt">
     ${S.cfg.fumeur?heroTabac():''}
@@ -2286,7 +2291,15 @@ function vJour(){
         <div class="row mt"><input class="inp" id="baPIn" maxlength="80" placeholder="Ex. Aider un voisin, appeler ma mère…" onkeydown="if(event.key==='Enter')baPAjout()" style="flex:1"><button class="btn green" onclick="baPAjout()">Ajouter</button></div></div>`:''}
     </div>
   </div>
-  <div class="grid g2 mt">
+  ${accOk()?'':hadMindCartes()}
+  <div class="mt">${soir}</div>
+  <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
+}
+// 📜💡 Hadith du jour + phrase du jour (accueil, ou Aujourd'hui)
+function hadMindCartes(){
+  const di=dayOfYear(S.sel), h=HADITHS[S.hadIdx??(di%HADITHS.length)];
+  const mi=S.mindIdx??mindDuMoment(S.sel), m=MINDSET[mi], b=BOOKS[m[0]];
+  return `  <div class="grid g2 mt">
     <div class="quote k-emerald" id="cHadith">
       <span class="q-tag">📜 Hadith du jour${h[4]?' · '+esc(h[4]):''}</span>
       <p>« ${esc(h[0])} »</p>
@@ -2300,8 +2313,25 @@ function vJour(){
       <p>${esc(m[1])}</p>
       <div class="src">D'après ${b.a?esc(b.t):'« '+esc(b.t)+' »'}<button onclick="nextMind()">Une autre ↻</button></div>
     </div>
+  </div>`;
+}
+// 🏠 Accueil (TEST admin) : juste les prières en grand, le hadith et la phrase du jour ; le reste est dans Aujourd'hui
+const accOk=()=>S.email===ADMIN_EMAIL;
+function vAccueil(){
+  if(S.sel!==today()) S.sel=today();
+  const d=J(), t=timesOf(S.sel), np=nextPrayer();
+  const coul=S.cfg.heroCouleur||'blanc', blanc=coul==='blanc';
+  const at=np.at%1440, iq=iqamaDe(np.p.k);
+  return `<div class="hero acc ${blanc?'k-emerald blanc':coul}">
+    <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
+    <div class="h-lbl" style="padding-right:80px">🕌 Prochaine prière · ${esc(lieuNom())}</div>
+    <div class="h-big tnum" style="font-size:3rem;line-height:1.1;margin-top:4px"><span id="npName">${np.p.n}</span></div>
+    <div id="npCount" class="tnum" style="font-size:1.35rem;font-weight:800;opacity:.95"></div>
+    <div class="h-sub" style="font-size:1rem">Adhan ${hm(at)}${iq!=null?` · Iqama ${hm((at+iq)%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${JUMUA.join(' / ')}`:''}</div>
+    ${dispOf(S.sel)?`<div class="h-sub" style="margin-top:10px">🌸 Période de dispense : tes points de prière restent au maximum.</div>`:prieresGrandes(d,t,np)}
+    <div class="hpal-bas"><button class="hpal-btn" onclick="go('jour')">Ma journée ›</button></div>
   </div>
-  <div class="mt">${soir}</div>
+  ${hadMindCartes()}
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
 function sportWeek(k){ // séances du lundi au dimanche
@@ -3714,8 +3744,9 @@ const DANS_PLUS=['plus','quiz','calendrier','apprendre','citadelle','voyage','ta
 function plusTuiles(){
   const T=[['quiz','🎯','Quiz','Quiz du jour, en famille','k-violet'],['calendrier','📅','Calendrier','Mois hégiriens, dates clés','k-emerald'],['bilan','📊','Bilan','Score, semaine, poids','k-violet'],['apprendre','✍️','Apprendre','L\'alphabet arabe','k-sky'],['citadelle','🛡️','Citadelle','Invocations du musulman','k-teal'],
     ...(S.cfg.fumeur?[['tabac','🚭','Tabac','Mon programme','k-sunset']]:[]),['don','💚','Don','Soutenir NIYYA','k-emerald'],['inviter','💌','Inviter','Partager NIYYA','k-pink'],
-    ['boutique','🛍️','Boutique','Bientôt disponible','k-gold'],
+    ['boutique','🛍️','Boutique','Bientôt disponible','k-gold'],...(accOk()?[['qibla','🧭','Qibla','Direction de la Mecque','k-sky']]:[]),
     ['contact','✉️','Nous contacter','Une idée, un souci ?','k-sky'],['reglages','⚙️','Réglages','Profil, rappels, essentiels','k-magenta']];
+  if(accOk()){ const i=T.findIndex(x=>x[0]==='citadelle'); if(i>=0) T.splice(i,1); } // la Citadelle est en bas
   const ord=S.cfg.plusOrdre||[], pos=k=>{ const i=ord.indexOf(k); return i<0?999+T.findIndex(x=>x[0]===k):i; };
   return T.slice().sort((x,y)=>pos(x[0])-pos(y[0]));
 }
@@ -4327,7 +4358,7 @@ ${esc(diagTexte().join('\n')||'(aucun clic traité par l\'appli)')}</div></detai
 let lastDay=today();
 let _mind14=null;
 function tick(){
-  { const apres=new Date().getHours()>=14; if(_mind14!==null&&_mind14!==apres&&S.view==='jour'&&S.mindIdx==null) render(); _mind14=apres; }
+  { const apres=new Date().getHours()>=14; if(_mind14!==null&&_mind14!==apres&&(S.view==='jour'||S.view==='accueil')&&S.mindIdx==null) render(); _mind14=apres; }
   try{ ramCompte(); }catch(e){}
   if(today()!==lastDay){ if(S.sel===lastDay) S.sel=today(); lastDay=today(); S.mindIdx=null; S.hadIdx=null; S.aimeI=null; S.nomI=null; render(); return; }
   const el=document.getElementById('npCount'); if(!el) return;
