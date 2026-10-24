@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-104741'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-105402'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1965,7 +1965,7 @@ const CONSEILS_POIDS={
 function conseilPoids(k){ const L=CONSEILS_POIDS[poidsBut()]||CONSEILS_POIDS.perdre; return L[dayOfYear(k||today())%L.length]; }
 /* ---------- Travail (fixe / variable / aucun) et objectif de poids (perdre / prendre / garder) ---------- */
 const travailMode=()=>(S.cfg.travail&&S.cfg.travail.mode)||'fixe';
-const prioTitre=()=>travailMode()==='aucun'?'3 priorités du jour':'3 priorités business';
+const prioTitre=()=>'Mes 3 priorités du jour';
 function poidsBut(){ const C=S.cfg; if(C.poidsBut) return C.poidsBut; const dep=C.poidsDepart&&+C.poidsDepart.v; if(C.poidsObj&&dep) return C.poidsObj>dep?'prendre':C.poidsObj<dep?'perdre':'garder'; return 'perdre'; }
 function poidsTexte(actuel){
   const but=poidsBut(), obj=+S.cfg.poidsObj||null, ref=obj||(S.cfg.poidsDepart&&+S.cfg.poidsDepart.v)||null;
@@ -2217,7 +2217,7 @@ function vJour(){
     <div class="panel">
       <button onclick="deroul('prio')" style="all:unset;display:block;width:100%;cursor:pointer">
       <h2><span class="ico">🎯</span>${prioTitre()}<span class="cnt">${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length||3} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['prio']?180:0}deg)">▾</span></span></h2>
-      <div class="sub" style="margin-bottom:${S.ouv.prio?0:2}px">${S.ouv.prio?`${travailMode()==='aucun'?'Les 3 choses importantes à faire aujourd\'hui (famille, maison, démarches…), à fixer le matin.':`Les 3 tâches qui feront vraiment avancer ton activité aujourd'hui — à fixer en début de journée${travailMode()==='fixe'?' ('+esc(S.cfg.travail.debut)+')':''}.`}`:d.prio.some(p=>p.t.trim())?esc(d.prio.filter(p=>p.t.trim()).map(p=>(p.ok?'✓ ':'')+p.t.trim()).join(' · ')):'Touche pour fixer tes 3 priorités du jour.'}</div></button>
+      <div class="sub" style="margin-bottom:${S.ouv.prio?0:2}px">${S.ouv.prio?`Les 3 choses les plus importantes pour toi aujourd\'hui (travail, famille, religion…), à fixer le matin.`:d.prio.some(p=>p.t.trim())?esc(d.prio.filter(p=>p.t.trim()).map(p=>(p.ok?'✓ ':'')+p.t.trim()).join(' · ')):'Touche pour fixer tes 3 priorités du jour.'}</div></button>
       ${S.ouv.prio?`<div class="checks">${d.prio.map((p,i)=>`
         <div class="prio"><button class="ck ${p.ok?'on':''}" onclick="prioOk(${i})" aria-label="Priorité faite"><span class="box"></span></button>
         <input type="text" value="${esc(p.t)}" placeholder="Priorité ${i+1}" oninput="prioTxt(${i},this.value)"></div>`).join('')}</div>`:''}
@@ -2547,8 +2547,6 @@ function vReglages(){
       <label class="f">Prénom</label><input class="inp" value="${esc(C.nom)}" onchange="setCfg('nom',this.value)">
       ${true?`<label class="f">Je suis</label><div class="opt">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${C.genre===g?'on':''}" onclick="setCfg('genre','${g}');render()">${l}</button>`).join('')}</div>
       ${C.genre==='f'?`<label class="f">🌸 Pendant la période de dispense</label><div class="opt">${[[true,'🔕 Mettre l\'adhan en pause'],[false,'🔔 Garder l\'adhan']].map(([v,l])=>`<button class="${(C.dispPauseAdhan!==false)===v?'on':''}" onclick="S.cfg.dispPauseAdhan=${v};cfgTouch();render()">${l}</button>`).join('')}</div>`:''}`:''}
-      <label class="f">Mon activité</label>
-      <div class="opt">${[['fixe','💼 Je travaille'],['aucun','🏡 Je ne travaille pas']].map(([m,l])=>`<button class="${travailMode()===m?'on':''}" onclick="choixTravail('${m}')">${l}</button>`).join('')}</div>
       <label class="f">Apparence</label>
       <select class="inp" onchange="setCfg('theme',this.value);applyTheme()">${[['auto','Automatique (comme le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${C.theme===v?'selected':''}>${l}</option>`).join('')}</select>
       <label class="f">Séances de sport visées par semaine</label>${num('sportSemaine',C.sportSemaine)}
