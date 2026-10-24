@@ -71,6 +71,7 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
 .pbouge{animation:pbouge .35s ease-in-out infinite alternate}@keyframes pbouge{from{transform:rotate(-1.2deg)}to{transform:rotate(1.2deg)}}
+.pdrag{z-index:5;transform:scale(1.07);filter:drop-shadow(0 12px 18px rgba(0,0,0,.25))}.pdrag .tile{animation:none}
 .pfl{position:absolute;top:10px;right:10px;display:flex;gap:6px}.pfl button{width:34px;height:34px;border-radius:50%;border:none;background:#fff;color:#111;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}.pfl button:disabled{opacity:.35}
 .preuve{margin-top:10px;font-weight:600}.preuve summary{cursor:pointer;font-weight:800;font-size:.82rem;color:var(--indigo,#4f46e5);list-style:none}.preuve summary::-webkit-details-marker{display:none}.preuve summary::after{content:' ▾'}.preuve[open] summary::after{content:' ▴'}
 .pv-ar{font-family:'Amiri',serif;font-size:1.3rem;line-height:2;margin-top:8px;text-align:right}.pv-fr{margin-top:6px;line-height:1.5;font-weight:600}.pv-src{margin-top:6px;font-size:.74rem;color:var(--muted);font-weight:700}
@@ -447,7 +448,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-120250'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-120512'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3689,13 +3690,19 @@ function plusClic(k){ if(_plusLong){ _plusLong=false; return; } if(S.plusEdit) r
   if(k==='don') return ouvrirDons(); if(k==='inviter') return inviter(); if(k==='contact') return nousContacter();
   if(k==='boutique') return openSheet(`<div style="text-align:center"><div style="font-size:3rem">🛍️</div><h2 style="margin:6px 0">La boutique NIYYA arrive bientôt</h2><div class="sub">Tapis de prière, livres, misbaha… une sélection pensée pour ta pratique.<br>In châ' Allâh, très bientôt ici.</div><button class="btn pri mt" onclick="closeSheet()">J'ai hâte !</button></div>`);
   go(k); }
+let _pdrag=null;
+function plusDragDebut(e,el){ e.preventDefault(); _pdrag=el; el.classList.add('pdrag'); try{ el.setPointerCapture(e.pointerId); }catch(x){}
+  el.onpointermove=ev=>{ const sous=document.elementFromPoint(ev.clientX,ev.clientY); const cible=sous&&sous.closest('#plusTiles > [data-k]'); if(!cible||cible===_pdrag) return;
+    const box=_pdrag.parentNode, L=[...box.children], a=L.indexOf(_pdrag), b=L.indexOf(cible); box.insertBefore(_pdrag, a<b?cible.nextSibling:cible); vib(); };
+  el.onpointerup=el.onpointercancel=()=>{ if(!_pdrag) return; _pdrag.classList.remove('pdrag'); el.onpointermove=null; S.cfg.plusOrdre=[...document.querySelectorAll('#plusTiles > [data-k]')].map(x=>x.dataset.k); cfgTouch(); _pdrag=null; };
+}
 function plusMove(k,dir){ const L=plusTuiles().map(x=>x[0]); const i=L.indexOf(k), j=i+dir; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; S.cfg.plusOrdre=L; cfgTouch(); vib(); render(); }
 function vPlus(){
   const T=plusTuiles(), ed=!!S.plusEdit;
   return `<div class="panel"><h2><span class="ico">☰</span>Plus${ed?`<span class="cnt"><button class="btn sm green" onclick="S.plusEdit=false;render();toast('✅ Ordre enregistré')">Terminé</button></span>`:''}</h2>
-    ${ed?`<div class="coach" style="font-size:.82rem;margin-bottom:10px">✋ Déplace tes tuiles avec ◀ ▶, puis touche <b>Terminé</b>.</div>`:''}
-    <div class="tiles">${T.map(([k,i,t,st,g],n)=>`<div style="position:relative"><button class="tile on ptile ${g} ${ed?'pbouge':''}" style="width:100%;-webkit-touch-callout:none;user-select:none" onpointerdown="plusDown()" onpointerup="plusUp()" onpointerleave="plusUp()" oncontextmenu="return false" onclick="plusClic('${k}')"><span class="t-ico">${i}</span><b>${t}</b><small>${st}</small></button>
-      ${ed?`<div class="pfl"><button ${n===0?'disabled':''} onclick="plusMove('${k}',-1)" aria-label="Avant">◀</button><button ${n===T.length-1?'disabled':''} onclick="plusMove('${k}',1)" aria-label="Après">▶</button></div>`:''}</div>`).join('')}</div>
+    ${ed?`<div class="coach" style="font-size:.82rem;margin-bottom:10px">✋ Fais glisser les tuiles avec ton doigt pour les ranger, puis touche <b>Terminé</b>.</div>`:''}
+    <div class="tiles" id="plusTiles" ${ed?'style="touch-action:none"':''}>${T.map(([k,i,t,st,g],n)=>`<div data-k="${k}" style="position:relative" ${ed?'onpointerdown="plusDragDebut(event,this)"':''}><button class="tile on ptile ${g} ${ed?'pbouge':''}" style="width:100%;-webkit-touch-callout:none;user-select:none" onpointerdown="plusDown()" onpointerup="plusUp()" onpointerleave="plusUp()" oncontextmenu="return false" onclick="plusClic('${k}')"><span class="t-ico">${i}</span><b>${t}</b><small>${st}</small></button>
+</div>`).join('')}</div>
     ${S.email===ADMIN_EMAIL&&!ed?`<div class="muted" style="font-size:.72rem;font-weight:600;text-align:center;margin-top:10px">Astuce : reste appuyé sur une tuile pour changer l'ordre.</div>`:''}</div>`;
 }
 // ===== Quiz religieux : quiz du jour (solo) + partie en famille sur un seul téléphone =====
