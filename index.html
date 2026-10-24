@@ -460,7 +460,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-185333'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-185542'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1770,6 +1770,7 @@ function render(){
   if(!S.cfg.onb){ nav.classList.add('hide'); app.innerHTML=vOnb(); return; }
   nav.classList.remove('hide');
   if(S.view==='tabac' && !S.cfg.fumeur) S.view='jour';
+  if(accOk()&&!S._acc){ S._acc=true; if(S.view==='jour'&&S.sel===today()) S.view='accueil'; } // à l'ouverture : l'accueil (avant le menu du bas, pour le bon onglet allumé)
   const menuPlus=true; // menu à 5 onglets + ☰ Plus pour tout le monde (19/10)
   document.getElementById('nav').innerHTML=(accOk()?[['accueil','🏠','Accueil'],['jour','☀️','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['citadelle','🛡️','Citadelle'],['plus','☰','Menu']]:menuPlus?[['jour','🏠','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['qibla','🧭','Qibla'],['plus','☰','Menu']]:[...VIEWS]).filter(([k])=>k!=='tabac'||S.cfg.fumeur).map(([k,i,l])=>`<button class="${S.view===k||(S.view==='noms'&&k==='din')||(S.view==='voyage'&&k==='citadelle')||(menuPlus&&k==='plus'&&DANS_PLUS.includes(S.view)&&!(accOk()&&['citadelle','voyage'].includes(S.view)))||(accOk()&&k==='plus'&&S.view==='qibla')?'on':''}" onclick="${k==='don'?'ouvrirDons()':`go('${k}')`}"><i>${i}</i>${l}</button>`).join('');
   const isT=S.sel===today();
@@ -1786,7 +1787,6 @@ function render(){
     ${isT?'':`<button class="back" onclick="setDay(today())">Aujourd'hui</button>`}
     <button onclick="shiftDay(1)" ${isT?'disabled':''} aria-label="Jour suivant">›</button>
   </div>`:''}`;
-  if(accOk()&&!S._acc){ S._acc=true; if(S.view==='jour'&&S.sel===today()) S.view='accueil'; } // à l'ouverture : l'accueil
   const v={accueil:vAccueil,plus:vPlus,quiz:vQuiz,calendrier:vCalendrier,apprendre:vApprendre,jour:vJour,din:vDin,noms:vNoms,voyage:vCitadelleVoyage,citadelle:vCitadelle,coran:vCoran,qibla:vQibla,tabac:vTabac,bilan:vBilan,reglages:vReglages}[S.view]();
   const alerte = S.sync==='invalid' ? `<div class="hero" style="background:linear-gradient(135deg,#ef4444,#be123c);margin-bottom:14px"><div class="h-lbl">⚠️ Ta session a expiré</div><div class="h-sub" style="margin:6px 0 10px">Tes saisies sont gardées sur cet appareil et seront envoyées dès que tu te reconnectes.</div><button class="btn" style="background:#fff;color:#be123c;border:none" onclick="deconnexion(true)">Me reconnecter</button></div>` : '';
   document.body.classList.toggle('ramadan',estRamadan(S.sel));
