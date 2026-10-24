@@ -460,7 +460,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-184337'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-184721'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2040,7 +2040,7 @@ function ouvrir(cible){
   try{ sessionStorage.setItem('nya_ouvrir',JSON.stringify({cible,corps:S.clicCorps||'',t:Date.now()})); }catch(e){}
   if(!S.uid||!S.pret){ S.ouvrirEnAttente=cible; return; }
   S.sel=today(); S.mindIdx=cible==='mindset'?(dayOfYear(today())*7)%MINDSET.length:null; S.hadIdx=null; // la notification de 10 h montre la phrase du matin
-  go(cible==='recap'?'bilan':cible==='calendrier'?'calendrier':accOk()&&cible!=='soir'&&cible!=='mindset'?'accueil':'jour');
+  go(cible==='recap'?'bilan':cible==='calendrier'?'calendrier':accOk()&&cible==='hadith'?'din':accOk()&&cible!=='soir'&&cible!=='mindset'?'accueil':'jour');
   if(/^priere-/.test(cible)){ const c0=S.clicCorps, k=cible; S.clicCorps=''; corpsRecent(k,c0).then(c=>versetPriere(k.slice(7),c)); }
   else if(cible==='calendrier'){ const c0=S.clicCorps; S.clicCorps=''; corpsRecent('calendrier',c0).then(corps=>{ if(!corps) return;
     openSheet(`<h2 style="margin:0 0 4px">📅 Calendrier islamique</h2><div style="margin-top:10px;font-weight:700;line-height:1.55;white-space:pre-line">${esc(corps)}</div><button class="btn pri mt" onclick="closeSheet()">Voir le calendrier</button>`); }); }
@@ -2338,7 +2338,6 @@ function vAccueil(){
     ${S.paletteOuverte?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:''}
   </div>
   <div class="panel mt">${prieresDetail()}</div>
-  ${hadMindCartes('h')}
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
 function sportWeek(k){ // séances du lundi au dimanche
@@ -2389,7 +2388,7 @@ function vDin(){
   const sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
   const moisSad=monthSadaqa(S.sel);
   const reg=prayerReg(30);
-  return `
+  return `${accOk()?`<div style="margin-bottom:14px">${hadMindCartes('h').replace('<div class="mt">','<div>')}</div>`:''}
   <div class="grid g2">
     <div class="panel">
 ${accOk()?'':prieresDetail()}
