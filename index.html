@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-105847'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-110356'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2327,10 +2327,12 @@ function vDin(){
         <div class="h-sub" style="margin-top:6px">Objectif : 100 par jour, comme le Prophète ﷺ</div>
       </div>${'</div>'}
       <div class="panel mt">
-        <h2><span class="ico">📖</span>Spiritualité du jour</h2>
-        <div class="checks" style="margin-top:8px">
+        <button onclick="deroul('spi')" style="all:unset;display:block;width:100%;cursor:pointer">
+        <h2><span class="ico">📖</span>Spiritualité du jour<span class="cnt">${['coran','adhM','adhS'].filter(k=>d[k]).length}/3 <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv.spi?180:0}deg)">▾</span></span></h2>
+        ${S.ouv.spi?'':`<div class="sub" style="margin-bottom:2px">${[['coran','📖'],['adhM','☀️'],['adhS','🌙']].map(([k,e])=>e+(d[k]?' ✓':'')).join(' · ')} · touche pour ouvrir</div>`}</button>
+        ${!S.ouv.spi?'':`<div class="checks" style="margin-top:8px">
           ${[['coran','📖 Coran — 20 minutes'],['adhM','☀️ Adhkar du matin (invocations)'],['adhS','🌙 Adhkar du soir (invocations)']].map(([k,l])=>`<button class="ck ${d[k]?'on':''}" onclick="toggle('${k}')"><span class="box"></span>${l}</button>`).join('')}
-        </div>
+        </div>`}
       </div>
       <div class="panel mt">
         <h2><span class="ico">💚</span>Sadaqa & zakat<span class="cnt">${sad?sad+' € ce jour':''}</span></h2>
