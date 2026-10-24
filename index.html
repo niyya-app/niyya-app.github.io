@@ -448,7 +448,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-122523'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-122747'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3693,10 +3693,10 @@ function plusClic(k){ if(_plusLong){ _plusLong=false; return; } if(S.plusEdit) r
 let _pdrag=null, _pdragT=null, _pdragXY=null, _pdragOn=false;
 // tactile (iPhone) : un court appui prend la tuile ; sinon le doigt fait défiler la page
 function pdStart(el,x,y){ _pdrag=el; _pdragOn=false; _pdragXY=[x,y]; clearTimeout(_pdragT);
-  _pdragT=setTimeout(()=>{ if(_pdrag!==el) return; _pdragOn=true; el.classList.add('pdrag'); vib(); },250); }
+  _pdragT=setTimeout(()=>{ if(_pdrag!==el) return; _pdragOn=true; el.classList.add('pdrag'); vib(); },3000); }
 function pdMove(x,y){
   if(!_pdrag) return false;
-  if(!_pdragOn){ if(Math.hypot(x-_pdragXY[0],y-_pdragXY[1])>10){ clearTimeout(_pdragT); _pdrag=null; } return false; }
+  if(!_pdragOn){ if(Math.hypot(x-_pdragXY[0],y-_pdragXY[1])>14){ clearTimeout(_pdragT); _pdrag=null; } return false; }
   if(y<90) window.scrollBy(0,-14); else if(y>innerHeight-140) window.scrollBy(0,14);
   const sous=document.elementFromPoint(x,y); const cible=sous&&sous.closest('#plusTiles > [data-k]');
   if(cible&&cible!==_pdrag){ const box=_pdrag.parentNode, L=[...box.children], i=L.indexOf(_pdrag), j=L.indexOf(cible); box.insertBefore(_pdrag, i<j?cible.nextSibling:cible); vib(); }
@@ -3713,7 +3713,7 @@ function plusMove(k,dir){ const L=plusTuiles().map(x=>x[0]); const i=L.indexOf(k
 function vPlus(){
   const T=plusTuiles(), ed=!!S.plusEdit;
   return `<div class="panel"><h2><span class="ico">☰</span>Plus${ed?`<span class="cnt"><button class="btn sm green" onclick="S.plusEdit=false;render();toast('✅ Ordre enregistré')">Terminé</button></span>`:''}</h2>
-    ${ed?`<div class="coach" style="font-size:.82rem;margin-bottom:10px">✋ Appuie un instant sur une tuile, puis fais-la glisser. Tu peux défiler normalement pour voir les autres. Touche <b>Terminé</b> à la fin.</div>`:''}
+    ${ed?`<div class="coach" style="font-size:.82rem;margin-bottom:10px">✋ Reste appuyé 3 secondes sur une tuile, puis fais-la glisser. Tu peux défiler normalement pour voir les autres. Touche <b>Terminé</b> à la fin.</div>`:''}
     <div class="tiles" id="plusTiles">${T.map(([k,i,t,st,g],n)=>`<div data-k="${k}" style="position:relative" ${ed?'ontouchstart="plusTouch(event,this)" onpointerdown="plusDragDebut(event,this)"':''}><button class="tile on ptile ${g} ${ed?'pbouge':''}" style="width:100%;-webkit-touch-callout:none;user-select:none" onpointerdown="plusDown()" onpointerup="plusUp()" onpointerleave="plusUp()" oncontextmenu="return false" onclick="plusClic('${k}')"><span class="t-ico">${i}</span><b>${t}</b><small>${st}</small></button>
 </div>`).join('')}</div>
     ${S.email===ADMIN_EMAIL&&!ed?`<div class="muted" style="font-size:.72rem;font-weight:600;text-align:center;margin-top:10px">Astuce : reste appuyé sur une tuile pour changer l'ordre.</div>`:''}</div>`;
