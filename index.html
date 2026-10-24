@@ -454,7 +454,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-131012'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-131406'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3237,10 +3237,10 @@ function suivreLecture(){
 }
 window.addEventListener('scroll',suivreLecture,{passive:true});
 function taille(d){ const z=Math.min(1.6,Math.max(.8,(S.cfg.qz||1)+d)); S.cfg.qz=Math.round(z*10)/10; cfgTouch(); render(); }
-// 🎧 Récitation audio (test admin) : Mishary Al-Afasy, 128 kbps, un fichier par verset (CDN alquran.cloud / islamic.network)
+// 🎧 Récitation audio : Mishary Al-Afasy, 128 kbps, un fichier par verset (CDN alquran.cloud / islamic.network)
 const QAUD=num=>`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${num}.mp3`;
 var QA={ n:null, i:0, num:null, joue:false, bism:false, el:null };
-const audioOk=()=>S.email===ADMIN_EMAIL;
+const audioOk=()=>true; // ouvert à tous le 24/10
 function qaEl(){ if(QA.el) return QA.el; const a=new Audio(); a.preload='auto';
   a.addEventListener('ended',()=>{ if(QA.bism){ QA.bism=false; return qaJouer(); } if(QA.i<QA.num.length-1){ QA.i++; qaJouer(); } else { QA.joue=false; qaMaj(); toast('✅ Fin de la sourate'); } });
   a.addEventListener('error',()=>{ QA.joue=false; qaMaj(); toast('Récitation indisponible, vérifie ta connexion'); });
@@ -3279,7 +3279,7 @@ function vCoran(){
       <input class="inp" placeholder="🔎 Chercher une sourate (nom ou numéro)" oninput="filtrerSourates(this.value)">
       <div style="margin-top:8px">${SURATES.map((s,i)=>`<button class="sur-row" data-k="${esc((i+1)+' '+s[1]+' '+s[2]).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}" onclick="ouvrirSourate(${i+1})">
         <span class="sur-n">${i+1}</span><span><b>${esc(s[2])}</b><small>${esc(s[1])} · ${s[3]} versets · ${s[4]==='M'?'mecquoise':'médinoise'}</small></span><span class="sur-ar">${s[0]}</span></button>`).join('')}</div>
-      <p class="muted" style="font-size:.72rem;font-weight:600;margin-top:12px">Texte arabe : Tanzil (écriture Uthmani). Traduction du sens : Muhammad Hamidullah. Source : alquran.cloud. Les sourates ouvertes restent lisibles sans connexion.</p>
+      <p class="muted" style="font-size:.72rem;font-weight:600;margin-top:12px">Texte arabe : Tanzil (écriture Uthmani). Traduction du sens : Muhammad Hamidullah. Récitation : Mishary Al-Afasy. Source : alquran.cloud. Les sourates ouvertes restent lisibles sans connexion.</p>
     </div>`;
   }
   const n=QC.n, s=SURATES[n-1], D=QC.data;
