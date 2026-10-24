@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-105619'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-105847'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2300,6 +2300,17 @@ function vDin(){
         <div class="hr tnum">${hm(t[p.i])}</div>
         <div class="seg">${PSTAT.map(s=>`<button class="s-${s.k} ${d.p[p.k]===s.k?'on':''}" onclick="setPrayer('${p.k}','${s.k}')">${s.l}</button>`).join('')}</div>
       </div>`).join('')}
+  ${(()=>{ const i=S.nomI??(dayOfYear(S.sel)%99), n=NOMS[i]; return `
+      <div class="quote k-magenta nomjour mt">
+        <span class="q-tag">✨ Nom du jour · ${i+1}/99</span>
+        <div class="ar">${n[0]}</div>
+        <p style="text-align:center;font-size:1.2rem">${esc(n[1])}</p>
+        <div class="src" style="justify-content:center">${esc(n[2])}</div>
+        <div class="row" style="justify-content:center;margin-top:12px;flex-wrap:wrap">
+          <button class="chip" style="border:none;color:#fff;cursor:pointer;padding:7px 12px" onclick="S.nomI=((S.nomI??(dayOfYear(S.sel)%99))+1)%99;render()">Un autre ↻</button>
+          <button class="chip" style="border:none;background:#fff;color:#7c3aed;cursor:pointer;padding:7px 12px" onclick="go('noms')">📿 Voir les 99 noms</button>
+        </div>
+      </div>`; })()}
       ${naflPanel()}
       ${jeunePanel()}
     </div>
@@ -2355,17 +2366,6 @@ function vDin(){
       <div class="kv"><span>Prières manquées / non notées</span><b>${reg.manque}</b></div>
     </div>
   </div>
-  ${(()=>{ const i=S.nomI??(dayOfYear(S.sel)%99), n=NOMS[i]; return `
-  <div class="quote k-magenta nomjour mt">
-    <span class="q-tag">✨ Nom du jour · ${i+1}/99</span>
-    <div class="ar">${n[0]}</div>
-    <p style="text-align:center;font-size:1.2rem">${esc(n[1])}</p>
-    <div class="src" style="justify-content:center">${esc(n[2])}</div>
-    <div class="row" style="justify-content:center;margin-top:12px;flex-wrap:wrap">
-      <button class="chip" style="border:none;color:#fff;cursor:pointer;padding:7px 12px" onclick="S.nomI=((S.nomI??(dayOfYear(S.sel)%99))+1)%99;render()">Un autre ↻</button>
-      <button class="chip" style="border:none;background:#fff;color:#7c3aed;cursor:pointer;padding:7px 12px" onclick="go('noms')">📿 Voir les 99 noms</button>
-    </div>
-  </div>`; })()}
   `;
 }
 function vNoms(){
