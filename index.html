@@ -460,7 +460,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-184123'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-184337'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2334,6 +2334,8 @@ function vAccueil(){
     <div class="h-big tnum" style="font-size:3rem;line-height:1.1;margin-top:4px"><span id="npName">${np.p.n}</span></div>
     <div id="npCount" class="tnum" style="font-size:1.35rem;font-weight:800;opacity:.95"></div>
     <div class="h-sub" style="font-size:1rem">Adhan ${hm(at)}${iq!=null?` · Iqama ${hm((at+iq)%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${mosq().jumua.join(' / ')}`:''}</div>
+    <div class="hpal-bas"><button class="hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()">🎨 ${S.paletteOuverte?'Fermer':'Couleur'}</button></div>
+    ${S.paletteOuverte?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:''}
   </div>
   <div class="panel mt">${prieresDetail()}</div>
   ${hadMindCartes('h')}
