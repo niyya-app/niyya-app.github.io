@@ -445,7 +445,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-115331'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261024-115442'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2233,7 +2233,7 @@ function vJour(){
     ${S.cfg.fumeur?heroTabac():''}
     <div class="panel" ${S.cfg.fumeur?'':'style="grid-column:1/-1"'}>
       <button onclick="deroul('ess')" style="all:unset;display:block;width:100%;cursor:pointer">
-      <h2><span class="ico">🏆</span>Mes essentiels<span class="cnt">${essFaits(d)}/${essNb()} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['ess']?180:0}deg)">▾</span></span></h2>
+      <h2><span class="ico">💎</span>Mes essentiels<span class="cnt">${essFaits(d)}/${essNb()} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['ess']?180:0}deg)">▾</span></span></h2>
       <div class="sub" style="margin-bottom:${S.ouv.ess?0:2}px">${S.ouv.ess?'Un clic = c\'est fait.':`🍎 ${d.fruits||0}/5 · 💧 ${litres(d.eau)} L · touche pour ouvrir`}</div></button>
       ${S.ouv.ess?`<div class="tiles">
         ${essSlots().map(id=>essTile(id)).join('')}
