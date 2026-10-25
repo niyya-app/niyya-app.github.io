@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-192340'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-192742'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2369,9 +2369,9 @@ function vAccueil(){
   const at=np.at%1440, iq=iqamaDe(np.p.k);
   return `<div class="hero acc ${blanc?'k-emerald blanc':coul}">
     <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
-    <div class="h-lbl" style="padding-right:80px">🕌 Prochaine prière${isHsc()?' · '+esc(mosq().nom):''}</div>
+    <div class="h-lbl" style="padding-right:80px">🕌 Prochaine prière</div>
     <div class="row" style="justify-content:space-between;align-items:center;gap:10px;margin-top:4px"><div class="h-big tnum" style="font-size:3rem;line-height:1.1"><span id="npName">${np.p.n}</span></div>
-      <div style="font-weight:800;font-size:.95rem;opacity:.9;text-align:right;max-width:45%">📍 ${esc(isHsc()?mosq().ville:((S.cfg.lieu&&S.cfg.lieu.nom)||'').replace(/\s*\(\d+\)$/,'').split(',')[0])}</div></div>
+      <div style="font-weight:800;font-size:.95rem;opacity:.9;text-align:right;max-width:50%;line-height:1.3">📍 ${esc(isHsc()?mosq().ville:((S.cfg.lieu&&S.cfg.lieu.nom)||'').replace(/\s*\(\d+\)$/,'').split(',')[0])}${isHsc()?`<div style="font-size:.78rem;font-weight:700;opacity:.85">${esc(mosq().nom)}</div>`:''}</div></div>
     <div id="npCount" class="tnum" style="font-size:1.35rem;font-weight:800;opacity:.95"></div>
     <div class="h-sub" style="font-size:1rem">Adhan ${hm(at)}${iq!=null?` · Iqama ${hm((at+iq)%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${mosq().jumua.join(' / ')}`:''}</div>
     <div class="hpal-bas"><button class="hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()">🎨 ${S.paletteOuverte?'Fermer':'Couleur'}</button></div>
