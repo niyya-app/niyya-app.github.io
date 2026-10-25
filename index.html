@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-210936'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-211811'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3429,7 +3429,7 @@ function coranFait(){ const d=J(today()); d.coran=!d.coran; touch(today()); rend
 
 
 /* ---------- Bonnes actions du jour : 9 tirées de BA_POOL, toujours les mêmes pour une date donnée ---------- */
-const baTest=()=>S.email===ADMIN_EMAIL; // TEST : 3 actions par jour en rotation
+const baTest=()=>true; // ouvert à tous le 25/10 : 3 bonnes actions/jour en rotation (138), dhikr+istighfar dans Prière, détail du score
 const BA_PAR_JOUR=()=>baTest()?3:9;
 function baJour(k){
   const d=S.jours[k];
