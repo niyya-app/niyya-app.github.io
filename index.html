@@ -462,7 +462,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-113515'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-113646'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2279,7 +2279,16 @@ function vJour(){
         <div class="prio"><button class="ck ${p.ok?'on':''}" onclick="prioOk(${i})" aria-label="Priorité faite"><span class="box"></span></button>
         <input type="text" value="${esc(p.t)}" placeholder="Priorité ${i+1}" oninput="prioTxt(${i},this.value)"></div>`).join('')}</div>`:''}
     </div>
-    <div class="panel">
+    ${accOk()?'':bonnesActionsCarte()}
+  </div>
+  ${accOk()?'':hadMindCartes()}
+  <div class="mt">${soir}</div>
+  <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
+}
+// 🤲 Bonnes actions du jour : dans Aujourd'hui, ou dans Dîn (sous le Nom du jour)
+function bonnesActionsCarte(){
+  const d=J(), nb=baNb(d);
+  return `    <div class="panel">
       <button onclick="S.baOpen=!S.baOpen;render()" style="all:unset;display:block;width:100%;cursor:pointer">
         <h2><span class="ico">🤲</span>Bonnes actions<span class="cnt">${nb?nb+' ✓':'0'} <span style="display:inline-block;transition:.2s;transform:rotate(${S.baOpen?180:0}deg)">▾</span></span></h2>
         <div class="sub" style="margin-bottom:8px">${nb>=1?`✓ Score max atteint${nb>1?` · ${nb} actions, chacune en plus est un bonus 🌟`:' · chaque action en plus est un bonus'}`:'Une seule bonne action suffit pour le score max. Touche pour ouvrir la liste.'}</div>
@@ -2291,11 +2300,7 @@ function vJour(){
         <div class="sub" style="margin:2px 0 8px">Ajoute tes propres bonnes actions : elles restent dans ta liste et tu pourras les cocher chaque jour.</div>
         ${(()=>{ const L=baPAffiche(d); return L.length?`<div class="checks">${L.map((t,k)=>{ const on=baPFait(d,t); return `<div class="prio"><button class="ck ${on?'on':''}" onclick="baPCoche(${k})" aria-label="Fait"><span class="box"></span></button><button onclick="baPCoche(${k})" style="all:unset;flex:1;font-weight:700;align-self:center;cursor:pointer">${esc(t)}</button><button class="btn sm" onclick="baPOubli(${k})" aria-label="Retirer de ma liste" title="Retirer de ma liste">✕</button></div>`; }).join('')}</div>`:''; })()}
         <div class="row mt"><input class="inp" id="baPIn" maxlength="80" placeholder="Ex. Aider un voisin, appeler ma mère…" onkeydown="if(event.key==='Enter')baPAjout()" style="flex:1"><button class="btn green" onclick="baPAjout()">Ajouter</button></div></div>`:''}
-    </div>
-  </div>
-  ${accOk()?'':hadMindCartes()}
-  <div class="mt">${soir}</div>
-  <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
+    </div>`;
 }
 // 🤍✨ « Ce qu'Allah aime » + « Sunnah du jour » (déroulants) : dans Aujourd'hui, ou dans Dîn
 function aimeSunnahCartes(){
@@ -2422,6 +2427,7 @@ ${accOk()?'':prieresDetail()}
           <button class="chip" style="border:none;background:#fff;color:#7c3aed;cursor:pointer;padding:7px 12px" onclick="go('noms')">📿 Voir les 99 noms</button>
         </div>
       </div>`; })()}
+      ${accOk()?`<div class="mt">${bonnesActionsCarte()}</div>`:''}
       ${naflPanel()}
       ${jeunePanel()}
       <div class="panel mt">
