@@ -462,7 +462,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-114438'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-114844'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2820,15 +2820,15 @@ function mouhasabaCarte(d){
   return `<div class="panel">
     <button onclick="deroul('soir')" style="all:unset;display:block;width:100%;cursor:pointer">
     <h2><span class="ico">🌙</span>Ma Mouhâsaba <span style="font-weight:600;color:var(--muted);font-size:.85em">(mon moment du soir)</span><span class="cnt">${fait?'✓ ':''}<span style="display:inline-block;transition:.2s;transform:rotate(${o?180:0}deg)">▾</span></span></h2>
-    <div class="sub" style="margin-bottom:${o?0:2}px">${o?'Une pause pour toi, en 30 secondes ☕':fait?`${d.humeur?HUMEURS[d.humeur-1][0]+' · ':''}${nb} bienfait${nb>1?'s':''}${(d.intention||'').trim()?' · intention fixée':''} · touche pour relire`:'Faire le point, remercier Allah, choisir une intention pour demain.'}</div></button>
+    <div class="sub" style="margin-bottom:${o?0:2}px">${o?'Une pause pour toi, en 30 secondes ☕':fait?(accOk()?[d.humeur?HUMEURS[d.humeur-1][0]:'',(d.intention||'').trim()?'intention fixée':'','touche pour relire'].filter(Boolean).join(' · '):`${d.humeur?HUMEURS[d.humeur-1][0]+' · ':''}${nb} bienfait${nb>1?'s':''}${(d.intention||'').trim()?' · intention fixée':''} · touche pour relire`):'Faire le point, remercier Allah, choisir une intention pour demain.'}</div></button>
     ${o?`
     <label class="f">1. Ma journée</label>
     <div class="row" style="gap:8px">${HUMEURS.map(([e,l],i)=>`<button class="btn" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;font-size:1.5rem;${d.humeur===i+1?'border:2px solid #10b981;background:#ecfdf5':''}" onclick="setHumeur(${i+1})" aria-label="${l}">${e}<small style="font-size:.62rem;font-weight:800;color:var(--muted)">${l}</small></button>`).join('')}</div>
-    <label class="f" style="margin-top:14px">2. 3 bienfaits dont je remercie Allah <span class="muted" style="font-weight:700">(${nb}/3)</span></label>
+    ${accOk()?'':`    <label class="f" style="margin-top:14px">2. 3 bienfaits dont je remercie Allah <span class="muted" style="font-weight:700">(${nb}/3)</span></label>
     <div class="row" style="gap:6px;flex-wrap:wrap">${BIENFAITS.concat(persos).map(t=>`<button class="btn sm" style="${(d.bienfaits||[]).includes(t)?'background:#10b981;color:#fff;border-color:#10b981':''}" onclick="toggleBienfait(${esc(JSON.stringify(t))})">${esc(t)}</button>`).join('')}</div>
     <div class="row" style="gap:6px;margin-top:8px"><input class="inp" id="bienfaitLibre" style="flex:1" placeholder="Autre bienfait…" maxlength="40"><button class="btn sm" onclick="const i=document.getElementById('bienfaitLibre');if(i.value.trim()){toggleBienfait(i.value.trim())}">+ Ajouter</button></div>
-    <div class="muted" style="font-size:.72rem;font-weight:600;margin-top:6px">« Si vous êtes reconnaissants, très certainement J'augmenterai [Mes bienfaits] pour vous. » (Coran 14:7)</div>
-    <label class="f" style="margin-top:14px">3. Mon intention pour demain</label>
+    <div class="muted" style="font-size:.72rem;font-weight:600;margin-top:6px">« Si vous êtes reconnaissants, très certainement J'augmenterai [Mes bienfaits] pour vous. » (Coran 14:7)</div>`}
+    <label class="f" style="margin-top:14px">${accOk()?2:3}. Mon intention pour demain</label>
     <input class="inp" maxlength="90" placeholder="Ex. Prier Fajr à la mosquée, appeler ma mère…" value="${esc(d.intention||'')}" oninput="setTxt('intention',this.value)">
     <div class="muted" style="font-size:.72rem;font-weight:600;margin-top:6px">🌅 Tu la retrouveras demain matin en haut de ta journée.</div>`:''}
   </div>`;
