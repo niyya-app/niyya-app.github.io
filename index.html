@@ -462,7 +462,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261024-190107'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-112732'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1774,7 +1774,7 @@ function render(){
   if(S.view==='tabac' && !S.cfg.fumeur) S.view='jour';
   if(accOk()&&!S._acc){ S._acc=true; if(S.view==='jour'&&S.sel===today()) S.view='accueil'; } // à l'ouverture : l'accueil (avant le menu du bas, pour le bon onglet allumé)
   const menuPlus=true; // menu à 5 onglets + ☰ Plus pour tout le monde (19/10)
-  document.getElementById('nav').innerHTML=(accOk()?[['accueil','🏠','Accueil'],['jour','☀️','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['citadelle','🛡️','Citadelle'],['plus','☰','Menu']]:menuPlus?[['jour','🏠','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['qibla','🧭','Qibla'],['plus','☰','Menu']]:[...VIEWS]).filter(([k])=>k!=='tabac'||S.cfg.fumeur).map(([k,i,l])=>`<button class="${S.view===k||(S.view==='noms'&&k==='din')||(S.view==='voyage'&&k==='citadelle')||(menuPlus&&k==='plus'&&DANS_PLUS.includes(S.view)&&!(accOk()&&['citadelle','voyage'].includes(S.view)))||(accOk()&&k==='plus'&&S.view==='qibla')?'on':''}" onclick="${k==='don'?'ouvrirDons()':`go('${k}')`}"><i>${i}</i>${l}</button>`).join('');
+  document.getElementById('nav').innerHTML=(accOk()?[['accueil','🕋','Prière'],['jour','☀️','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['citadelle','🛡️','Citadelle'],['plus','☰','Menu']]:menuPlus?[['jour','🏠','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['qibla','🧭','Qibla'],['plus','☰','Menu']]:[...VIEWS]).filter(([k])=>k!=='tabac'||S.cfg.fumeur).map(([k,i,l])=>`<button class="${S.view===k||(S.view==='noms'&&k==='din')||(S.view==='voyage'&&k==='citadelle')||(menuPlus&&k==='plus'&&DANS_PLUS.includes(S.view)&&!(accOk()&&['citadelle','voyage'].includes(S.view)))||(accOk()&&k==='plus'&&S.view==='qibla')?'on':''}" onclick="${k==='don'?'ouvrirDons()':`go('${k}')`}"><i>${i}</i>${l}</button>`).join('');
   const isT=S.sel===today();
   const head=`
   <div class="top">
