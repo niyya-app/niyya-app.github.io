@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-122842'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-125323'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1911,7 +1911,7 @@ async function lireRecue(){
     if(!o) return;
     const cible=cibleDeTag(o.tag||''); if(!cible) return;
     if(!S.uid||!S.pret||!S.cfg.onb) return;
-    marquerRecue(o.t); diagNotif('notification reçue affichée : '+cible); S.diagClic=S.diagClic||'notif_cache'; S.clicCorps=o.body||''; S.clicEssai=!!o.essai; ouvrir(cible);
+    marquerRecue(o.t); diagNotif('notification reçue affichée : '+cible); S.diagClic=S.diagClic||'notif_auto'; // ouverte par l'appli elle-même, pas par un toucher : ne compte pas comme « ouverte » S.clicCorps=o.body||''; S.clicEssai=!!o.essai; ouvrir(cible);
   }catch(e){}
 }
 function bandeauRecue(o){ // l'appli est déjà à l'écran quand la notification arrive : petit bandeau à toucher
@@ -2054,7 +2054,9 @@ function ouvrir(cible){
     openSheet(`<h2 style="margin:0 0 4px">📊 Ta semaine NIYYA</h2><div class="sub">Les 7 derniers jours</div>
       <div class="checks" style="margin-top:12px;gap:8px;font-size:1rem;font-weight:700">${L.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
       <button class="btn pri mt" onclick="closeSheet()">Voir mon bilan détaillé</button>`); }); }
-  if(S.diagClic){ compter(S.diagClic); if(!S.clicEssai) compter('ouvert_'+(/^priere-/.test(cible)?'priere':['hadith','mindset','recap','soir'].includes(cible)?cible:'annonce')); S.diagClic=null; S.clicEssai=false; } // taux d'ouverture anonyme (les notifications d'essai ne comptent pas)
+  if(S.diagClic){ // taux d'ouverture : seulement quand la personne a vraiment touché la notification (pas les essais, pas l'affichage automatique au retour dans l'appli, pas le calendrier qui n'a pas de compteur d'envoi)
+    if(S.diagClic!=='notif_auto'){ compter(S.diagClic); if(!S.clicEssai&&cible!=='calendrier') compter('ouvert_'+(/^priere-/.test(cible)?'priere':['hadith','mindset','recap','soir'].includes(cible)?cible:'annonce')); }
+    S.diagClic=null; S.clicEssai=false; } // taux d'ouverture anonyme (les notifications d'essai ne comptent pas)
   const id={hadith:'cHadith',mindset:'cMindset'}[cible];
   if(id) setTimeout(()=>{ const el=document.getElementById(id); if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.outline='3px solid #facc15'; setTimeout(()=>{ el.style.outline=''; },2500); } },250);
 }
