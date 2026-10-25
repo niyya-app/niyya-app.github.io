@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-212327'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-215242'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1488,7 +1488,7 @@ const TIPS_ENVIE = [
 /* ---------- Dons : liens à renseigner par Mehdi (aucun paiement ne passe par NIYYA) ---------- */
 const DONS = {
   asso:{ nom:'', desc:'', url:'' },      // association à but non lucratif (ex. page HelloAsso de l'association)
-  fondateur:{ url:'' },                  // soutien au fondateur : serveur, maintenance (ex. lien PayPal, Stripe, Lydia)
+  fondateur:{ url:'', liens:{} },        // soutien au fondateur : un lien (montant libre) ou un lien par montant {2:'…',5:'…',10:'…',autre:'…'} (ex. Stripe Payment Links, Ko-fi)
 };
 /* ---------- Réglages par défaut ---------- */
 const DEF_CFG = {
@@ -2951,6 +2951,20 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
 }
 function dhikr(n){ const d=J(); d.istighfar=Math.max(0,d.istighfar+n); vib(); touch(); render(); if(d.istighfar>=100&&d.istighfar-n<100){ if(true) celebrer('أَسْتَغْفِرُ اللّٰهَ','100 istighfar','Qu\'Allah te pardonne · +'+PTS_ISTIGHFAR+' points'); else toast('🤲 100 istighfar, qu\'Allah te pardonne'); } }
 /* ---------- Faire un don ---------- */
+// ☕ Soutenir NIYYA (revenu du fondateur, pas un don fiscal). Sur l'appli iPhone : rien tant que les achats intégrés Apple ne sont pas en place (règle App Store).
+function soutienCarte(F){
+  const lien=m=>(F.liens&&F.liens[m])||F.url||'';
+  const montants=[['☕','2 €',2],['🍽️','5 €',5],['💚','10 €',10],['✨','Autre','autre']];
+  const actif=montants.some(([, ,m])=>lien(m));
+  return `<div class="hero k-violet">
+      <div class="h-lbl">☕ Soutenir NIYYA</div>
+      <div style="font-size:1.05rem;font-weight:800;margin:6px 0 2px">Aide NIYYA à grandir</div>
+      <div class="h-sub">NIYYA est un projet indépendant, sans pub et sans investisseur. Si elle t'aide à prier à l'heure et à tenir tes bonnes habitudes, tu peux aider à la faire vivre.</div>
+      ${actif?`<div class="row" style="gap:6px;margin-top:12px;flex-wrap:wrap">${montants.map(([i,l,m])=>lien(m)?`<a class="btn sm" style="background:#fff;color:#6d28d9;border:none;text-decoration:none;flex:1;text-align:center;min-width:64px" href="${esc(lien(m))}" target="_blank" rel="noopener" onclick="coeurVert('Merci de faire vivre NIYYA')">${i} ${l}</a>`:'').join('')}</div>`
+        :`<div class="h-sub" style="margin-top:10px;font-weight:800">🤍 Bientôt, tu pourras soutenir NIYYA ici.</div>`}
+      <div class="h-sub" style="margin-top:10px;font-size:.74rem;opacity:.85">À quoi ça sert : le serveur, les notifications d'adhan et les nouvelles fonctions.</div>
+    </div>`;
+}
 function ouvrirDons(){
   compter('don');
   const A=DONS.asso, F=DONS.fondateur;
@@ -2963,13 +2977,7 @@ function ouvrirDons(){
       ${A.url?`<a class="btn" style="display:inline-block;margin-top:12px;background:#fff;color:#047857;border:none;text-decoration:none" href="${esc(A.url)}" target="_blank" rel="noopener" onclick="coeurVert('Qu\'Allah accepte ta sadaqa');apresDon('asso')">Faire un don à l'association →</a>`
         :`<div class="chip" style="display:inline-block;margin-top:12px">Lien bientôt disponible</div>`}
     </div>
-    <div class="hero k-violet">
-      <div class="h-lbl">☕ Soutenir NIYYA</div>
-      <div style="font-size:1.05rem;font-weight:800;margin:6px 0 2px">Faire vivre NIYYA</div>
-      <div class="h-sub">Serveur, maintenance et nouvelles fonctions. NIYYA est gratuite et sans publicité. Même 2 € comptent.</div>
-      ${F.url?`<a class="btn" style="display:inline-block;margin-top:12px;background:#fff;color:#6d28d9;border:none;text-decoration:none" href="${esc(F.url)}" target="_blank" rel="noopener" onclick="coeurVert('Merci de faire vivre NIYYA')">Soutenir NIYYA →</a>`
-        :`<div class="chip" style="display:inline-block;margin-top:12px">Lien bientôt disponible</div>`}
-    </div>
+    ${NATIF?'':soutienCarte(F)}
     <p class="muted" style="font-size:.72rem;font-weight:600;margin:12px 0">Le soutien à NIYYA n'est pas un don à une association : il ne donne pas droit à une réduction d'impôt.</p>
     <button class="btn" onclick="closeSheet()">Fermer</button>`);
 }
