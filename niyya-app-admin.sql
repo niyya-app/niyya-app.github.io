@@ -50,17 +50,18 @@ grant execute on function public.niyya_robot_passage(integer, integer, text) to 
 create or replace function public.niyya_admin_data()
 returns jsonb language plpgsql stable security definer set search_path = public, auth as $$
 declare aujourd date := (now() at time zone 'Europe/Paris')::date;
+        moi uuid := (select id from auth.users where email = 'hestia14000@gmail.com'); -- le compte de Mehdi est exclu des statistiques
 begin
   return jsonb_build_object(
     'maj', to_char(now() at time zone 'Europe/Paris','DD/MM/YYYY HH24:MI'),
-    'comptes', (select count(*) from auth.users),
-    'questionnaire_fini', (select count(*) from public.niyya_profils p where coalesce((p.data->>'onb')::boolean,false)),
-    'nouveaux_7j', (select count(*) from auth.users where created_at > now() - interval '7 days'),
-    'actifs_1j',  (select count(distinct user_id) from public.niyya_jours where updated_at > now() - interval '1 day'),
-    'actifs_7j',  (select count(distinct user_id) from public.niyya_jours where updated_at > now() - interval '7 days'),
-    'actifs_30j', (select count(distinct user_id) from public.niyya_jours where updated_at > now() - interval '30 days'),
+    'comptes', (select count(*) from auth.users where id is distinct from moi),
+    'questionnaire_fini', (select count(*) from public.niyya_profils p where coalesce((p.data->>'onb')::boolean,false) and p.user_id is distinct from moi),
+    'nouveaux_7j', (select count(*) from auth.users where created_at > now() - interval '7 days' and id is distinct from moi),
+    'actifs_1j',  (select count(distinct user_id) from public.niyya_jours where updated_at > now() - interval '1 day' and user_id is distinct from moi),
+    'actifs_7j',  (select count(distinct user_id) from public.niyya_jours where updated_at > now() - interval '7 days' and user_id is distinct from moi),
+    'actifs_30j', (select count(distinct user_id) from public.niyya_jours where updated_at > now() - interval '30 days' and user_id is distinct from moi),
     'inscriptions', coalesce((select jsonb_agg(jsonb_build_object('jour', d::date, 'nb',
-        (select count(*) from auth.users u where (u.created_at at time zone 'Europe/Paris')::date = d::date)) order by d)
+        (select count(*) from auth.users u where (u.created_at at time zone 'Europe/Paris')::date = d::date and u.id is distinct from moi)) order by d)
       from generate_series(aujourd - 29, aujourd, interval '1 day') d), '[]'::jsonb),
     'quotidien', coalesce((select jsonb_agg(jsonb_build_object('jour', d::date,
         'actifs', coalesce((select nb from public.niyya_stats s where s.jour = d::date and s.onglet = 'actif'),0),
@@ -84,10 +85,10 @@ begin
     'robot', (select jsonb_build_object('dernier_tick', to_char(e.dernier_tick at time zone 'Europe/Paris','DD/MM HH24:MI'),
         'minutes', round(extract(epoch from now() - e.dernier_tick)/60), 'envoyes_jour', case when e.jour = aujourd then e.envoyes_jour else 0 end,
         'echecs_jour', case when e.jour = aujourd then e.echecs_jour else 0 end, 'derniere_erreur', e.derniere_erreur) from public.niyya_push_etat e where e.id = 1),
-    'abonnes_notifs', (select count(*) from public.niyya_push where actif),
+    'abonnes_notifs', (select count(*) from public.niyya_push where actif and user_id is distinct from moi),
     'villes', coalesce((select jsonb_agg(jsonb_build_object('ville', v, 'nb', n) order by n desc) from (
         select regexp_replace(coalesce(p.data->'lieu'->>'nom','—'),'\s*\(\d+\)$','') v, count(*) n
-        from public.niyya_profils p group by 1 order by 2 desc limit 15) t), '[]'::jsonb),
+        from public.niyya_profils p where p.user_id is distinct from moi group by 1 order by 2 desc limit 15) t), '[]'::jsonb),
     'utilisateurs', coalesce((select jsonb_agg(jsonb_build_object(
         'prenom', coalesce(p.data->>'nom','—'),
         'email', u.email,
@@ -107,7 +108,7 @@ begin
                 then exists(select 1 from public.niyya_jours j where j.user_id = u.id and j.jour = (u.created_at at time zone 'Europe/Paris')::date + 1) end,
         'j7', case when (now() at time zone 'Europe/Paris')::date > (u.created_at at time zone 'Europe/Paris')::date + 7
                 then exists(select 1 from public.niyya_jours j where j.user_id = u.id and j.jour >= (u.created_at at time zone 'Europe/Paris')::date + 7) end
-      ) order by u.created_at desc) from auth.users u left join public.niyya_profils p on p.user_id = u.id), '[]'::jsonb)
+      ) order by u.created_at desc) from auth.users u left join public.niyya_profils p on p.user_id = u.id where u.id is distinct from moi), '[]'::jsonb)
   );
 end $$;
 
@@ -118,7 +119,7 @@ begin
   if coalesce(auth.jwt()->>'email','') <> 'hestia14000@gmail.com' then
     raise exception 'Réservé à l''administrateur' using errcode = '42501';
   end if;
-  return public.niyya_admin_data() || jsonb_build_object('genres', jsonb_build_object('h', (select count(*) from public.niyya_profils where data->>'genre'='h'), 'f', (select count(*) from public.niyya_profils where data->>'genre'='f'))); -- totaux hommes / femmes uniquement
+  return public.niyya_admin_data() || jsonb_build_object('genres', jsonb_build_object('h', (select count(*) from public.niyya_profils p join auth.users u on u.id = p.user_id where p.data->>'genre'='h' and u.email <> 'hestia14000@gmail.com'), 'f', (select count(*) from public.niyya_profils p join auth.users u on u.id = p.user_id where p.data->>'genre'='f' and u.email <> 'hestia14000@gmail.com'))); -- totaux hommes / femmes uniquement
 end $$;
 
 -- 4) Accès par LIEN SECRET (#k=…) : seule l'empreinte SHA-256 de la clé est stockée, jamais la clé
@@ -134,7 +135,7 @@ begin
      or not exists (select 1 from public.niyya_admin_acces a where a.empreinte = encode(sha256(convert_to(p_cle,'UTF8')),'hex')) then
     raise exception 'Lien d''accès invalide' using errcode = '42501';
   end if;
-  return public.niyya_admin_data() || jsonb_build_object('genres', jsonb_build_object('h', (select count(*) from public.niyya_profils where data->>'genre'='h'), 'f', (select count(*) from public.niyya_profils where data->>'genre'='f'))); -- totaux hommes / femmes uniquement
+  return public.niyya_admin_data() || jsonb_build_object('genres', jsonb_build_object('h', (select count(*) from public.niyya_profils p join auth.users u on u.id = p.user_id where p.data->>'genre'='h' and u.email <> 'hestia14000@gmail.com'), 'f', (select count(*) from public.niyya_profils p join auth.users u on u.id = p.user_id where p.data->>'genre'='f' and u.email <> 'hestia14000@gmail.com'))); -- totaux hommes / femmes uniquement
 end $$;
 
 revoke all on function public.niyya_admin_data() from public, anon, authenticated;

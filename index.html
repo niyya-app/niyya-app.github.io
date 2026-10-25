@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-211825'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-212059'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3522,7 +3522,7 @@ function sportValider(){
 /* ---------- Statistiques ANONYMES d'ouverture des onglets (aucun identifiant stocké) ---------- */
 const ADMIN_EMAIL='hestia14000@gmail.com';
 function compter(onglet){
-  if(!S.uid || !sb || location.hash==='#autotest') return;
+  if(!S.uid || !sb || location.hash==='#autotest' || S.email===ADMIN_EMAIL) return; // le compte de Mehdi ne compte pas dans les statistiques
   try{
     const k='nya_vu_'+onglet, t=Number(sessionStorage.getItem(k)||0);
     if(Date.now()-t < 10*60e3) return;              // une ouverture comptée au plus toutes les 10 min par onglet
@@ -3531,7 +3531,7 @@ function compter(onglet){
   sb.rpc('niyya_compter',{p_onglet:onglet}).then(()=>{},()=>{});
 }
 function compterJournee(){ // 1 « actif » par appareil et par jour + mode d'ouverture (icône / navigateur)
-  if(!S.uid || !sb || location.hash==='#autotest') return;
+  if(!S.uid || !sb || location.hash==='#autotest' || S.email===ADMIN_EMAIL) return; // le compte de Mehdi ne compte pas dans les statistiques
   try{
     const icone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
     if(icone && !S.cfg.vuIcone){ S.cfg.vuIcone=true; cfgTouch(); } // noté à chaque ouverture depuis l'icône (pas seulement la 1re du jour)
