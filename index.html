@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-215501'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-215732'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2967,16 +2967,15 @@ function soutienCarte(F){
 function ouvrirDons(){
   compter('don');
   const A=DONS.asso, F=DONS.fondateur;
-  openSheet(`<h3>💚 Faire un don</h3>
-    <p class="muted" style="font-size:.84rem;font-weight:600;margin-bottom:14px">NIYYA est gratuite et sans publicité. Si elle t'aide au quotidien, tu peux faire une bonne action de deux façons. Le paiement se fait sur un site sécurisé extérieur : NIYYA ne voit jamais tes coordonnées bancaires.</p>
-    <div class="hero k-emerald" style="margin-bottom:12px">
+  openSheet(`<h3>💚 Soutenir NIYYA</h3>
+    <p class="muted" style="font-size:.84rem;font-weight:600;margin-bottom:14px">NIYYA est gratuite et sans publicité. Le paiement se fait sur un site sécurisé extérieur : NIYYA ne voit jamais tes coordonnées bancaires.</p>
+    ${soutienCarte(NATIF?{}:F)}
+    ${A.url?`<div class="hero k-emerald mt">
       <div class="h-lbl">🤲 Sadaqa à une association</div>
       <div style="font-size:1.05rem;font-weight:800;margin:6px 0 2px">${esc(A.nom||'Association à but non lucratif')}</div>
-      <div class="h-sub">${esc(A.desc||'100 % de ton don va à l\'association. Elle peut te délivrer un reçu fiscal si elle y est habilitée.')}</div>
-      ${A.url?`<a class="btn" style="display:inline-block;margin-top:12px;background:#fff;color:#047857;border:none;text-decoration:none" href="${esc(A.url)}" target="_blank" rel="noopener" onclick="coeurVert('Qu\'Allah accepte ta sadaqa');apresDon('asso')">Faire un don à l'association →</a>`
-        :`<div class="chip" style="display:inline-block;margin-top:12px">Lien bientôt disponible</div>`}
-    </div>
-    ${NATIF?'':soutienCarte(F)}
+      <div class="h-sub">${esc(A.desc||'100 % de ton don va à l\'association.')}</div>
+      <a class="btn" style="display:inline-block;margin-top:12px;background:#fff;color:#047857;border:none;text-decoration:none" href="${esc(A.url)}" target="_blank" rel="noopener" onclick="coeurVert('Qu\'Allah accepte ta sadaqa');apresDon('asso')">Faire un don à l'association →</a>
+    </div>`:''}
     <p class="muted" style="font-size:.72rem;font-weight:600;margin:12px 0">Le soutien à NIYYA n'est pas un don à une association : il ne donne pas droit à une réduction d'impôt.</p>
     <button class="btn" onclick="closeSheet()">Fermer</button>`);
 }
