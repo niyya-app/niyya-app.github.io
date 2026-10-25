@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-194310'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-203106'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2386,6 +2386,7 @@ function vAccueil(){
     </div>
     ${isT?'':`<button class="btn sm green" style="width:100%;margin-bottom:10px" onclick="setDay(today())">↩ Revenir à aujourd'hui</button>`}
     ${prieresDetail()}</div>
+  ${baTest()?cartesDhikr(J(),true):''}
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
 function sportWeek(k){ // séances du lundi au dimanche
@@ -2464,7 +2465,7 @@ ${accOk()?'':prieresDetail()}
         ${d.sadaqa.map((x,i)=>`<div class="kv"><span>${esc(x.n||'Sadaqa')}</span><b>${esc(x.m)} € <button class="btn sm" onclick="delSad(${i})" aria-label="Supprimer">✕</button></b></div>`).join('')}
       </div>
     </div>
-    <div>${cartesDhikr(d)+'<div style="display:none">'}
+    <div>${(baTest()?'':cartesDhikr(d))+'<div style="display:none">'}
       <div class="hero k-teal">
         <div class="h-lbl">📿 Istighfar & dhikr</div>
         <div class="dhikr" style="margin-top:8px"><div class="big tnum">${d.istighfar}</div>
@@ -2891,7 +2892,7 @@ function celebrer(ar,tr,sous){ // même animation que les 5 prières : croissant
   el.innerHTML=`<div class="c">🌙</div><div class="t"><b class="ar" lang="ar" dir="rtl">${ar}</b><i>${esc(tr)}</i><small>${esc(sous)}</small></div>`;
   document.body.appendChild(el); setTimeout(()=>el.remove(),3900);
 }
-function cartesDhikr(d){
+function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Prière)
   const o=d.dk||{}, m=S.dhikrMode||'tasbih', D=DHIKRS[m], n=o[m]||0, [i,r]=m==='tasbih'?dhikrEtape('tasbih',n):[0,n], E=D.etapes[i];
   const ist=d.istighfar||0;
   const ferme=(k,cls,titre,resume,chip)=>`<div class="hero ${cls}${k==='dk'?' mt':''}" onclick="deroul('${k}')" style="cursor:pointer"><div class="row" style="align-items:center;gap:8px"><div><div class="h-lbl">${titre}</div><div class="h-sub" style="margin-top:2px">${resume}</div></div><div class="sp"></div><span class="chip">${chip}</span><span style="font-size:1.3rem;font-weight:800">▾</span></div></div>`;
@@ -2919,7 +2920,7 @@ function cartesDhikr(d){
       <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="annulerDhikr()">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(10)">+10</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(33)">+33</button></div>
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 ${esc(D.r)} — ${esc(D.src)}</div>
     </div>`;
-  return carteIst+carteDk;
+  return dkDabord?carteDk+'<div class="mt">'+carteIst+'</div>':carteIst+carteDk;
 }
 function dhikr(n){ const d=J(); d.istighfar=Math.max(0,d.istighfar+n); vib(); touch(); render(); if(d.istighfar>=100&&d.istighfar-n<100){ if(true) celebrer('أَسْتَغْفِرُ اللّٰهَ','100 istighfar','Qu\'Allah te pardonne · +'+PTS_ISTIGHFAR+' points'); else toast('🤲 100 istighfar, qu\'Allah te pardonne'); } }
 /* ---------- Faire un don ---------- */
