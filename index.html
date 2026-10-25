@@ -462,7 +462,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-114056'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-114146'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2035,7 +2035,7 @@ function poidsTexte(actuel){
 }
 function choixTravail(m){ S.cfg.travail=Object.assign({debut:'09:00',fin:'18:00'},S.cfg.travail,{mode:m}); cfgTouch(); render(); }
 function choixPoidsBut(b){ S.cfg.poidsBut=b; cfgTouch(); render(); }
-function deroul(k){ S.ouv=S.ouv||{}; S.ouv[k]=!S.ouv[k]; render(); }
+function deroul(k){ S.ouv=S.ouv||{}; S.ouv[k]=!S.ouv[k]; if(k==='ess'&&accOk()){ S.cfg.essFerme=!S.ouv.ess; cfgTouch(); } render(); }
 // Ouverture depuis une notification : ?ouvrir=priere|hadith|mindset|recap
 function ouvrir(cible){
   diagNotif('ouvrir '+cible+(!S.uid||!S.pret?' (en attente du chargement)':'')); marquerRecue(Date.now());
@@ -2200,6 +2200,7 @@ function tileBtn(key,ico,title,sub,grad,alt){
   return `<button class="tile ${on?'on '+grad:''} ${alt?'alt':''}" onclick="${key==='sport'?'openSport()':`toggle('${key}')`}"><span class="t-ico">${ico}</span><b>${title}</b>${sub?`<small>${sub}</small>`:''}</button>`;
 }
 function vJour(){
+  if(accOk()&&S.ouv&&S.ouv.ess===undefined) S.ouv.ess=!S.cfg.essFerme; // Mes essentiels ouverts par défaut (on peut les fermer, le choix est gardé)
   const d=J(), sc=scoreOf(S.sel);
   const sem=sportWeek(S.sel);
   const nb=baNb(d);
@@ -2249,7 +2250,6 @@ function vJour(){
     </div>`}
     ${accOk()?'':heroPriere()}
   </div>
-  ${accOk()?`<div class="mt">${hadMindCartes('m')}</div>`:''}
   <div class="grid g2 mt">
     ${S.cfg.fumeur?heroTabac():''}
     <div class="panel" ${S.cfg.fumeur?'':'style="grid-column:1/-1"'}>
@@ -2264,7 +2264,7 @@ function vJour(){
       ${!d.sport?`<button class="btn sm mt" onclick="toggle('repos')">${d.repos?'✓ Jour de repos sportif':'😴 Marquer jour de repos'}</button>`:''}`:''}
     </div>
   </div>
-  ${accOk()?`<div class="mt">${santeCarte()}</div>`:''}
+  ${accOk()?`<div class="mt">${hadMindCartes('m')}</div><div class="mt">${santeCarte()}</div>`:''}
   ${poidsCarte()?`<div class="mt">${poidsCarte()}</div>`:''}
   ${deuxDeroul}
   <div class="grid g2 mt">
