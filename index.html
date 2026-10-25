@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-210538'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-210936'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1760,6 +1760,30 @@ function scoreOf(k){
     if(dhikrFait(d)){ parts.push({k:'dhikr',l:'Dhikr',bonus:true,f:1,pts:PTS_DHIKR,max:0,txt:'fait'}); score=Math.min(100,score+PTS_DHIKR); } }
   return {score, parts};
 }
+// ⭐ Détail du score : une ligne par partie (barre + points), qui mène au bon endroit, et « ton prochain pas »
+const SC_L={prieres:['🕌','Prières'],tabac:['🚭','Tabac'],essentiels:['💎','Mes essentiels'],bonnes:['🤲','Bonnes actions'],sante:['🍎','Santé'],business:['🎯','Mes priorités']};
+function scoreLignes(sc){
+  const P={}; sc.parts.filter(p=>!p.bonus).forEach(p=>{ const k=(p.k==='fruits'||p.k==='eau')?'sante':p.k; P[k]=P[k]||{k,pts:0,max:0}; P[k].pts+=p.f*p.max; P[k].max+=p.max; });
+  const L=Object.values(P).filter(x=>x.max>0), bonus=sc.parts.filter(p=>p.bonus);
+  const nbE=essNb(), PAS={prieres:`Une prière à l'heure = +${Math.round(((P.prieres||{}).max||0)/5)} points`,bonnes:`Une bonne action = +${Math.round((P.bonnes||{}).max||0)} points`,essentiels:`Un essentiel = +${Math.round(((P.essentiels||{}).max||0)/nbE)} points`,sante:'Un fruit ou un verre d\'eau = +1 point',business:'Fixe et coche tes 3 priorités'};
+  const pas1=x=>({prieres:x.max/5,bonnes:x.pts<0.5?x.max:0,essentiels:x.max/nbE,sante:1,business:x.max/3})[x.k]||0; // ce que rapporte UN geste
+  const pas=L.filter(x=>PAS[x.k]&&x.max-x.pts>0.5&&pas1(x)>0).sort((a,b)=>pas1(b)-pas1(a))[0];
+  return `${pas?`<button onclick="event.stopPropagation();scoreAller('${pas.k}')" style="all:unset;box-sizing:border-box;display:block;width:100%;cursor:pointer;margin-top:12px;background:rgba(255,255,255,.95);color:#4c1d95;border-radius:14px;padding:10px 12px;font-weight:800;font-size:.88rem">👉 Ton prochain pas : ${PAS[pas.k]} <span style="float:right">›</span></button>`:`<div style="margin-top:12px;background:rgba(255,255,255,.2);border-radius:14px;padding:10px 12px;font-weight:800;font-size:.88rem">🌟 Tout est fait aujourd'hui, mâ châ' Allâh !</div>`}
+    <div style="margin-top:10px;display:grid;gap:6px">${L.map(x=>{ const pct=Math.round(x.pts/x.max*100), ok=pct>=100;
+      return `<button onclick="event.stopPropagation();scoreAller('${x.k}')" style="all:unset;box-sizing:border-box;display:grid;grid-template-columns:1.4em 7.6em 1fr auto 1em;align-items:center;gap:8px;width:100%;cursor:pointer;font-size:.84rem;font-weight:800">
+        <span>${SC_L[x.k][0]}</span><span>${SC_L[x.k][1]}</span>
+        <span style="height:8px;border-radius:99px;background:rgba(255,255,255,.22);overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:${ok?'#34d399':'#fde047'};border-radius:99px"></span></span>
+        <span class="tnum" style="text-align:right">${Math.round(x.pts)}/${Math.round(x.max)}${ok?' ✓':''}</span><span style="opacity:.7">›</span></button>`; }).join('')}</div>
+    ${bonus.length?`<div class="chips" style="margin-top:8px">${bonus.map(p=>`<span class="chip">${({jeune:'🍽️',istighfar:'📿',dhikr:'🤍'}[p.k]||'⭐')} ${p.l} +${p.pts}</span>`).join('')}</div>`:''}`;
+}
+function scoreAller(k){
+  const cible={prieres:['accueil',null],bonnes:['din','[onclick*="S.baOpen"]'],essentiels:['jour',"[onclick=\"deroul('ess')\"]"],sante:['jour',"[onclick=\"deroul('sante')\"]"],business:['jour',"[onclick=\"deroul('prio')\"]"],tabac:['jour',null]}[k]; if(!cible) return;
+  const [v,sel]=cible; const sel0=S.sel;
+  if(v!==S.view) go(v);
+  if(k==='bonnes') S.baOpen=true; if(k==='essentiels'){ S.ouv.ess=true; } if(k==='sante') S.ouv.sante=true; if(k==='business') S.ouv.prio=true;
+  render();
+  setTimeout(()=>{ const b=sel&&document.querySelector(sel); const el=b?(b.closest('.panel')||b):document.querySelector('#app .panel'); if(el){ el.scrollIntoView({behavior:'smooth',block:'start'}); el.style.outline='3px solid #facc15'; setTimeout(()=>el.style.outline='',2000); } },120);
+}
 function scoreColor(s){ return s>=80?'#10b981':s>=60?'#84cc16':s>=40?'#f59e0b':s>0?'#fb7185':'var(--card2)'; }
 
 /* =====================================================================
@@ -2253,7 +2277,7 @@ function vJour(){
         <div class="h-sub" style="font-size:.9rem;margin-top:4px">${sc.score>=80?'Journée excellente, mashaAllah 🌟':sc.score>=60?'Belle journée, continue':sc.score>=30?'On avance, un pas après l\'autre':'Chaque case cochée compte'}</div>
         <div class="h-sub">${streakTxt()}</div>${progCarte(true)}</div>
       </div>
-      <div class="chips">${sc.parts.map(p=>`<span class="chip">${p.bonus?({jeune:'🍽️',istighfar:'📿',dhikr:'🤍'}[p.k]||'⭐')+' '+p.l+' +'+p.pts:p.l+' '+p.pts+'/'+p.max}</span>`).join('')}</div>
+      ${baTest()?scoreLignes(sc):`<div class="chips">${sc.parts.map(p=>`<span class="chip">${p.bonus?({jeune:'🍽️',istighfar:'📿',dhikr:'🤍'}[p.k]||'⭐')+' '+p.l+' +'+p.pts:p.l+' '+p.pts+'/'+p.max}</span>`).join('')}</div>`}
       <div class="h-sub" style="margin-top:10px;font-size:.8rem;line-height:1.45;opacity:.95">Ton score t'aide à être régulier. Seul Allah connaît la valeur de tes actes : renouvelle ton intention 🤲</div>
     </div>`}
     ${accOk()?'':heroPriere()}
