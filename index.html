@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-212059'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-212327'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2214,12 +2214,14 @@ function essChoisir(slot,accueil){
   const libres=Object.keys(ESS_CAT).filter(k=>!L.includes(k));
   const perso=Object.keys(S.cfg.essPerso||{}).filter(k=>!L.includes(k));
   openSheet(`<h2 style="margin:0 0 4px">Case ${slot+1} · ${esc(essInfo(L[slot]).t)}</h2><div class="sub">Choisis ce qui la remplace, ou écris le tien.</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">${[...libres,...perso].map(k=>{ const c=essInfo(k); return `<button class="chip" style="cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)" onclick="essPoser(${slot},'${k}')">${esc(c.i||'✅')} ${esc(c.t)}</button>`; }).join('')}</div>
+    ${perso.length?`<label class="f" style="margin-top:12px">⭐ Mes essentiels perso</label><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${perso.map(k=>{ const c=essInfo(k); return `<span style="display:inline-flex;align-items:center;border:1.5px solid #c4b5fd;background:color-mix(in srgb,var(--violet) 8%,var(--card));border-radius:99px"><button class="chip" style="cursor:pointer;border:none;background:none;color:var(--ink)" onclick="essPoser(${slot},'${k}')">${esc(c.i||'⭐')} ${esc(c.t)}</button><button onclick="essPersoSuppr(${slot},'${k}')" aria-label="Supprimer" style="border:none;background:none;color:var(--muted);cursor:pointer;padding:0 10px 0 2px;font-weight:800">✕</button></span>`; }).join('')}</div><label class="f" style="margin-top:12px">Les essentiels NIYYA</label>`:''}
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">${libres.map(k=>{ const c=essInfo(k); return `<button class="chip" style="cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)" onclick="essPoser(${slot},'${k}')">${esc(c.i||'✅')} ${esc(c.t)}</button>`; }).join('')}</div>
     <label class="f" style="margin-top:14px">✍️ Mon propre essentiel</label>
     <div class="row"><input class="inp" id="essIn" maxlength="40" placeholder="Ex. Pas de sucre, appeler mes parents…" style="flex:1" onkeydown="if(event.key==='Enter')essPerso(${slot})"><button class="btn green" onclick="essPerso(${slot})">OK</button></div>
     <button class="btn mt" onclick="essChoisir()">‹ Retour</button>`);
 }
 function essPoser(slot,id){ const L=essTous(); L[slot]=id; S.cfg.ess=L; cfgTouch(); render(); essChoisir(); toast('✅ Essentiel mis à jour'); }
+function essPersoSuppr(slot,k){ if(!confirm('Supprimer « '+essInfo(k).t+' » de tes essentiels perso ?')) return; delete S.cfg.essPerso[k]; cfgTouch(); essChoisir(slot); }
 function essPerso(slot){
   const t=((document.getElementById('essIn')||{}).value||'').trim().slice(0,40); if(!t) return toast('Écris ton essentiel');
   const P=S.cfg.essPerso=S.cfg.essPerso||{}; let id=Object.keys(P).find(k=>P[k].t.toLowerCase()===t.toLowerCase());
