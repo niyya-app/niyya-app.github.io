@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261025-192742'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261025-193640'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2314,8 +2314,8 @@ function bonnesActionsCarte(){
         <div class="sub" style="margin-bottom:8px">${nb>=1?`✓ Score max atteint${nb>1?` · ${nb} actions, chacune en plus est un bonus 🌟`:' · chaque action en plus est un bonus'}`:'Une seule bonne action suffit pour le score max. Touche pour ouvrir la liste.'}</div>
         <div class="wbar"><div style="width:${nb>=1?100:0}%;background:linear-gradient(90deg,#10b981,#14b8a6)"></div></div>
       </button>
-      ${S.baOpen?`<div class="checks" style="margin-top:12px">${baJour(S.sel).map((id,i)=>{ const a=BA_POOL[id], h=a[1]>=0?HADITHS[a[1]]:null, src=h?`📜 « ${esc(h[0].length>110?h[0].slice(0,108)+'…':h[0])} » — ${esc(h[1])}`:`📖 « ${esc(a[3])} » — Coran, ${esc(SURATES[parseInt(a[4])-1][2])} ${esc(a[4])}`; return `<button class="ck ${d.ba[i]?'on':''}" onclick="ba(${i})" style="align-items:flex-start"><span class="box" style="margin-top:2px"></span><span>${esc(a[0])}<small style="display:block;font-weight:600;color:var(--muted);font-size:.72rem;margin-top:3px;line-height:1.35">${src}</small></span></button>`; }).join('')}
-        <p class="muted" style="font-size:.7rem;font-weight:600;margin-top:4px">9 nouvelles actions chaque jour, chacune appuyée par un verset du Coran (trad. Hamidullah) ou un hadith authentique vérifié (Bukhari / Muslim).</p>
+      ${S.baOpen?`<div class="checks" style="margin-top:12px">${baJour(S.sel).map((id,i)=>{ const a=BA_POOL[id], h=a[1]>=0?[HADITHS[a[1]][0],HADITHS[a[1]][1]]:a[1]===-2?[a[3],a[4]]:null, src=h?baSource(h[0],h[1]):`📖 « ${esc(a[3])} » — Coran, ${esc(SURATES[parseInt(a[4])-1][2])} ${esc(a[4])}`; return `<button class="ck ${d.ba[i]?'on':''}" onclick="ba(${i})" style="align-items:flex-start"><span class="box" style="margin-top:2px"></span><span>${esc(a[0])}<small style="display:block;font-weight:600;color:var(--muted);font-size:.72rem;margin-top:3px;line-height:1.35">${src}</small></span></button>`; }).join('')}
+        <p class="muted" style="font-size:.7rem;font-weight:600;margin-top:4px">${BA_PAR_JOUR()} nouvelles actions chaque jour, chacune appuyée par un verset du Coran (trad. Hamidullah) ou un hadith authentique vérifié (Bukhari / Muslim).</p>
         <div style="margin-top:14px;font-weight:800;font-size:.9rem">✍️ Mes bonnes actions</div>
         <div class="sub" style="margin:2px 0 8px">Ajoute tes propres bonnes actions : elles restent dans ta liste et tu pourras les cocher chaque jour.</div>
         ${(()=>{ const L=baPAffiche(d); return L.length?`<div class="checks">${L.map((t,k)=>{ const on=baPFait(d,t); return `<div class="prio"><button class="ck ${on?'on':''}" onclick="baPCoche(${k})" aria-label="Fait"><span class="box"></span></button><button onclick="baPCoche(${k})" style="all:unset;flex:1;font-weight:700;align-self:center;cursor:pointer">${esc(t)}</button><button class="btn sm" onclick="baPOubli(${k})" aria-label="Retirer de ma liste" title="Retirer de ma liste">✕</button></div>`; }).join('')}</div>`:''; })()}
@@ -2815,7 +2815,7 @@ function baPOubli(k){
   if(!confirm(`Retirer « ${t} » de ta liste ?\n(Les jours où tu l'as cochée restent comptés.)`)) return;
   S.cfg.baPersoListe=(S.cfg.baPersoListe||[]).filter(x=>bas(x)!==bas(t)); const d=J(); d.baPerso=(d.baPerso||[]).filter(x=>bas(x.t)!==bas(t)); cfgTouch(); touch(); render();
 }
-function ba(i){ const d=J(); if(!d.baIds) d.baIds=baJour(S.sel); d.ba[i]=!d.ba[i]; vib(); touch(); render(); if(d.ba[i]&&baNb(d)===9) toast('🌟 9/9 bonnes actions, qu\'Allah accepte'); }
+function ba(i){ const d=J(); if(!d.baIds) d.baIds=baJour(S.sel); d.ba[i]=!d.ba[i]; vib(); touch(); render(); if(d.ba[i]&&baNb(d)===BA_PAR_JOUR()) toast(`🌟 ${BA_PAR_JOUR()}/${BA_PAR_JOUR()} bonnes actions, qu'Allah accepte`); }
 function prioOk(i){ const d=J(); d.prio[i].ok=!d.prio[i].ok; vib(); touch(); render(); }
 function prioTxt(i,v){ J().prio[i].t=v; touch(); }
 // 🌙 Mouhâsaba du soir (examen de soi) : humeur · 3 bienfaits · intention pour demain, retrouvée le lendemain matin
@@ -3403,14 +3403,27 @@ function coranFait(){ const d=J(today()); d.coran=!d.coran; touch(today()); rend
 
 
 /* ---------- Bonnes actions du jour : 9 tirées de BA_POOL, toujours les mêmes pour une date donnée ---------- */
+const baTest=()=>S.email===ADMIN_EMAIL; // TEST : 3 actions par jour en rotation
+const BA_PAR_JOUR=()=>baTest()?3:9;
 function baJour(k){
   const d=S.jours[k];
-  if(d && Array.isArray(d.baIds) && d.baIds.length===9) return d.baIds;  // la liste vue ce jour-là reste figée
+  if(d && Array.isArray(d.baIds) && (d.baIds.length===9||d.baIds.length===3) && d.baIds.every(i=>BA_POOL[i])) return d.baIds;  // la liste vue ce jour-là reste figée
+  if(baTest()){ // rotation : un ordre fixe de toute la liste, 3 actions de plus chaque jour → une action ne revient qu'après N/3 jours
+    let seed=20261025; const ord=BA_POOL.map((_,i)=>i);
+    for(let i=ord.length-1;i>0;i--){ seed=(seed*1103515245+12345)>>>0; const j=seed%(i+1); [ord[i],ord[j]]=[ord[j],ord[i]]; }
+    const n=Math.round(dateOf(k)/864e5), N=ord.length, a=((n*3)%N+N)%N;
+    return [0,1,2].map(x=>ord[(a+x)%N]); }
   if(d && d.u && !d.baIds && d.ba && d.ba.some(Boolean)) return [26,5,24,11,9,15,33,34,14]; // anciennes journées : équivalents des 9 actions fixes d'origine
   let seed=0; for(const c of k) seed=(seed*31+c.charCodeAt(0))>>>0;
   const idx=BA_POOL.map((_,i)=>i);
   for(let i=idx.length-1;i>0;i--){ seed=(seed*1103515245+12345)>>>0; const j=seed%(i+1); [idx[i],idx[j]]=[idx[j],idx[i]]; }
   return idx.slice(0,9);
+}
+// source d'une bonne action : coupée proprement à la fin d'un mot, avec « Lire en entier » si elle est longue
+function baSource(t,ref){
+  if(t.length<=120) return `📜 « ${esc(t)} » — ${esc(ref)}`;
+  const c=t.slice(0,110).replace(/\s+\S*$/,'');
+  return `📜 « ${esc(c)}… » — ${esc(ref)}<details class="preuve" onclick="event.stopPropagation()" style="margin-top:4px"><summary style="font-size:.72rem">Lire en entier</summary><div class="pv-fr">« ${esc(t)} »</div></details>`;
 }
 function baCat(k,cat){ const d=S.jours[k]; if(!d||!d.ba) return 0; const ids=baJour(k); return ids.some((id,i)=>d.ba[i]&&BA_POOL[id][2]===cat)?1:0; }
 
