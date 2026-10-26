@@ -360,7 +360,7 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .sur-row small{font-size:.72rem;color:var(--muted);font-weight:600}
 .sur-ar{font-family:'Amiri Quran','Amiri',serif;font-size:1.35rem;direction:rtl}
 .qbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.ayah{padding:16px 6px;border-bottom:1px dashed var(--line);position:relative}
+.ayah{padding:16px 6px 16px 48px;border-bottom:1px dashed var(--line);position:relative;min-height:96px} /* place à gauche pour 🔖 et ▶ : ils ne cachent plus le texte arabe */
 .ayah .ar{font-family:'Amiri Quran','Amiri',serif;direction:rtl;text-align:right;line-height:2.4;font-size:calc(1.65rem*var(--qz,1))}
 .ayah .ar .fin{font-family:'Amiri',serif;color:var(--emerald);font-size:.85em;margin-right:4px}
 .ayah .tr{font-size:calc(.95rem*var(--qz,1));line-height:1.65;margin-top:6px}
@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261026-081259'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261026-102752'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2103,7 +2103,7 @@ async function versetPriere(k,corps){
     <p style="margin:12px 0 0;font-weight:700">C'est l'heure de la prière. Qu'Allah l'accepte. 🤲</p>
     <button class="btn pri mt" onclick="closeSheet()">Fermer</button>`);
 }
-function go(v){ if(v==='accueil') S.sel=today(); S.scoreOpen=false; S.ouv={}; S.plusEdit=false; if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
+function go(v){ if(v==='accueil') S.sel=today(); if(v==='coran') _qcAuMarque=false; S.scoreOpen=false; S.ouv={}; S.plusEdit=false; if(v!=='qibla') stopCompass(); compter(v); S.view=v; lsSet(LS.ui,{view:v}); render(); window.scrollTo({top:0}); }
 function setDay(k){ S.sel=k>today()?today():k; render(); }
 function shiftDay(n){ setDay(addDays(S.sel,n)); }
 
@@ -3343,6 +3343,7 @@ async function chargerSourate(n){
   return { ar, num:A.ayahs.map(a=>a.number), fr:F.ayahs.map(a=>a.text), page:A.ayahs.map(a=>a.page||null), juz:A.ayahs.map(a=>a.juz||null) };
 }
 function ouvrirSourate(n,verset){
+  _qcAuMarque=false;
   QC.n=n; QC.data=null; QC.err=null; QC.goto=verset||null; render(); window.scrollTo({top:0});
   chargerSourate(n).then(d=>{ if(QC.n!==n) return; QC.data=d; render();
     if(QC.goto){ const el=document.getElementById('ay'+QC.goto); if(el) setTimeout(()=>el.scrollIntoView({block:'center'}),60); QC.goto=null; } })
@@ -3395,6 +3396,8 @@ function qaMaj(){ const b=document.getElementById('qplayer'); if(!b) return;
   b.innerHTML=`<button onclick="qaSaut(-1)" aria-label="Verset précédent">⏮</button><button onclick="qaPause()" aria-label="Lecture ou pause">${QA.joue?'⏸':'▶️'}</button><button onclick="qaSaut(1)" aria-label="Verset suivant">⏭</button>
     <div class="qi" onclick="go('coran');if(QC.n!==QA.n)ouvrirSourate(QA.n,QA.i+1)">🎧 ${esc(SURATES[QA.n-1][2])}<small>${QA.bism?'Basmala':'Verset '+(QA.i+1)+' / '+QA.num.length} · Al-Afasy</small></div>
     <button onclick="qaStop()" aria-label="Arrêter">✕</button>`; }
+let _qcAuMarque=false;
+function allerMarque(){ const L=S.cfg.lecture; if(!L) return; _qcAuMarque=true; if(QC.n===L.s&&QC.data){ const el=document.getElementById('ay'+L.a); if(el) el.scrollIntoView({block:'center',behavior:'smooth'}); render(); } else { ouvrirSourate(L.s,L.a); _qcAuMarque=true; render(); } }
 function vCoran(){
   const L=S.cfg.lecture, z=S.cfg.qz||1, dT=J(today());
   if(!QC.n){
@@ -3414,7 +3417,7 @@ function vCoran(){
     </div>`;
   }
   const n=QC.n, s=SURATES[n-1], D=QC.data;
-  return `<div class="qbar"><button class="btn sm" onclick="QC.n=null;render();window.scrollTo({top:0})">← Sourates</button><span class="sp"></span>
+  return `<div class="qbar"><button class="btn sm" onclick="QC.n=null;render();window.scrollTo({top:0})">← Sourates</button><span class="sp"></span>${L&&!(QC.n===L.s&&D&&_qcAuMarque)?`<button class="btn sm" style="background:#fef3c7;color:#92400e;border-color:#fde68a" onclick="allerMarque()">🔖 Reprendre au marque-page</button>`:''}
       ${audioOk()&&QC.data?`<button class="btn sm green" onclick="ecouter(0)">🎧 Écouter</button>`:''}<button class="btn sm" onclick="taille(-.1)" aria-label="Texte plus petit">A−</button><button class="btn sm" onclick="taille(.1)" aria-label="Texte plus grand">A+</button></div>
     <div class="hero k-emerald" style="text-align:center">
       <div class="h-lbl">Sourate ${n} · ${s[4]==='M'?'mecquoise':'médinoise'} · ${s[3]} versets</div>
