@@ -67,10 +67,11 @@ function horaires(params: any, now: Date): { tz: string; t: number[]; jour: stri
     const c = new adhan.Coordinates(params.lat, params.lon);
     const pr = new adhan.CalculationParameters("Other", f, i);
     pr.madhab = adhan.Madhab.Shafi; pr.highLatitudeRule = adhan.HighLatitudeRule.recommended(c);
+    pr.rounding = adhan.Rounding.None; // arrondi prudent, comme l'appli : prière jamais en avance, lever du soleil jamais en retard
     if (params.methode === "umq") pr.ishaInterval = 90 + (estRamadan(now, tz) ? 30 : 0);
     const pt = new adhan.PrayerTimes(c, new Date(P.y, P.m - 1, P.d, 12), pr);
-    const mn = (x: Date) => partsTz(x, tz).min;
-    t = [mn(pt.fajr), mn(pt.sunrise), mn(pt.dhuhr), mn(pt.asr), mn(pt.maghrib), mn(pt.isha)];
+    const mn = (x: Date) => partsTz(x, tz).min, up = (x: Date) => partsTz(new Date(x.getTime() + 59999), tz).min;
+    t = [up(pt.fajr), mn(pt.sunrise), up(pt.dhuhr), up(pt.asr), up(pt.maghrib), up(pt.isha)];
   }
   // ajustements « ma mosquée » (minutes par prière) réglés dans l'appli
   if (params.ajust) for (const [k, , i] of PRIERES) { const d = Number(params.ajust[k]) || 0; if (d) t[i] = (t[i] + d + 1440) % 1440; }
