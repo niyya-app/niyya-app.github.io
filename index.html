@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261026-081031'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261026-081259'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2947,7 +2947,7 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
       ${m==='tasbih'?`<div class="row" style="justify-content:center;gap:6px">${DHIKRS.tasbih.etapes.map((x,j)=>`<span class="chip" style="${j===i?'background:#fff;color:#6d28d9':''}">${j<i?'✓ ':''}${esc(x[1])} ${x[3]}</span>`).join('')}</div><div class="h-sub" style="text-align:center;margin-top:10px;font-weight:800">${(()=>{ const c=dhikrCible(d); return c?`Tu fais le dhikr d'après ${PRAYERS.find(p=>p.k===c).n}`:'✓ Fait après les 5 prières aujourd\'hui'; })()}</div>
       <div class="row" style="justify-content:center;gap:5px;margin-top:6px;flex-wrap:wrap">${PRAYERS.map(p=>{ const fait=(o.apres||{})[p.k], cur=dhikrCible(d)===p.k; return `<button onclick="${fait?'':`S.dkPriere='${p.k}';render()`}" style="border:none;border-radius:12px;padding:6px 9px;font:inherit;font-size:.74rem;font-weight:800;cursor:${fait?'default':'pointer'};background:${fait?'#10b981':cur?'#fff':'rgba(255,255,255,.15)'};color:${fait?'#fff':cur?'#6d28d9':'#fff'};${cur?'box-shadow:0 0 0 2px #facc15':''}">${fait?'✓ ':''}${p.n}</button>`; }).join('')}</div>
       <div class="h-sub" style="text-align:center;font-size:.7rem;opacity:.8;margin-top:4px">Touche une prière pour la choisir.</div>`:''}
-      <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="annulerDhikr()">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(10)">+10</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(33)">+33</button></div>
+      <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="annulerDhikr()">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(10)">+10</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(33)">+33</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(34)">+34</button></div>
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 ${esc(D.r)} — ${esc(D.src)}</div>
     </div>`;
   return dkDabord?carteDk+'<div class="mt">'+carteIst+'</div>':carteIst+carteDk;
