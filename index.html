@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261026-102752'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261026-125523'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1939,7 +1939,7 @@ async function lireRecue(){
     if(!o) return;
     const cible=cibleDeTag(o.tag||''); if(!cible) return;
     if(!S.uid||!S.pret||!S.cfg.onb) return;
-    marquerRecue(o.t); diagNotif('notification reçue affichée : '+cible); S.diagClic=S.diagClic||'notif_auto'; // ouverte par l'appli elle-même, pas par un toucher : ne compte pas comme « ouverte » S.clicCorps=o.body||''; S.clicEssai=!!o.essai; ouvrir(cible);
+    marquerRecue(o.t); diagNotif('notification reçue affichée : '+cible); S.diagClic=S.diagClic||'notif_auto'; S.clicCorps=o.body||''; S.clicEssai=!!o.essai; ouvrir(cible); // 'notif_auto' : ouverte par l'appli elle-même, pas par un toucher → ne compte pas comme « ouverte »
   }catch(e){}
 }
 function bandeauRecue(o){ // l'appli est déjà à l'écran quand la notification arrive : petit bandeau à toucher
