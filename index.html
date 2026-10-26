@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261026-170901'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261026-171831'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2899,14 +2899,18 @@ const PTS_ISTIGHFAR=5, PTS_DHIKR=5; // points bonus dans le score du jour (ne p�
 const dk=d=>{ d.dk=d.dk||{}; return d.dk; };
 const dhikrFait=d=>{ const o=d.dk||{}; return (o.tasbihTours||0)>=1 || (o.sbh||0)>=100 || (o.tahlil||0)>=100; };
 function dhikrEtape(mode,n){ const E=DHIKRS[mode].etapes; let r=n; for(let i=0;i<E.length;i++){ if(r<E[i][3]) return [i,r]; r-=E[i][3]; } return [E.length-1,E[E.length-1][3]]; }
+// une prière dont l'heure n'est pas encore arrivée (aujourd'hui) ne peut pas recevoir son dhikr
+function dkDispo(k){ if(S.sel!==today()) return true; return timesOf(S.sel)[PRAYERS.find(p=>p.k===k).i]<=nowMin(); }
 function dhikrCible(d){
   const A=(d.dk&&d.dk.apres)||{};
-  if(S.dkPriere && !A[S.dkPriere]) return S.dkPriere;
-  if(S.sel===today()){ const t=timesOf(S.sel), m=nowMin(); const passees=PRAYERS.filter(p=>t[p.i]<=m).map(p=>p.k).reverse(); const k=passees.find(k=>!A[k]); if(k) return k; }
+  if(S.dkPriere && !A[S.dkPriere] && dkDispo(S.dkPriere)) return S.dkPriere;
+  if(S.sel===today()){ const t=timesOf(S.sel), m=nowMin(); const passees=PRAYERS.filter(p=>t[p.i]<=m).map(p=>p.k).reverse(); return passees.find(k=>!A[k])||null; }
   return (PRAYERS.find(p=>!A[p.k])||{}).k||null;
 }
+function dkProchaine(){ const t=timesOf(today()), m=nowMin(); return PRAYERS.find(p=>t[p.i]>m)||null; }
 function compterDhikr(n){
   n=n||1; const d=J(), o=dk(d), m=S.dhikrMode||'tasbih', avant=dhikrFait(d); let fete=null;
+  if(m==='tasbih' && !dhikrCible(d)){ const p=dkProchaine(); return toast(p?`🕐 Le dhikr d'après ${p.n} sera possible à ${hm(timesOf(today())[p.i])}`:'✓ Dhikr fait après toutes les prières aujourd\'hui',3500); }
   for(let x=0;x<n;x++){
     o[m]=(o[m]||0)+1;
     if(m==='tasbih' && o.tasbih>=100){ const c=dhikrCible(d); o.tasbih=0; o.apres=o.apres||{}; if(c) o.apres[c]=true; S.dkPriere=null; o.tasbihTours=Object.keys(o.apres).length||((o.tasbihTours||0)+1); fete=['Tasbîh terminé',c?`Après ${PRAYERS.find(p=>p.k===c).n} · ${o.tasbihTours}/5 aujourd'hui`:`${o.tasbihTours}/5 aujourd'hui`]; }
@@ -2947,8 +2951,8 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
       <button onclick="compterDhikr()" aria-label="Compter" style="position:relative;display:block;margin:12px 0 8px;width:100%;height:96px;border-radius:20px;border:none;background:#fff;color:#6d28d9;font-weight:900;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer;overflow:hidden;-webkit-user-select:none;user-select:none">
         <span style="position:absolute;left:0;top:0;bottom:0;width:${Math.min(100,r/E[3]*100)}%;background:linear-gradient(90deg,#c4b5fd,#a78bfa);transition:width .15s"></span>
         <span style="position:relative;font-size:2.2rem">${r}<small style="font-size:1rem;font-weight:800"> / ${E[3]}</small></span><small style="position:relative;display:block;font-size:.75rem;font-weight:700">touche pour compter</small></button>
-      ${m==='tasbih'?`<div class="row" style="justify-content:center;gap:6px">${DHIKRS.tasbih.etapes.map((x,j)=>`<span class="chip" style="${j===i?'background:#fff;color:#6d28d9':''}">${j<i?'✓ ':''}${esc(x[1])} ${x[3]}</span>`).join('')}</div><div class="h-sub" style="text-align:center;margin-top:10px;font-weight:800">${(()=>{ const c=dhikrCible(d); return c?`Tu fais le dhikr d'après ${PRAYERS.find(p=>p.k===c).n}`:'✓ Fait après les 5 prières aujourd\'hui'; })()}</div>
-      <div class="row" style="justify-content:center;gap:5px;margin-top:6px;flex-wrap:wrap">${PRAYERS.map(p=>{ const fait=(o.apres||{})[p.k], cur=dhikrCible(d)===p.k; return `<button onclick="${fait?'':`S.dkPriere='${p.k}';render()`}" style="border:none;border-radius:12px;padding:6px 9px;font:inherit;font-size:.74rem;font-weight:800;cursor:${fait?'default':'pointer'};background:${fait?'#10b981':cur?'#fff':'rgba(255,255,255,.15)'};color:${fait?'#fff':cur?'#6d28d9':'#fff'};${cur?'box-shadow:0 0 0 2px #facc15':''}">${fait?'✓ ':''}${p.n}</button>`; }).join('')}</div>
+      ${m==='tasbih'?`<div class="row" style="justify-content:center;gap:6px">${DHIKRS.tasbih.etapes.map((x,j)=>`<span class="chip" style="${j===i?'background:#fff;color:#6d28d9':''}">${j<i?'✓ ':''}${esc(x[1])} ${x[3]}</span>`).join('')}</div><div class="h-sub" style="text-align:center;margin-top:10px;font-weight:800">${(()=>{ const c=dhikrCible(d); const A=(d.dk&&d.dk.apres)||{}, pr=S.sel===today()?dkProchaine():null; return c?`Tu fais le dhikr d'après ${PRAYERS.find(p=>p.k===c).n}`:PRAYERS.every(p=>A[p.k])?'✓ Fait après les 5 prières aujourd\'hui':pr?`✓ À jour · prochain dhikr après ${pr.n} (${hm(timesOf(today())[pr.i])})`:'✓ À jour'; })()}</div>
+      <div class="row" style="justify-content:center;gap:5px;margin-top:6px;flex-wrap:wrap">${PRAYERS.map(p=>{ const fait=(o.apres||{})[p.k], cur=dhikrCible(d)===p.k, lock=!fait&&!dkDispo(p.k); return `<button onclick="${fait?'':lock?`toast('🕐 Possible après l\\'adhan de ${p.n} (${hm(timesOf(S.sel)[p.i])})')`:`S.dkPriere='${p.k}';render()`}" style="border:none;border-radius:12px;padding:6px 9px;font:inherit;font-size:.74rem;font-weight:800;cursor:${fait?'default':'pointer'};background:${fait?'#10b981':cur?'#fff':'rgba(255,255,255,.15)'};color:${fait?'#fff':cur?'#6d28d9':'#fff'};${lock?'opacity:.45;':''}${cur?'box-shadow:0 0 0 2px #facc15':''}">${fait?'✓ ':lock?'🔒 ':''}${p.n}</button>`; }).join('')}</div>
       <div class="h-sub" style="text-align:center;font-size:.7rem;opacity:.8;margin-top:4px">Touche une prière pour la choisir.</div>`:''}
       <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="annulerDhikr()">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(10)">+10</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(33)">+33</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(34)">+34</button></div>
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 ${esc(D.r)} — ${esc(D.src)}</div>
