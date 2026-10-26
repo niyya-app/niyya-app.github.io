@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261026-130513'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261026-163541'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1770,8 +1770,8 @@ function scoreLignes(sc){
   const L=Object.values(P).filter(x=>x.max>0), bonus=sc.parts.filter(p=>p.bonus);
   const nbE=essNb(), PAS={prieres:`Une prière à l'heure = +${Math.round(((P.prieres||{}).max||0)/5)} points`,bonnes:`Une bonne action = +${Math.round((P.bonnes||{}).max||0)} points`,essentiels:`Un essentiel = +${Math.round(((P.essentiels||{}).max||0)/nbE)} points`,sante:'Un fruit ou un verre d\'eau = +1 point',business:'Fixe et coche tes 3 priorités'};
   const pas1=x=>({prieres:x.max/5,bonnes:x.pts<0.5?x.max:0,essentiels:x.max/nbE,sante:1,business:x.max/3})[x.k]||0; // ce que rapporte UN geste
-  const pas=L.filter(x=>PAS[x.k]&&x.max-x.pts>0.5&&pas1(x)>0).sort((a,b)=>pas1(b)-pas1(a))[0];
-  return `${pas?`<button onclick="event.stopPropagation();scoreAller('${pas.k}')" style="all:unset;box-sizing:border-box;display:block;width:100%;cursor:pointer;margin-top:12px;background:rgba(255,255,255,.95);color:#4c1d95;border-radius:14px;padding:10px 12px;font-weight:800;font-size:.88rem">👉 Ton prochain pas : ${PAS[pas.k]} <span style="float:right">›</span></button>`:`<div style="margin-top:12px;background:rgba(255,255,255,.2);border-radius:14px;padding:10px 12px;font-weight:800;font-size:.88rem">🌟 Tout est fait aujourd'hui, mâ châ' Allâh !</div>`}
+  const pasL=L.filter(x=>PAS[x.k]&&x.max-x.pts>0.5&&pas1(x)>0).sort((a,b)=>pas1(b)-pas1(a)), pas=pasL.length?pasL[(S.pasIdx||0)%pasL.length]:null; // « Autre » fait défiler les suggestions
+  return `${pas?`<div style="display:flex;gap:6px;margin-top:12px"><button onclick="event.stopPropagation();scoreAller('${pas.k}')" style="all:unset;box-sizing:border-box;flex:1;cursor:pointer;background:rgba(255,255,255,.95);color:#4c1d95;border-radius:14px;padding:10px 12px;font-weight:800;font-size:.88rem">👉 Ton prochain pas : ${PAS[pas.k]} <span style="float:right">›</span></button>${pasL.length>1?`<button onclick="event.stopPropagation();S.pasIdx=(S.pasIdx||0)+1;render()" aria-label="Autre suggestion" style="all:unset;box-sizing:border-box;cursor:pointer;background:rgba(255,255,255,.22);color:#fff;border-radius:14px;padding:10px 12px;font-weight:800;font-size:.82rem;white-space:nowrap">Autre ↻</button>`:''}</div>`:`<div style="margin-top:12px;background:rgba(255,255,255,.2);border-radius:14px;padding:10px 12px;font-weight:800;font-size:.88rem">🌟 Tout est fait aujourd'hui, mâ châ' Allâh !</div>`}
     <div style="margin-top:10px;display:grid;gap:6px">${L.map(x=>{ const pct=Math.round(x.pts/x.max*100), ok=pct>=100;
       return `<button onclick="event.stopPropagation();scoreAller('${x.k}')" style="all:unset;box-sizing:border-box;display:grid;grid-template-columns:1.4em 7.6em 1fr auto 1em;align-items:center;gap:8px;width:100%;cursor:pointer;font-size:.84rem;font-weight:800">
         <span>${SC_L[x.k][0]}</span><span>${SC_L[x.k][1]}</span>
