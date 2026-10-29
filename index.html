@@ -396,6 +396,7 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .lune-bg .t b.ar{font-family:'Amiri',serif;font-size:clamp(3.4rem,17vw,6.5rem);line-height:1.3}
 .lune-bg .t i{display:block;font-style:normal;font-size:clamp(1.6rem,7vw,2.4rem);font-weight:900;color:#a16207;margin-top:2px}
 .lune-bg .t small{display:block;margin-top:10px;font-size:1.15rem;font-weight:800;color:#854d0e}
+@keyframes vEntre{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}.vEntre{animation:vEntre .24s ease-out}
 @keyframes lfond{0%{opacity:0}8%{opacity:1}85%{opacity:1}100%{opacity:0}}
 @keyframes llune{0%{opacity:0;transform:scale(.3) rotate(-25deg)}15%{opacity:1;transform:scale(1.1) rotate(0)}25%{transform:scale(1)}38%{opacity:1;transform:scale(1)}48%{opacity:0;transform:scale(1.4)}100%{opacity:0}}
 @keyframes ltexte{0%,40%{opacity:0;transform:scale(.6)}52%{opacity:1;transform:scale(1.08)}60%{transform:scale(1)}88%{opacity:1}100%{opacity:0}}
@@ -463,7 +464,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261029-222836'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-001204'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1794,6 +1795,21 @@ function scoreColor(s){ return s>=80?'#10b981':s>=60?'#84cc16':s>=40?'#f59e0b':s
    ===================================================================== */
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const app=document.getElementById('app');
+// ✨ Animations douces (TEST compte admin) : fondu entre les onglets + barres qui se remplissent en glissant
+(function(){
+  const base=render; let vueAvant=null;
+  const barres=()=>[...app.querySelectorAll('[style*="width:"]')].filter(e=>/width:\s*[\d.]+%/.test(e.getAttribute('style')||''));
+  render=function(){
+    if(S.email!==ADMIN_EMAIL||!S.pret) return base.apply(this,arguments);
+    const memeVue=vueAvant===S.view+'|'+S.sel, avant=memeVue?barres().map(e=>e.style.width):null;
+    base.apply(this,arguments);
+    const cle=S.view+'|'+S.sel;
+    if(!memeVue&&vueAvant!==null&&vueAvant.split('|')[0]!==S.view){ app.classList.remove('vEntre'); void app.offsetWidth; app.classList.add('vEntre'); }
+    vueAvant=cle;
+    if(avant){ const B=barres(); if(B.length===avant.length) B.forEach((e,i)=>{ const n=e.style.width; if(avant[i]&&avant[i]!==n){ e.style.transition='none'; e.style.width=avant[i]; void e.offsetWidth; e.style.transition='width .55s cubic-bezier(.22,1,.36,1)'; e.style.width=n; } }); }
+  };
+})();
+
 const VIEWS=[['jour','🏠','Aujourd\'hui'],['din','🕌','Dîn'],['coran','📖','Coran'],['qibla','🧭','Qibla'],['tabac','🚭','Tabac'],['citadelle','🛡️','Citadelle'],['don','💚','Don']];
 
 function render(){
