@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261029-221438'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261029-221746'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2825,7 +2825,12 @@ function vReglages(){
    Actions
    ===================================================================== */
 function toast(msg,ms){ const t=document.getElementById('toast'); t.innerHTML=msg; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),ms||2200); }
-function vib(){ try{ navigator.vibrate&&navigator.vibrate(12); }catch(e){} }
+function vib(){ // petite vibration quand on coche (prière, essentiel…)
+  try{ if(NATIF&&window.Capacitor&&Capacitor.registerPlugin){ (S._hap=S._hap||Capacitor.registerPlugin('Haptics')).impact({style:'LIGHT'}).catch(()=>{}); return; } }catch(e){}
+  try{ if(navigator.vibrate){ navigator.vibrate(15); return; } }catch(e){}
+  // iPhone (Safari / appli web) : pas de navigator.vibrate ; un interrupteur caché déclenche le retour haptique d'iOS 18+ — TEST compte admin
+  try{ if(S.email!==ADMIN_EMAIL) return; let l=document.getElementById('hapL'); if(!l){ l=document.createElement('label'); l.id='hapL'; l.style.cssText='position:fixed;left:-99px;top:0;width:1px;height:1px;overflow:hidden;opacity:0'; l.innerHTML='<input type="checkbox" switch tabindex="-1" aria-hidden="true">'; document.body.appendChild(l); } l.click(); }catch(e){}
+}
 function toggle(k){
   const d=J(); d[k]=!d[k]; if(k==='sport'&&d.sport) d.repos=false; vib(); touch(); render();
   if(d[k]) toast({sport:'💪 Séance validée !',coran:'📖 BarakAllahu fik',lecture:'📚 +20 min pour ton cerveau',famille:'❤️ Le meilleur investissement',adhM:'☀️ Protégé pour la journée',adhS:'🌙 Protégé pour la nuit',sunnahOk:'✨ Sunnah accomplie · comptée dans tes bonnes actions',repos:'😴 Repos noté',jeuneNafl:'🍽️ Qu\'Allah accepte ton jeûne · +10 points',aime:'🤍 Qu\'Allah t\'aime et t\'accepte'}[k]||'✓');
