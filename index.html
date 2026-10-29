@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261029-164843'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261029-221438'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2102,6 +2102,7 @@ async function versetPriere(k,corps,jour){
     <div class="sub">${jour!==today()?'Envoyé avec l\'adhan du '+esc(fmtLong(jour)):futur?'Il sera envoyé avec l\'adhan de '+hm(timesOf(jour)[PRAYERS.find(p=>p.k===k).i]):'Envoyé avec l\'adhan d\'aujourd\'hui'} · traduction Hamidullah</div>
     <div class="quote k-emerald" style="margin-top:12px"><p style="font-size:1.05rem;line-height:1.55">« ${esc(v[0])} »</p><div class="src">${esc(v[1])}</div></div>
     ${/(\d+):(\d+)(?:-(\d+))?\s*$/.test(v[1])?`<div id="vAr"><button class="btn mt" style="width:100%" onclick="versetArabe(${JSON.stringify(v[1]).replace(/"/g,'&quot;')})">عربي · Lire le verset en arabe</button></div>`:''}
+    ${partOk()?`<button class="btn mt" style="width:100%" onclick='partager(${JSON.stringify({type:'verset',tag:'Verset de '+nom,fr:'« '+v[0]+' »',src:v[1]}).replace(/'/g,'&#39;')})'>📤 Partager ce verset en image</button>`:''}
     <p style="margin:12px 0 0;font-weight:700">${futur?'Prépare ton cœur pour cette prière. 🤲':'Qu\'Allah accepte ta prière. 🤲'}</p>
     <button class="btn pri mt" onclick="closeSheet()">Fermer</button>`);
 }
@@ -2384,6 +2385,47 @@ function aimeSunnahCartes(){
   return deuxDeroul;
 }
 // 📜💡 Hadith du jour + phrase du jour (accueil, ou Aujourd'hui)
+// 📤 Partager en image (format story 1080×1920) : verset, hadith, Nom du jour, phrase mindset — TEST compte admin
+const partOk=()=>S.email===ADMIN_EMAIL;
+const PART_FONDS={verset:['#064e3b','#047857','#0d9488'],hadith:['#065f46','#059669','#10b981'],nom:['#581c87','#a21caf','#db2777'],mind:['#312e81','#6d28d9','#c026d3']};
+function partLignes(ctx,txt,maxW){ const mots=String(txt).split(/\s+/), L=[]; let l=''; mots.forEach(w=>{ const t=l?l+' '+w:w; if(ctx.measureText(t).width>maxW&&l){ L.push(l); l=w; } else l=t; }); if(l) L.push(l); return L; }
+function partBloc(ctx,txt,police,taille,min,maxW,maxH,ecart){ // réduit la police jusqu'à ce que le texte tienne
+  let t=taille, L; for(;;){ ctx.font=police.replace('$',t); L=partLignes(ctx,txt,maxW); if(L.length*t*ecart<=maxH||t<=min) break; t-=4; } return {L,t,h:L.length*t*ecart};
+}
+async function partImage(o){ // o : {type, tag, ar, fr, src}
+  try{ await Promise.all(['700 60px Amiri','60px "Amiri Quran"','800 60px "Plus Jakarta Sans"','600 40px "Plus Jakarta Sans"'].map(f=>document.fonts.load(f))); }catch(e){}
+  const W=1080, H=1920, c=document.createElement('canvas'); c.width=W; c.height=H; const x=c.getContext('2d');
+  const F=PART_FONDS[o.type]||PART_FONDS.verset, g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,F[0]); g.addColorStop(.55,F[1]); g.addColorStop(1,F[2]); x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.globalAlpha=.07; x.fillStyle='#fff'; x.beginPath(); x.arc(W*.85,H*.12,330,0,7); x.fill(); x.beginPath(); x.arc(W*.1,H*.9,420,0,7); x.fill(); x.globalAlpha=1;
+  x.textAlign='center'; x.fillStyle='#fff';
+  x.font='800 40px "Plus Jakarta Sans",sans-serif'; x.globalAlpha=.85; x.fillText(o.tag.toUpperCase(),W/2,230); x.globalAlpha=1;
+  const maxW=W-180; let ar=null, fr=null, tot=0;
+  if(o.ar){ x.direction='rtl'; ar=partBloc(x,o.ar,(o.type==='verset'?'$px "Amiri Quran",Amiri,serif':'700 $px Amiri,serif'),o.type==='nom'?150:72,40,maxW,o.type==='nom'?260:620,o.type==='nom'?1.3:1.75); x.direction='ltr'; tot+=ar.h+60; }
+  fr=partBloc(x,o.fr,'700 $px "Plus Jakarta Sans",sans-serif',o.type==='nom'?64:56,30,maxW,o.ar?640:1000,1.45); tot+=fr.h;
+  let y=Math.max(330,(H-tot)/2-40);
+  if(ar){ x.direction='rtl'; x.font=(o.type==='verset'?ar.t+'px "Amiri Quran",Amiri,serif':'700 '+ar.t+'px Amiri,serif'); ar.L.forEach(l=>{ y+=ar.t*(o.type==='nom'?1.3:1.75); x.fillText(l,W/2,y-ar.t*.45); }); x.direction='ltr'; y+=60;
+    x.globalAlpha=.35; x.fillRect(W/2-60,y-30,120,4); x.globalAlpha=1; }
+  x.font='700 '+fr.t+'px "Plus Jakarta Sans",sans-serif'; fr.L.forEach(l=>{ y+=fr.t*1.45; x.fillText(l,W/2,y-fr.t*.35); });
+  if(o.src){ y+=70; x.globalAlpha=.85; const s=partBloc(x,o.src,'600 $px "Plus Jakarta Sans",sans-serif',36,26,maxW,140,1.4); s.L.forEach(l=>{ x.fillText(l,W/2,y); y+=s.t*1.4; }); x.globalAlpha=1; }
+  // signature NIYYA en bas
+  try{ const im=new Image(); im.src='niyya-logo-180.png'; await im.decode(); x.save(); x.beginPath(); x.roundRect(W/2-150,H-250,90,90,22); x.clip(); x.drawImage(im,W/2-150,H-250,90,90); x.restore(); }catch(e){}
+  x.textAlign='left'; x.font='800 46px "Plus Jakarta Sans",sans-serif'; x.fillText('NIYYA',W/2-40,H-196); x.globalAlpha=.8; x.font='600 28px "Plus Jakarta Sans",sans-serif'; x.fillText('niyya-app.github.io',W/2-40,H-158); x.globalAlpha=1;
+  return c;
+}
+async function partager(o){
+  toast('Création de l\'image…');
+  if(o.type==='verset'&&!o.ar){ const m=/(\d+):(\d+)(?:-(\d+))?\s*$/.exec(o.src||''); if(m){ try{ const d=await chargerSourate(+m[1]); const L=[]; for(let i=+m[2];i<=+(m[3]||m[2]);i++) if(d.ar[i-1]) L.push(d.ar[i-1]); o.ar=L.join(' '); }catch(e){} } }
+  const c=await partImage(o), url=c.toDataURL('image/png');
+  const blob=await new Promise(r=>c.toBlob(r,'image/png')), f=new File([blob],'niyya.png',{type:'image/png'});
+  S._partFichier=f;
+  const peut=!!(navigator.canShare&&navigator.canShare({files:[f]}));
+  openSheet(`<h2 style="margin:0 0 4px">📤 Partager</h2><div class="sub">Image prête pour ta story Instagram, WhatsApp ou Snapchat.</div>
+    <img src="${url}" alt="Aperçu" style="display:block;width:62%;margin:12px auto;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.25)">
+    ${peut?'<button class="btn pri" style="width:100%" onclick="partEnvoyer()">📤 Partager l\'image</button>':`<a class="btn pri" style="width:100%;display:block;text-align:center;text-decoration:none" href="${url}" download="niyya.png">⬇️ Enregistrer l'image</a><div class="sub" style="text-align:center;margin-top:6px">Ou appuie longtemps sur l'image pour l'enregistrer.</div>`}
+    <button class="btn mt" style="width:100%" onclick="closeSheet()">Fermer</button>`);
+}
+async function partEnvoyer(){ try{ await navigator.share({files:[S._partFichier],text:'Via NIYYA 🤲 https://niyya-app.github.io'}); compter('partage'); }catch(e){ if(e&&e.name!=='AbortError') toast('Partage impossible ici : appuie longtemps sur l\'image pour l\'enregistrer'); } }
+const partBtn=(js,clair)=>partOk()?`<button class="chip" style="border:none;cursor:pointer;margin-top:8px;${clair?'background:#fff;color:#047857':'color:#fff'}" onclick="${js}">📤 Partager</button>`:'';
 function hadMindCartes(q){ // q : 'h' hadith seul, 'm' phrase seule, sinon les deux
   const di=dayOfYear(S.sel), hi=S.hadIdx??(di%HADITHS.length), h=HADITHS[hi];
   const mi=S.mindIdx??mindDuMoment(S.sel), m=MINDSET[mi], b=BOOKS[m[0]];
@@ -2393,12 +2435,13 @@ function hadMindCartes(q){ // q : 'h' hadith seul, 'm' phrase seule, sinon les d
       ${hadithPreuve(hi)}
       ${h[3]&&S.hadAr?`<div class="ar" style="margin-top:10px">${esc(h[3])}</div>`:''}
       <div class="src" style="flex-wrap:wrap">D'après ${esc(h[2])} · ${esc(h[1])}<button onclick="nextHadith()">Un autre ↻</button></div>
-      ${h[3]?`<button class="chip" style="border:none;color:#fff;cursor:pointer;margin-top:8px" onclick="S.hadAr=!S.hadAr;render()">${S.hadAr?'Masquer':'Voir'} le texte arabe</button>`:''}
+      ${h[3]?`<button class="chip" style="border:none;color:#fff;cursor:pointer;margin-top:8px" onclick="S.hadAr=!S.hadAr;render()">${S.hadAr?'Masquer':'Voir'} le texte arabe</button>`:''}${partBtn(`partager({type:'hadith',tag:'Hadith du jour',ar:HADITHS[${hi}][3]||'',fr:'« '+HADITHS[${hi}][0]+' »',src:HADITHS[${hi}][1]})`)}
       <div style="font-size:.66rem;opacity:.8;margin-top:8px">Sens en français proposé par NIYYA, vérifié sur le texte arabe.${h[4]?' Thème inspiré des chapitres de Riyad as-Salihin (imam An-Nawawi).':''} Référence pour retrouver le hadith : sunnah.com ou ton recueil.</div>
     </div>`, mc=S.cfg.mindCouleur||b.c, M=`<div class="quote ${mc}" id="cMindset">
       <span class="q-tag">💡 Mindset ${S.sel===today()&&new Date().getHours()>=14?'de l\'après-midi':'du matin'}</span>
       <p>${esc(m[1])}</p>
       <div class="src">D'après ${b.a?esc(b.t):'« '+esc(b.t)+' »'}<button onclick="nextMind()">Une autre ↻</button></div>
+      ${partBtn(`partager({type:'mind',tag:'Mindset du jour',fr:MINDSET[${mi}][1],src:'D’après '+BOOKS[MINDSET[${mi}][0]].t})`)}
       <div class="hpal-bas"><button class="hpal-btn" onclick="S.palMind=!S.palMind;render()">🎨 ${S.palMind?'Fermer':'Couleur'}</button></div>
       ${S.palMind?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===mc?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurMind('${k}')"></button>`).join('')}</div>`:''}
     </div>`;
@@ -2493,6 +2536,7 @@ ${accOk()?'':prieresDetail()}
         <div class="row" style="justify-content:center;margin-top:12px;flex-wrap:wrap">
           <button class="chip" style="border:none;color:#fff;cursor:pointer;padding:7px 12px" onclick="S.nomI=((S.nomI??(dayOfYear(S.sel)%99))+1)%99;render()">Un autre ↻</button>
           <button class="chip" style="border:none;background:#fff;color:#7c3aed;cursor:pointer;padding:7px 12px" onclick="go('noms')">📿 Voir les 99 noms</button>
+          ${partOk()?`<button class="chip" style="border:none;color:#fff;cursor:pointer;padding:7px 12px" onclick="partager({type:'nom',tag:'Nom du jour · ${i+1}/99',ar:NOMS[${i}][0],fr:NOMS[${i}][1]+' — '+NOMS[${i}][2]})">📤 Partager</button>`:''}
         </div>
       </div>`; })()}
       ${naflPanel()}
