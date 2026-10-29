@@ -463,7 +463,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261029-222326'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261029-222610'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2387,39 +2387,58 @@ function aimeSunnahCartes(){
 // 📜💡 Hadith du jour + phrase du jour (accueil, ou Aujourd'hui)
 // 📤 Partager en image (format story 1080×1920) : verset, hadith, Nom du jour, phrase mindset — TEST compte admin
 const partOk=()=>S.email===ADMIN_EMAIL;
-const PART_FONDS={verset:['#064e3b','#047857','#0d9488'],hadith:['#065f46','#059669','#10b981'],nom:['#581c87','#a21caf','#db2777'],mind:['#312e81','#6d28d9','#c026d3']};
 function partLignes(ctx,txt,maxW){ const mots=String(txt).split(/\s+/), L=[]; let l=''; mots.forEach(w=>{ const t=l?l+' '+w:w; if(ctx.measureText(t).width>maxW&&l){ L.push(l); l=w; } else l=t; }); if(l) L.push(l); return L; }
 function partBloc(ctx,txt,police,taille,min,maxW,maxH,ecart){ // réduit la police jusqu'à ce que le texte tienne
   let t=taille, L; for(;;){ ctx.font=police.replace('$',t); L=partLignes(ctx,txt,maxW); if(L.length*t*ecart<=maxH||t<=min) break; t-=4; } return {L,t,h:L.length*t*ecart};
 }
-async function partImage(o){ // o : {type, tag, ar, fr, src}
+const PART_STYLES={
+  nuit:{bg:['#070b1a','#0f1a3a','#132650'],txt:'#ffffff',acc:'#e9c46a',sub:'rgba(255,255,255,.72)',motif:'rgba(233,196,106,.07)',lune:true},
+  creme:{bg:['#fbf6ec','#f5ecd9','#efe2c6'],txt:'#1f2d24',acc:'#9a7b2f',sub:'rgba(31,45,36,.65)',motif:'rgba(154,123,47,.09)',cadre:true},
+  emeraude:{bg:['#022c22','#064e3b','#065f46'],txt:'#ffffff',acc:'#d4b26a',sub:'rgba(255,255,255,.72)',motif:'rgba(212,178,106,.08)',cadre:true}
+};
+function partMotif(x,W,H,coul){ // étoiles à 8 branches (motif géométrique islamique), très discrètes
+  x.save(); x.strokeStyle=coul; x.lineWidth=2; const p=120;
+  for(let yy=-p;yy<H+p;yy+=p) for(let xx=-p;xx<W+p;xx+=p){ const cx=xx+((yy/p)%2?p/2:0), cy=yy, r=34;
+    for(const a of [0,Math.PI/4]){ x.beginPath(); for(let k=0;k<4;k++){ const t=a+k*Math.PI/2; const px=cx+r*Math.cos(t), py=cy+r*Math.sin(t); k?x.lineTo(px,py):x.moveTo(px,py);} x.closePath(); x.stroke(); } }
+  x.restore();
+}
+async function partImage(o){ // o : {type, tag, ar, fr, src, style}
   try{ await Promise.all(['700 60px Amiri','60px "Amiri Quran"','800 60px "Plus Jakarta Sans"','600 40px "Plus Jakarta Sans"'].map(f=>document.fonts.load(f))); }catch(e){}
+  const St=PART_STYLES[o.style||S.cfg.partStyle||'nuit']||PART_STYLES.nuit;
   const W=1080, H=1920, c=document.createElement('canvas'); c.width=W; c.height=H; const x=c.getContext('2d');
-  const F=PART_FONDS[o.type]||PART_FONDS.verset, g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,F[0]); g.addColorStop(.55,F[1]); g.addColorStop(1,F[2]); x.fillStyle=g; x.fillRect(0,0,W,H);
-  x.globalAlpha=.07; x.fillStyle='#fff'; x.beginPath(); x.arc(W*.85,H*.12,330,0,7); x.fill(); x.beginPath(); x.arc(W*.1,H*.9,420,0,7); x.fill(); x.globalAlpha=1;
-  x.textAlign='center'; x.fillStyle='#fff';
-  x.font='800 40px "Plus Jakarta Sans",sans-serif'; x.globalAlpha=.85; x.fillText(o.tag.toUpperCase(),W/2,230); x.globalAlpha=1;
-  const maxW=W-180; let ar=null, fr=null, tot=0;
-  if(o.ar){ x.direction='rtl'; ar=partBloc(x,o.ar,(o.type==='verset'?'$px "Amiri Quran",Amiri,serif':'700 $px Amiri,serif'),o.type==='nom'?150:72,40,maxW,o.type==='nom'?260:620,o.type==='nom'?1.3:1.75); x.direction='ltr'; tot+=ar.h+60; }
-  fr=partBloc(x,o.fr,'700 $px "Plus Jakarta Sans",sans-serif',o.type==='nom'?64:56,30,maxW,o.ar?640:1000,1.45); tot+=fr.h;
-  let y=Math.max(330,(H-tot)/2-40);
-  if(ar){ x.direction='rtl'; x.font=(o.type==='verset'?ar.t+'px "Amiri Quran",Amiri,serif':'700 '+ar.t+'px Amiri,serif'); ar.L.forEach(l=>{ y+=ar.t*(o.type==='nom'?1.3:1.75); x.fillText(l,W/2,y-ar.t*.45); }); x.direction='ltr'; y+=60;
-    x.globalAlpha=.35; x.fillRect(W/2-60,y-30,120,4); x.globalAlpha=1; }
+  const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,St.bg[0]); g.addColorStop(.5,St.bg[1]); g.addColorStop(1,St.bg[2]); x.fillStyle=g; x.fillRect(0,0,W,H);
+  partMotif(x,W,H,St.motif);
+  const vg=x.createRadialGradient(W/2,H/2,200,W/2,H/2,1100); vg.addColorStop(0,St.bg[1]); vg.addColorStop(.55,St.bg[1]+'00'); vg.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=vg; x.fillRect(0,0,W,H); // centre plus calme pour le texte
+  if(St.lune){ x.save(); x.fillStyle=St.acc; x.globalAlpha=.9; x.beginPath(); x.arc(W/2,170,46,0,7); x.fill(); x.globalAlpha=1; x.fillStyle=g; x.beginPath(); x.arc(W/2+22,156,42,0,7); x.fill(); x.restore();
+    x.fillStyle=St.acc; [[180,300,3],[880,260,4],[960,520,2.5],[130,640,2.5],[820,1500,3],[220,1380,2]].forEach(([a,b,r])=>{ x.globalAlpha=.6; x.beginPath(); x.arc(a,b,r,0,7); x.fill(); }); x.globalAlpha=1; }
+  if(St.cadre){ x.strokeStyle=St.acc; x.globalAlpha=.55; x.lineWidth=3; x.strokeRect(54,54,W-108,H-108); x.lineWidth=1.5; x.strokeRect(70,70,W-140,H-140); x.globalAlpha=1; }
+  x.textAlign='center';
+  x.font='800 34px "Plus Jakarta Sans",sans-serif'; x.fillStyle=St.acc; if('letterSpacing' in x) x.letterSpacing='6px'; x.fillText(o.tag.toUpperCase(),W/2,St.lune?300:250); if('letterSpacing' in x) x.letterSpacing='0px';
+  x.fillStyle=St.txt;
+  const maxW=W-200; let ar=null, fr=null, tot=0;
+  if(o.ar){ x.direction='rtl'; ar=partBloc(x,o.ar,(o.type==='verset'?'$px "Amiri Quran",Amiri,serif':'700 $px Amiri,serif'),o.type==='nom'?150:72,40,maxW,o.type==='nom'?260:620,o.type==='nom'?1.3:1.75); x.direction='ltr'; tot+=ar.h+80; }
+  fr=partBloc(x,o.fr,'700 $px "Plus Jakarta Sans",sans-serif',o.type==='nom'?64:58,30,maxW,o.ar?640:1000,1.45); tot+=fr.h;
+  let y=Math.max(360,(H-tot)/2-40);
+  if(ar){ x.direction='rtl'; x.font=(o.type==='verset'?ar.t+'px "Amiri Quran",Amiri,serif':'700 '+ar.t+'px Amiri,serif'); ar.L.forEach(l=>{ y+=ar.t*(o.type==='nom'?1.3:1.75); x.fillText(l,W/2,y-ar.t*.45); }); x.direction='ltr'; y+=80;
+    x.fillStyle=St.acc; x.save(); x.translate(W/2,y-42); x.rotate(Math.PI/4); x.fillRect(-9,-9,18,18); x.restore(); x.fillRect(W/2-120,y-43,90,2); x.fillRect(W/2+30,y-43,90,2); x.fillStyle=St.txt; }
+  else { x.fillStyle=St.acc; x.font='700 150px Amiri,serif'; x.globalAlpha=.5; x.fillText('“',W/2,y+40); x.globalAlpha=1; x.fillStyle=St.txt; y+=60; }
   x.font='700 '+fr.t+'px "Plus Jakarta Sans",sans-serif'; fr.L.forEach(l=>{ y+=fr.t*1.45; x.fillText(l,W/2,y-fr.t*.35); });
-  if(o.src){ y+=70; x.globalAlpha=.85; const s=partBloc(x,o.src,'600 $px "Plus Jakarta Sans",sans-serif',36,26,maxW,140,1.4); s.L.forEach(l=>{ x.fillText(l,W/2,y); y+=s.t*1.4; }); x.globalAlpha=1; }
+  if(o.src){ y+=80; x.fillStyle=St.sub; const s=partBloc(x,o.src,'600 $px "Plus Jakarta Sans",sans-serif',34,24,maxW,140,1.4); s.L.forEach(l=>{ x.fillText(l,W/2,y); y+=s.t*1.4; }); x.fillStyle=St.txt; }
   // signature NIYYA en bas
-  try{ const im=new Image(); im.src='niyya-logo-180.png'; await im.decode(); x.save(); x.beginPath(); x.roundRect(W/2-150,H-250,90,90,22); x.clip(); x.drawImage(im,W/2-150,H-250,90,90); x.restore(); }catch(e){}
-  x.textAlign='left'; x.font='800 46px "Plus Jakarta Sans",sans-serif'; x.fillText('NIYYA',W/2-40,H-196); x.globalAlpha=.8; x.font='600 28px "Plus Jakarta Sans",sans-serif'; x.fillText('niyya-app.github.io',W/2-40,H-158); x.globalAlpha=1;
+  try{ const im=new Image(); im.src='niyya-logo-180.png'; await im.decode(); x.save(); x.beginPath(); x.roundRect(W/2-150,H-260,90,90,22); x.clip(); x.drawImage(im,W/2-150,H-260,90,90); x.restore(); }catch(e){}
+  x.textAlign='left'; x.fillStyle=St.txt; x.font='800 46px "Plus Jakarta Sans",sans-serif'; x.fillText('NIYYA',W/2-40,H-206); x.fillStyle=St.sub; x.font='600 28px "Plus Jakarta Sans",sans-serif'; x.fillText('niyya-app.github.io',W/2-40,H-168);
   return c;
 }
 async function partager(o){
   toast('Création de l\'image…');
   if(o.type==='verset'&&!o.ar){ const m=/(\d+):(\d+)(?:-(\d+))?\s*$/.exec(o.src||''); if(m){ try{ const d=await chargerSourate(+m[1]); const L=[]; for(let i=+m[2];i<=+(m[3]||m[2]);i++) if(d.ar[i-1]) L.push(d.ar[i-1]); o.ar=L.join(' '); }catch(e){} } }
-  const c=await partImage(o), url=c.toDataURL('image/png');
+  S._partO=o; const c=await partImage(o), url=c.toDataURL('image/png');
   const blob=await new Promise(r=>c.toBlob(r,'image/png')), f=new File([blob],'niyya.png',{type:'image/png'});
   S._partFichier=f;
   const peut=!!(navigator.canShare&&navigator.canShare({files:[f]}));
+  const st=S.cfg.partStyle||'nuit', sty=[['nuit','🌙 Nuit','#0f1a3a','#e9c46a'],['creme','📜 Crème','#f5ecd9','#9a7b2f'],['emeraude','🕌 Émeraude','#064e3b','#d4b26a']];
   openSheet(`<h2 style="margin:0 0 4px">📤 Partager</h2><div class="sub">Image prête pour ta story Instagram, WhatsApp ou Snapchat.</div>
+    <div class="row" style="justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap">${sty.map(([k,l,b,a])=>`<button class="chip" style="cursor:pointer;background:${b};color:${a};border:2px solid ${k===st?a:'transparent'};padding:6px 12px;font-weight:800" onclick="S.cfg.partStyle='${k}';cfgTouch();partager(S._partO)">${l}</button>`).join('')}</div>
     <img src="${url}" alt="Aperçu" style="display:block;width:62%;margin:12px auto;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.25)">
     ${peut?'<button class="btn pri" style="width:100%" onclick="partEnvoyer()">📤 Partager l\'image</button>':`<a class="btn pri" style="width:100%;display:block;text-align:center;text-decoration:none" href="${url}" download="niyya.png">⬇️ Enregistrer l'image</a><div class="sub" style="text-align:center;margin-top:6px">Ou appuie longtemps sur l'image pour l'enregistrer.</div>`}
     <button class="btn mt" style="width:100%" onclick="closeSheet()">Fermer</button>`);
