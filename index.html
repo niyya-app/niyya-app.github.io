@@ -551,7 +551,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-203144'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-203201'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2481,7 +2481,7 @@ function vJour(){
     </div>
   </div>
   ${accOk()?`${S.cfg.fumeur?`<div class="mt">${heroTabac()}</div>`:''}<div class="mt">${hadMindCartes('m')}</div><div class="mt">${santeCarte()}</div>`:''}
-  ${poidsCarte()?`<div class="mt">${poidsCarte()}</div>`:''}
+  ${poidsCarte()&&!defiDansSante()?`<div class="mt">${poidsCarte()}</div>`:''}
   ${deuxDeroul}
   <div class="grid g2 mt">
     <div class="panel">
@@ -2512,9 +2512,10 @@ function santeCarte(){
   return `<div class="panel">
     <button onclick="deroul('sante')" style="all:unset;display:block;width:100%;cursor:pointer">
     <h2><span class="ico">🍎</span>Santé<span class="cnt">${ptsMax?`${pts}/${ptsMax} pts `:''}${ok?'✓ ':''}<span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv.sante?180:0}deg)">▾</span></span></h2>
-    <div class="sub" style="margin-bottom:${S.ouv.sante?0:2}px">${S.ouv.sante?'Fruits, légumes et eau de la journée.':`🍎 ${d.fruits||0}/5 · 💧 ${litres(d.eau)} L · touche pour ouvrir`}</div></button>
-    ${S.ouv.sante?santeCorps(d):''}</div>`;
+    <div class="sub" style="margin-bottom:${S.ouv.sante?0:2}px">${S.ouv.sante?'Fruits, légumes et eau de la journée.':`🍎 ${d.fruits||0}/5 · 💧 ${litres(d.eau)} L${defiDansSante()&&+S.cfg.poidsObj?' · ⚖️ défi forme':''} · touche pour ouvrir`}</div></button>
+    ${S.ouv.sante?santeCorps(d)+(defiDansSante()&&poidsCarte()?poidsCarte().replace('<div class="panel">','<div class="panel" style="box-shadow:none;background:var(--card2);margin-top:12px">'):''):''}</div>`;
 }
+const defiDansSante=()=>S.email===ADMIN_EMAIL; // TEST : le défi forme rangé dans la carte Santé
 // 🤲 Bonnes actions du jour : dans Aujourd'hui, ou dans Dîn (sous le Nom du jour)
 function bonnesActionsCarte(){
   const d=J(), nb=baNb(d);
