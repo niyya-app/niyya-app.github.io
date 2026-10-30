@@ -70,12 +70,12 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 
 /* ===== 🌙 Thème « Violet doux · Émeraude · Or » (TEST compte admin : classe .noble sur <html>) ===== */
 :root.noble{ --bg1:#f5f2ea; --bg2:#efeadf; --card:#ffffff; --card2:#f7f4ed; --ink:#16231d; --muted:#5b665f; --line:#e7e0d0;
-  --indigo:#5b47b8; --violet:#5b47b8; --emerald:#0b6b4f; --emerald-d:#064e3b; --or:#a8842f; --halo1:transparent; --halo2:transparent; --sh:0 6px 18px rgba(22,35,29,.06); }
+  --indigo:#4b3a9e; --violet:#4b3a9e; --emerald:#0b6b4f; --emerald-d:#064e3b; --or:#a8842f; --halo1:transparent; --halo2:transparent; --sh:0 6px 18px rgba(22,35,29,.06); }
 :root.noble[data-theme="dark"]{ --bg1:#0e0b22; --bg2:#120e2c; --card:#1a1538; --card2:#221b48; --ink:#f3eee2; --muted:#a9b1c4; --line:#2e2758; --emerald:#2fa57f; --or:#d4b26a; --sh:0 6px 18px rgba(0,0,0,.35); }
 @media (prefers-color-scheme: dark){ :root.noble:not([data-theme="light"]):not([data-theme="dark"]){ --bg1:#0e0b22; --bg2:#120e2c; --card:#1a1538; --card2:#221b48; --ink:#f3eee2; --muted:#aaa6c4; --line:#2e2758; --emerald:#2fa57f; --or:#d4b26a; --sh:0 6px 18px rgba(0,0,0,.35); } }
 .noble body{background:linear-gradient(180deg,var(--bg1),var(--bg2));background-attachment:fixed}
-.noble .k-violet,.noble .k-pink,.noble .k-magenta{--g:linear-gradient(160deg,#7462d6,#5a47b5);background:var(--g)}
-.noble .k-sky{--g:linear-gradient(160deg,#6872d8,#4f58b8);background:var(--g)}
+.noble .k-violet,.noble .k-pink,.noble .k-magenta{--g:linear-gradient(160deg,#5a48b0,#3f2f8c);background:var(--g)}
+.noble .k-sky{--g:linear-gradient(160deg,#5560bf,#3c449c);background:var(--g)}
 .noble .k-emerald,.noble .k-teal{--g:linear-gradient(160deg,#0b6b4f,#064e3b);background:var(--g)}
 .noble .k-gold,.noble .k-sunset{--g:linear-gradient(160deg,#b8933d,#8f6d24);background:var(--g)}
 .noble .cTabac{--g:linear-gradient(160deg,#7b8be6,#5866c8);background:var(--g)}
@@ -83,8 +83,8 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .noble .logo{box-shadow:0 4px 12px rgba(124,58,237,.25)} /* le logo garde le violet-rose de l'icône (ADN NIYYA) */
 .noble .brand h1 span{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--or)}
 .noble .brand p b{color:var(--or)!important}
-.noble .panel h2 .ico{background:#ece8fb;color:#5a47b5}
-.noble .nav button.on{background:#6c5ad0;color:#fff;box-shadow:0 4px 12px rgba(108,90,208,.3)}
+.noble .panel h2 .ico{background:#e9e4f8;color:#4b3a9e}
+.noble .nav button.on{background:#4b3a9e;color:#fff;box-shadow:0 4px 12px rgba(75,58,158,.3)}
 .noble .btn.pri{background:#0b6b4f;border-color:transparent}
 .noble .q-tag,.noble .h-lbl{letter-spacing:.04em}
 .noble .tile.ptile.on{background:var(--card)!important;color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
@@ -518,7 +518,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-153557'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-153912'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1855,7 +1855,7 @@ function scoreColor(s){ return s>=80?'#10b981':s>=60?'#84cc16':s>=40?'#f59e0b':s
    ===================================================================== */
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const app=document.getElementById('app');
-const THEME_VAR='bleuNuit'; // TEST : 'bleuNuit' (1re version) ou 'violet' (violet doux)
+const THEME_VAR='violet'; // TEST : 'bleuNuit' (1re version) ou 'violet' (violet doux)
 // ✍️ « clarify » (ouvert à tous le 30/10) : textes de l'interface plus courts et plus clairs — jamais les hadiths, versets ni invocations
 const clOk=()=>true; // ouvert à tous le 30/10
 const CL_TXT=[
