@@ -555,7 +555,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-205421'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-210334'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2916,6 +2916,45 @@ function coachMsg(){
 }
 
 /* ---------- Bilan ---------- */
+// 🌙 « Mon mois avec NIYYA » : récap mensuel en cartes à partager (TEST compte admin)
+const MOIS_FR=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function moisStats(ym){ const [y,m]=ym.split('-').map(Number), n=new Date(y,m,0).getDate(), ks=[];
+  for(let i=1;i<=n;i++){ const k=ym+'-'+String(i).padStart(2,'0'); if(k<=today()) ks.push(k); }
+  const f=ks.filter(has), o={ym,nom:MOIS_FR[m-1],jours:f.length,prieres:0,heure:0,mosquee:0,parP:{},ist:0,dk:0,ba:0,coran:0,serie:0};
+  let run=0; ks.forEach(k=>{ const d=has(k)?J(k):null; const cinq=d&&PRAYERS.every(p=>d.p[p.k]&&d.p[p.k]!=='manquee'); run=cinq?run+1:0; o.serie=Math.max(o.serie,run); });
+  f.forEach(k=>{ const d=J(k); PRAYERS.forEach(p=>{ const st=d.p[p.k]; if(st&&st!=='manquee'){ o.prieres++; if(st==='heure'||st==='mosquee'){ o.heure++; o.parP[p.k]=(o.parP[p.k]||0)+1; } if(st==='mosquee') o.mosquee++; } });
+    o.ist+=+d.istighfar||0; o.dk+=Object.keys((d.dk&&d.dk.apres)||{}).length; o.ba+=baNb(d); if(d.coran||(d.essX&&d.essX.coran)) o.coran++; });
+  const best=Object.entries(o.parP).sort((a,b)=>b[1]-a[1])[0]; o.best=best?PRAYERS.find(p=>p.k===best[0]).n:null; return o; }
+function moisCartes(o){ const C=[[`Mon mois de ${o.nom}`,String(o.jours),o.jours>1?'jours avec NIYYA':'jour avec NIYYA',o.serie>1?`Meilleure série : ${o.serie} jours avec les 5 prières`:'']];
+  if(o.prieres) C.push(['Mes prières',String(o.prieres),'prières notées',`${o.heure} à l'heure${o.mosquee?' · dont '+o.mosquee+' à la mosquée':''}`,o.best?`Ma prière la plus régulière : ${o.best}`:'']);
+  if(o.ist||o.dk) C.push(['Mon dhikr',o.ist.toLocaleString('fr-FR'),'istighfar',o.dk?`${o.dk} dhikr après la prière`:'']);
+  if(o.ba||o.coran) C.push(['Mes bonnes actions',String(o.ba),'bonnes actions',o.coran?`${o.coran} jour${o.coran>1?'s':''} de Coran`:'']);
+  C.push(['Qu\'Allah accepte','تَقَبَّلَ اللّٰهُ','Seul Allah connaît la valeur de nos actes.','Renouvelle ton intention pour le mois prochain 🤲']); return C; }
+async function moisImage(c,i,n){ try{ await Promise.all(['700 60px Amiri','800 60px "Plus Jakarta Sans"','600 40px "Plus Jakarta Sans"'].map(f=>document.fonts.load(f))); }catch(e){}
+  const St=PART_STYLES.nuit, W=1080, H=1920, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,St.bg[0]); g.addColorStop(.5,St.bg[1]); g.addColorStop(1,St.bg[2]); x.fillStyle=g; x.fillRect(0,0,W,H); partMotif(x,W,H,St.motif);
+  x.fillStyle=St.acc; x.beginPath(); x.arc(W/2,190,46,0,7); x.fill(); x.fillStyle=g; x.beginPath(); x.arc(W/2+22,176,42,0,7); x.fill();
+  x.textAlign='center'; x.fillStyle=St.acc; x.font='800 36px "Plus Jakarta Sans",sans-serif'; if('letterSpacing' in x) x.letterSpacing='6px'; x.fillText(c[0].toUpperCase(),W/2,330); if('letterSpacing' in x) x.letterSpacing='0px';
+  const ar=/[؀-ۿ]/.test(c[1]); x.fillStyle=St.txt;
+  if(ar){ x.direction='rtl'; x.font='700 170px Amiri,serif'; x.fillText(c[1],W/2,900); x.direction='ltr'; }
+  else { let t=260; x.font=`800 ${t}px "Plus Jakarta Sans",sans-serif`; while(x.measureText(c[1]).width>W-160&&t>120){ t-=20; x.font=`800 ${t}px "Plus Jakarta Sans",sans-serif`; } x.fillText(c[1],W/2,880); }
+  x.font='700 58px "Plus Jakarta Sans",sans-serif'; const L1=partLignes(x,c[2],W-200); let y=1030; L1.forEach(l=>{ x.fillText(l,W/2,y); y+=72; });
+  x.fillStyle=St.sub; x.font='600 40px "Plus Jakarta Sans",sans-serif'; y+=30; [c[3],c[4]].filter(Boolean).forEach(t=>{ partLignes(x,t,W-200).forEach(l=>{ x.fillText(l,W/2,y); y+=54; }); y+=14; });
+  x.fillStyle=St.acc; for(let k=0;k<n;k++){ x.globalAlpha=k===i?1:.35; x.beginPath(); x.arc(W/2-(n-1)*18+k*36,H-330,8,0,7); x.fill(); } x.globalAlpha=1;
+  try{ const im=new Image(); im.src='niyya-logo-180.png'; await im.decode(); x.save(); x.beginPath(); x.roundRect(W/2-150,H-260,90,90,22); x.clip(); x.drawImage(im,W/2-150,H-260,90,90); x.restore(); }catch(e){}
+  x.textAlign='left'; x.fillStyle=St.txt; x.font='800 46px "Plus Jakarta Sans",sans-serif'; x.fillText('NIYYA',W/2-40,H-206); x.fillStyle=St.sub; x.font='600 28px "Plus Jakarta Sans",sans-serif'; x.fillText('niyya-app.github.io',W/2-40,H-168);
+  return cv; }
+async function ouvrirMois(ym){ toast('Création de ton récap…'); const o=moisStats(ym), C=moisCartes(o), urls=[], files=[];
+  for(let i=0;i<C.length;i++){ const cv=await moisImage(C[i],i,C.length); urls.push(cv.toDataURL('image/jpeg',.9)); const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',.9)); files.push(new File([b],`niyya-${ym}-${i+1}.jpg`,{type:'image/jpeg'})); }
+  S._moisFiles=files; const peut=!!(navigator.canShare&&navigator.canShare({files}));
+  openSheet(`<h2 style="margin:0 0 4px">🌙 Mon mois de ${esc(o.nom)}</h2><div class="sub">${C.length} cartes à faire défiler, prêtes pour ta story.</div>
+    <div style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:12px 2px">${urls.map(u=>`<img src="${u}" alt="" style="flex:none;width:62%;scroll-snap-align:center;border-radius:14px">`).join('')}</div>
+    ${peut?'<button class="btn pri" style="width:100%" onclick="moisPartager()">📤 Partager les cartes</button>':'<div class="sub" style="text-align:center">Appuie longtemps sur une carte pour l\'enregistrer.</div>'}
+    <button class="btn mt" style="width:100%" onclick="closeSheet()">Fermer</button>`); }
+async function moisPartager(){ try{ await navigator.share({files:S._moisFiles,text:'Mon mois avec NIYYA 🌙 https://niyya-app.github.io'}); compter('partage_mois'); }catch(e){ if(e&&e.name!=='AbortError') toast('Partage impossible ici : appuie longtemps sur une carte pour l\'enregistrer'); } }
+function moisCarteBilan(){ if(S.email!==ADMIN_EMAIL) return ''; const ym=today().slice(0,7), d=new Date(); d.setDate(0); const prev=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const op=[[ym,MOIS_FR[+ym.slice(5)-1]+' (en cours)'],[prev,MOIS_FR[+prev.slice(5)-1]]].filter(([k])=>moisStats(k).jours>0);
+  return op.length?`<div class="panel" style="margin-bottom:14px"><h2><span class="ico">🌙</span>Mon mois avec NIYYA</h2><div class="sub">Ton récap en cartes, à garder ou à partager en story.</div><div class="row mt" style="gap:8px;flex-wrap:wrap">${op.map(([k,l])=>`<button class="btn pri sm" onclick="ouvrirMois('${k}')">${esc(l.charAt(0).toUpperCase()+l.slice(1))}</button>`).join('')}</div></div>`:''; }
 function vBilan(){
   const P=S.statsPer, keys=[]; for(let i=P-1;i>=0;i--) keys.push(addDays(today(),-i));
   const prev=[]; for(let i=2*P-1;i>=P;i--) prev.push(addDays(today(),-i));
@@ -2945,7 +2984,7 @@ function vBilan(){
     cal+=`<div class="d ${k===S.sel?'sel':''} ${fut?'fut':''}" style="background:${has(k)?scoreColor(s):''};color:${has(k)&&s>0?'#fff':''}" ${fut?'':`onclick="openDay('${k}')"`} title="${s}">${i}</div>`; }
   const sel=S.sel, dsel=J(sel), ssel=scoreOf(sel);
   const delta=(a,b)=>a===null||b===null?'':(a-b>=.05?`<span class="up">▲${(a-b).toFixed(1)}</span>`:a-b<=-.05?`<span class="down">▼${(b-a).toFixed(1)}</span>`:'<span class="muted">=</span>');
-  return `${progCarte(false)}<div class="mt"></div>
+  return `${moisCarteBilan()}${progCarte(false)}<div class="mt"></div>
   <div class="nav" style="position:static;margin-bottom:14px;border-radius:14px;border:1px solid var(--line);padding:5px">
     ${[[7,'7 jours'],[30,'30 jours'],[90,'90 jours'],[365,'1 an']].map(([n,l])=>`<button class="${P===n?'on':''}" style="flex-direction:row;justify-content:center;font-size:.82rem;padding:10px" onclick="setPer(${n})">${l}</button>`).join('')}
   </div>
