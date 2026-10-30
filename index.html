@@ -555,7 +555,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-210334'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-210835'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2925,27 +2925,46 @@ function moisStats(ym){ const [y,m]=ym.split('-').map(Number), n=new Date(y,m,0)
   f.forEach(k=>{ const d=J(k); PRAYERS.forEach(p=>{ const st=d.p[p.k]; if(st&&st!=='manquee'){ o.prieres++; if(st==='heure'||st==='mosquee'){ o.heure++; o.parP[p.k]=(o.parP[p.k]||0)+1; } if(st==='mosquee') o.mosquee++; } });
     o.ist+=+d.istighfar||0; o.dk+=Object.keys((d.dk&&d.dk.apres)||{}).length; o.ba+=baNb(d); if(d.coran||(d.essX&&d.essX.coran)) o.coran++; });
   const best=Object.entries(o.parP).sort((a,b)=>b[1]-a[1])[0]; o.best=best?PRAYERS.find(p=>p.k===best[0]).n:null; return o; }
-function moisCartes(o){ const C=[[`Mon mois de ${o.nom}`,String(o.jours),o.jours>1?'jours avec NIYYA':'jour avec NIYYA',o.serie>1?`Meilleure série : ${o.serie} jours avec les 5 prières`:'']];
-  if(o.prieres) C.push(['Mes prières',String(o.prieres),'prières notées',`${o.heure} à l'heure${o.mosquee?' · dont '+o.mosquee+' à la mosquée':''}`,o.best?`Ma prière la plus régulière : ${o.best}`:'']);
-  if(o.ist||o.dk) C.push(['Mon dhikr',o.ist.toLocaleString('fr-FR'),'istighfar',o.dk?`${o.dk} dhikr après la prière`:'']);
-  if(o.ba||o.coran) C.push(['Mes bonnes actions',String(o.ba),'bonnes actions',o.coran?`${o.coran} jour${o.coran>1?'s':''} de Coran`:'']);
-  C.push(['Qu\'Allah accepte','تَقَبَّلَ اللّٰهُ','Seul Allah connaît la valeur de nos actes.','Renouvelle ton intention pour le mois prochain 🤲']); return C; }
-async function moisImage(c,i,n){ try{ await Promise.all(['700 60px Amiri','800 60px "Plus Jakarta Sans"','600 40px "Plus Jakarta Sans"'].map(f=>document.fonts.load(f))); }catch(e){}
-  const St=PART_STYLES.nuit, W=1080, H=1920, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d');
-  const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,St.bg[0]); g.addColorStop(.5,St.bg[1]); g.addColorStop(1,St.bg[2]); x.fillStyle=g; x.fillRect(0,0,W,H); partMotif(x,W,H,St.motif);
-  x.fillStyle=St.acc; x.beginPath(); x.arc(W/2,190,46,0,7); x.fill(); x.fillStyle=g; x.beginPath(); x.arc(W/2+22,176,42,0,7); x.fill();
-  x.textAlign='center'; x.fillStyle=St.acc; x.font='800 36px "Plus Jakarta Sans",sans-serif'; if('letterSpacing' in x) x.letterSpacing='6px'; x.fillText(c[0].toUpperCase(),W/2,330); if('letterSpacing' in x) x.letterSpacing='0px';
-  const ar=/[؀-ۿ]/.test(c[1]); x.fillStyle=St.txt;
-  if(ar){ x.direction='rtl'; x.font='700 170px Amiri,serif'; x.fillText(c[1],W/2,900); x.direction='ltr'; }
-  else { let t=260; x.font=`800 ${t}px "Plus Jakarta Sans",sans-serif`; while(x.measureText(c[1]).width>W-160&&t>120){ t-=20; x.font=`800 ${t}px "Plus Jakarta Sans",sans-serif`; } x.fillText(c[1],W/2,880); }
-  x.font='700 58px "Plus Jakarta Sans",sans-serif'; const L1=partLignes(x,c[2],W-200); let y=1030; L1.forEach(l=>{ x.fillText(l,W/2,y); y+=72; });
-  x.fillStyle=St.sub; x.font='600 40px "Plus Jakarta Sans",sans-serif'; y+=30; [c[3],c[4]].filter(Boolean).forEach(t=>{ partLignes(x,t,W-200).forEach(l=>{ x.fillText(l,W/2,y); y+=54; }); y+=14; });
-  x.fillStyle=St.acc; for(let k=0;k<n;k++){ x.globalAlpha=k===i?1:.35; x.beginPath(); x.arc(W/2-(n-1)*18+k*36,H-330,8,0,7); x.fill(); } x.globalAlpha=1;
+function moisCartes(o){ const C=[{t:`${S.cfg.nom?S.cfg.nom+', ton':'Ton'} mois de ${o.nom}`,n:String(o.jours),l:o.jours>1?'jours avec NIYYA':'jour avec NIYYA',s:[o.serie>1?`Meilleure série : ${o.serie} jours avec les 5 prières`:''],v:'cal',st:'nuit'}];
+  if(o.prieres) C.push({t:'Mes prières',n:String(o.prieres),l:'prières notées',s:[`${o.heure} à l'heure${o.mosquee?' · '+o.mosquee+' à la mosquée':''}`,o.best?`Ma prière la plus régulière : ${o.best}`:''],v:'barres',st:'emeraude'});
+  if(o.ist||o.dk) C.push({t:'Mon dhikr',n:o.ist.toLocaleString('fr-FR'),l:'istighfar',s:[o.dk?`${o.dk} dhikr après la prière`:''],v:'anneau',st:'bleu'});
+  if(o.ba||o.coran) C.push({t:'Mes bonnes actions',n:String(o.ba),l:'bonnes actions',s:[o.coran?`${o.coran} jour${o.coran>1?'s':''} de Coran`:''],v:'points',st:'prune'});
+  C.push({t:'Mon mois en un coup d\'œil',v:'resume',st:'nuit'});
+  C.push({t:'Qu\'Allah accepte',n:'تَقَبَّلَ اللّٰهُ',l:'Seul Allah connaît la valeur de nos actes.',s:['Renouvelle ton intention pour le mois prochain 🤲'],v:'',st:'emeraude'}); return C; }
+const MOIS_FONDS={nuit:['#120c2e','#21174f','#35237a'],emeraude:['#022c22','#064e3b','#0b6b4f'],bleu:['#0a1230','#16244d','#1d3566'],prune:['#2a1030','#4c2556','#6e3a78']};
+async function moisImage(c,i,n,o){ try{ await Promise.all(['700 60px Amiri','800 60px "Plus Jakarta Sans"','600 40px "Plus Jakarta Sans"'].map(f=>document.fonts.load(f))); }catch(e){}
+  const F=MOIS_FONDS[c.st]||MOIS_FONDS.nuit, A='#f2cf5b', SUB='rgba(255,255,255,.76)', W=1080, H=1920, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,F[0]); g.addColorStop(.5,F[1]); g.addColorStop(1,F[2]); x.fillStyle=g; x.fillRect(0,0,W,H); partMotif(x,W,H,'rgba(242,207,91,.06)');
+  x.fillStyle=A; x.beginPath(); x.arc(W/2,170,42,0,7); x.fill(); x.fillStyle=g; x.beginPath(); x.arc(W/2+20,157,38,0,7); x.fill();
+  x.textAlign='center'; x.fillStyle=A; x.font='800 38px "Plus Jakarta Sans",sans-serif'; if('letterSpacing' in x) x.letterSpacing='5px'; partLignes(x,c.t.toUpperCase(),W-160).forEach((l,k)=>x.fillText(l,W/2,300+k*50)); if('letterSpacing' in x) x.letterSpacing='0px';
+  // visuel de la carte (au-dessus du grand chiffre)
+  const vy=420;
+  if(c.v==='cal'){ const [yy,mm]=o.ym.split('-').map(Number), nj=new Date(yy,mm,0).getDate(), d0=(new Date(yy,mm-1,1).getDay()+6)%7, cs=74, gx=W/2-cs*3.5;
+    x.font='700 26px "Plus Jakarta Sans",sans-serif'; ['L','M','M','J','V','S','D'].forEach((l,k)=>{ x.fillStyle=SUB; x.fillText(l,gx+cs*k+cs/2,vy); });
+    for(let dd=1;dd<=nj;dd++){ const pos=d0+dd-1, cx=gx+(pos%7)*cs+cs/2, cy=vy+40+Math.floor(pos/7)*cs+cs/2, k=o.ym+'-'+String(dd).padStart(2,'0'), act=has(k);
+      x.fillStyle=act?A:'rgba(255,255,255,.12)'; x.beginPath(); x.arc(cx,cy,26,0,7); x.fill(); x.fillStyle=act?F[1]:'rgba(255,255,255,.55)'; x.font='800 24px "Plus Jakarta Sans",sans-serif'; x.fillText(String(dd),cx,cy+9); } }
+  if(c.v==='barres'){ const vals=PRAYERS.map(p=>o.parP[p.k]||0), mx=Math.max(1,...vals), bw=110, gap=40, x0=W/2-(5*bw+4*gap)/2, bh=420;
+    PRAYERS.forEach((p,k)=>{ const h=Math.max(12,vals[k]/mx*bh), bx=x0+k*(bw+gap), by=vy+bh-h+20; x.fillStyle=o.best===p.n?A:'rgba(255,255,255,.28)'; x.beginPath(); x.roundRect(bx,by,bw,h,18); x.fill();
+      x.fillStyle=o.best===p.n?A:SUB; x.font='800 30px "Plus Jakarta Sans",sans-serif'; x.fillText(p.n,bx+bw/2,vy+bh+70); x.fillStyle='#fff'; x.font='800 34px "Plus Jakarta Sans",sans-serif'; x.fillText(String(vals[k]),bx+bw/2,by-16); }); }
+  if(c.v==='anneau'){ const pct=o.jours?Math.min(1,o.ist/(o.jours*100)):0, cx=W/2, cy=vy+230, r=210; x.lineWidth=34; x.lineCap='round'; x.strokeStyle='rgba(255,255,255,.14)'; x.beginPath(); x.arc(cx,cy,r,0,7); x.stroke(); x.strokeStyle=A; x.beginPath(); x.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+pct*2*Math.PI); x.stroke();
+    x.fillStyle='#fff'; x.font='800 90px "Plus Jakarta Sans",sans-serif'; x.fillText(Math.round(pct*100)+'%',cx,cy+20); x.fillStyle=SUB; x.font='600 30px "Plus Jakarta Sans",sans-serif'; x.fillText('de l\'objectif 100 / jour',cx,cy+70); }
+  if(c.v==='points'){ const tot=Math.min(o.ba,60), cols=10, cs=70, gx=W/2-cs*cols/2; for(let k=0;k<Math.max(tot,1);k++){ x.fillStyle=k<tot?A:'rgba(255,255,255,.12)'; x.beginPath(); x.arc(gx+(k%cols)*cs+cs/2,vy+40+Math.floor(k/cols)*cs,24,0,7); x.fill(); } }
+  if(c.v==='resume'){ const T=[[String(o.jours),'jours'],[String(o.prieres),'prières'],[o.ist.toLocaleString('fr-FR'),'istighfar'],[String(o.ba),'bonnes actions']];
+    T.forEach(([nb,l],k)=>{ const bx=W/2-430+(k%2)*440, by=480+Math.floor(k/2)*440; x.fillStyle='rgba(255,255,255,.08)'; x.beginPath(); x.roundRect(bx,by,420,400,36); x.fill();
+      x.fillStyle=A; let t=130; x.font=`800 ${t}px "Plus Jakarta Sans",sans-serif`; while(x.measureText(nb).width>360&&t>60){ t-=10; x.font=`800 ${t}px "Plus Jakarta Sans",sans-serif`; } x.fillText(nb,bx+210,by+230); x.fillStyle='#fff'; x.font='700 40px "Plus Jakarta Sans",sans-serif'; x.fillText(l,bx+210,by+310); });
+    x.fillStyle=SUB; x.font='600 36px "Plus Jakarta Sans",sans-serif'; x.fillText(o.best?`Prière la plus régulière : ${o.best}`:'',W/2,1450); }
+  // grand chiffre + légende
+  if(c.n){ const ar=/[؀-ۿ]/.test(c.n), ny=c.v?1180:900; x.fillStyle='#fff';
+    if(ar){ x.direction='rtl'; x.font='700 170px Amiri,serif'; x.fillText(c.n,W/2,ny); x.direction='ltr'; }
+    else { let t=c.v?200:260; x.font=`800 ${t}px "Plus Jakarta Sans",sans-serif`; while(x.measureText(c.n).width>W-160&&t>110){ t-=20; x.font=`800 ${t}px "Plus Jakarta Sans",sans-serif`; } x.fillText(c.n,W/2,ny); }
+    x.font='700 56px "Plus Jakarta Sans",sans-serif'; let y=ny+110; partLignes(x,c.l,W-200).forEach(l=>{ x.fillText(l,W/2,y); y+=70; });
+    x.fillStyle=SUB; x.font='600 38px "Plus Jakarta Sans",sans-serif'; y+=24; (c.s||[]).filter(Boolean).forEach(t=>{ partLignes(x,t,W-200).forEach(l=>{ x.fillText(l,W/2,y); y+=52; }); y+=12; }); }
+  x.fillStyle=A; for(let k=0;k<n;k++){ x.globalAlpha=k===i?1:.35; x.beginPath(); x.arc(W/2-(n-1)*18+k*36,H-330,8,0,7); x.fill(); } x.globalAlpha=1;
   try{ const im=new Image(); im.src='niyya-logo-180.png'; await im.decode(); x.save(); x.beginPath(); x.roundRect(W/2-150,H-260,90,90,22); x.clip(); x.drawImage(im,W/2-150,H-260,90,90); x.restore(); }catch(e){}
-  x.textAlign='left'; x.fillStyle=St.txt; x.font='800 46px "Plus Jakarta Sans",sans-serif'; x.fillText('NIYYA',W/2-40,H-206); x.fillStyle=St.sub; x.font='600 28px "Plus Jakarta Sans",sans-serif'; x.fillText('niyya-app.github.io',W/2-40,H-168);
+  x.textAlign='left'; x.fillStyle='#fff'; x.font='800 46px "Plus Jakarta Sans",sans-serif'; x.fillText('NIYYA',W/2-40,H-206); x.fillStyle=SUB; x.font='600 28px "Plus Jakarta Sans",sans-serif'; x.fillText('niyya-app.github.io',W/2-40,H-168);
   return cv; }
 async function ouvrirMois(ym){ toast('Création de ton récap…'); const o=moisStats(ym), C=moisCartes(o), urls=[], files=[];
-  for(let i=0;i<C.length;i++){ const cv=await moisImage(C[i],i,C.length); urls.push(cv.toDataURL('image/jpeg',.9)); const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',.9)); files.push(new File([b],`niyya-${ym}-${i+1}.jpg`,{type:'image/jpeg'})); }
+  for(let i=0;i<C.length;i++){ const cv=await moisImage(C[i],i,C.length,o); urls.push(cv.toDataURL('image/jpeg',.9)); const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',.9)); files.push(new File([b],`niyya-${ym}-${i+1}.jpg`,{type:'image/jpeg'})); }
   S._moisFiles=files; const peut=!!(navigator.canShare&&navigator.canShare({files}));
   openSheet(`<h2 style="margin:0 0 4px">🌙 Mon mois de ${esc(o.nom)}</h2><div class="sub">${C.length} cartes à faire défiler, prêtes pour ta story.</div>
     <div style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:12px 2px">${urls.map(u=>`<img src="${u}" alt="" style="flex:none;width:62%;scroll-snap-align:center;border-radius:14px">`).join('')}</div>
