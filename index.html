@@ -507,7 +507,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-145745'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-145926'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2663,7 +2663,7 @@ function regPanel(){ const reg=prayerReg(30); return `    <div class="panel">
 `; }
 // ✂️ « distill » (TEST compte admin) : Dîn resserré — l'essentiel en haut, le reste dans « Plus de pratiques »
 const distOk=()=>S.email===ADMIN_EMAIL;
-function vDin(){ return distOk()?vDin2():vDin1(); }
+function vDin(){ return vDin2(); } // Dîn resserré ouvert à tous le 30/10 (vDin1 = ancienne version)
 function vDin2(){
   const d=J(), fri=dateOf(S.sel).getDay()===5, o=!!S.ouv.pdin, n=naflN(d), sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
   const resume=[`✨ Ce qu'Allah aime`,`☀️ Sunnah du jour`,`🌙 Surérogatoires ${n}/${NAFL.length}`,`🍽️ Jeûne${d.jeune==='fait'?' ✓':''}`,`💚 Sadaqa${sad?' '+sad+' €':''}`,`📈 Régularité`];
