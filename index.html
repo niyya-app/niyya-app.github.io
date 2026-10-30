@@ -464,7 +464,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-001204'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-064802'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1595,10 +1595,10 @@ function ajustForm(){
 }
 function timesBrut(k){
   const P=S.cfg.priere||{}, L=S.cfg.lieu||{};
-  if(!MOSQ[P.methode] && L.lat!=null && window.adhan){
+  if(!mosqCle() && L.lat!=null && window.adhan){
     const tz=lieuTz(), ck=k+'|'+P.methode+'|'+L.lat+'|'+L.lon+'|'+tz; if(_tcache[ck]) return _tcache[ck];
     try{
-      const M=METHODES[P.methode]||METHODES.uoif, c=new adhan.Coordinates(L.lat,L.lon);
+      const M=(!MOSQ[P.methode]&&METHODES[P.methode])||METHODES[METHODE_PAYS[L.tz]]||METHODES.uoif, c=new adhan.Coordinates(L.lat,L.lon);
       const pr=new adhan.CalculationParameters('Other',M.f,M.i); pr.madhab=adhan.Madhab.Shafi; pr.highLatitudeRule=adhan.HighLatitudeRule.recommended(c);
       if(M.iv){ pr.ishaInterval=M.iv+(typeof estRamadan==='function'&&estRamadan(k)?30:0); }
       pr.rounding=adhan.Rounding.None; // arrondi prudent : une prière n'est jamais affichée en avance (minute supérieure), le lever du soleil (fin de Fajr) jamais en retard
@@ -1607,7 +1607,7 @@ function timesBrut(k){
     }catch(e){}
   }
   const d=dateOf(k);
-  const CC=(MOSQ[P.methode]||MOSQ.hsc).cal;
+  const CC=(mosq()||MOSQ.hsc).cal;
   let row=(CC[d.getMonth()]||'').split('|')[d.getDate()-1];
   if(!row) row=CC[d.getMonth()].split('|').pop();
   const t=[]; for(let i=0;i<6;i++) t.push(Number(row.substr(i*4,2))*60+Number(row.substr(i*4+2,2)));
@@ -1620,7 +1620,13 @@ function nextPrayer(){
 }
 // une mosquée n'est proposée qu'aux utilisateurs dont la ville est à moins de 30 km
 function mosqProche(k){ const M=MOSQ[k], L=S.cfg.lieu||{}; if(!M||L.lat==null) return false; const r=Math.PI/180, a=Math.sin((L.lat-M.lat)*r/2)**2+Math.cos(L.lat*r)*Math.cos(M.lat*r)*Math.sin((L.lon-M.lon)*r/2)**2; return 12742*Math.asin(Math.sqrt(a))<=30; }
-const mosq=()=>MOSQ[(S.cfg.priere||{}).methode]||null; // calendrier d'une mosquée (An-Nour, Maryam)
+const mosqCle=()=>{ const k=(S.cfg.priere||{}).methode, L=S.cfg.lieu||{}; return MOSQ[k]&&(L.lat==null||mosqProche(k))?k:null; }; // une mosquée ne vaut que près d'elle (≤ 30 km)
+const mosq=()=>MOSQ[mosqCle()]||null; // calendrier d'une mosquée (An-Nour, Maryam)
+// en déplacement loin de sa mosquée : on repasse au calcul pour la nouvelle ville, et on retrouve la mosquée au retour
+function verifMosq(){ const P=S.cfg.priere=S.cfg.priere||{}, L=S.cfg.lieu||{};
+  if(MOSQ[P.methode]&&L.lat!=null&&!mosqProche(P.methode)){ P.mosqAvant=P.methode; P.methode='uoif'; for(const k in _tcache) delete _tcache[k]; methodeAuto(); cfgTouch(); return 'loin'; }
+  if(!MOSQ[P.methode]&&P.mosqAvant&&mosqProche(P.mosqAvant)){ P.methode=P.mosqAvant; delete P.mosqAvant; for(const k in _tcache) delete _tcache[k]; cfgTouch(); return 'retour'; }
+  return null; }
 const isHsc=()=>!!mosq();
 function lieuNom(){ return isHsc()?mosq().nom:((S.cfg.lieu&&S.cfg.lieu.nom)||'Horaires').replace(/\s*\(\d+\)$/,''); }
 function prevPrayer(m,t){ let c=null; for(const p of PRAYERS){ if(t[p.i]<=m) c=p; } return c; }
@@ -1675,7 +1681,7 @@ async function pull(){
     if(r.maintenant){ try{ localStorage.setItem(kD,r.maintenant); if(complet) localStorage.setItem(kC,String(Date.now())); }catch(e){} }
     saveLocal(); setSync('ok');
     if(S.dirty.size||S.cfgDirty) planPush();
-    if(!S.pret){ S.pret=true; render(); compter(S.view||'jour'); if(NATIF){ natifBrancher(); planifierLocal(); } }
+    if(!S.pret){ S.pret=true; try{ verifMosq(); }catch(e){} render(); compter(S.view||'jour'); if(NATIF){ natifBrancher(); planifierLocal(); } }
     if(S.cfg.onb && !S.cfg.methodeAutoFaite && METHODE_PAYS[(S.cfg.lieu||{}).tz] && ['uoif',METHODE_PAYS[(S.cfg.lieu||{}).tz]].includes(S.cfg.priere.methode)){ S.cfg.methodeAutoFaite=true; if(methodeAuto()){ cfgTouch(); pushMajParams(); render(); toast('🕌 Horaires : '+((S.cfg.lieu||{}).tz==='Africa/Algiers'?'méthode officielle algérienne (18° / 17°)':'méthode Umm al-Qura (Arabie saoudite)'),4000); } else cfgTouch(); }
     if(S.ouvrirEnAttente && S.cfg.onb){ const c=S.ouvrirEnAttente; S.ouvrirEnAttente=null; ouvrir(c); } else if(!S._clicDemarrage){ S._clicDemarrage=true; [0,700,1500,3000,5000,8000].forEach(t=>setTimeout(lireClicNotif,t)); [400,1500,4000].forEach(t=>setTimeout(lireRecue,t)); } // au lancement : on regarde tout de suite quelle notification a été touchée else lireClicNotif();
     if(S.cfg.onb && !S._rappelVu && location.hash!=='#autotest'){ S._rappelVu=true; setTimeout(()=>{ if(document.getElementById('sheetBg').classList.contains('on')) return; if(!demanderGenre()) proposerRappels(false); },2500); } // d'abord homme/femme (une fois), sinon la proposition des rappels
@@ -3240,7 +3246,7 @@ let _villeT=null;
 function lieuForm(){
   const P=S.cfg.priere;
   return `<label class="f">Méthode de calcul</label>
-    <select class="inp" onchange="S.cfg.priere.methode=this.value;cfgTouch();render()">${Object.entries(METHODES).filter(([k])=>!MOSQ[k]||P.methode===k||mosqProche(k)).map(([k,m])=>`<option value="${k}" ${P.methode===k?'selected':''}>${esc(m.l)}</option>`).join('')}</select>
+    <select class="inp" onchange="S.cfg.priere.methode=this.value;delete S.cfg.priere.mosqAvant;for(const k in _tcache) delete _tcache[k];cfgTouch();render()">${Object.entries(METHODES).filter(([k])=>!MOSQ[k]||P.methode===k||mosqProche(k)).map(([k,m])=>`<option value="${k}" ${P.methode===k?'selected':''}>${esc(m.l)}</option>`).join('')}</select>
     ${(()=>{ const L=S.cfg.lieu||{}; const horsFr=L.lat!=null&&!(L.lat>41&&L.lat<51.5&&L.lon>-5.5&&L.lon<9.8); return horsFr&&P.methode!=='mwl'?`<p style="font-size:.76rem;font-weight:700;color:#b45309;margin-top:6px">🌍 Tu es hors de France : la méthode « Ligue islamique mondiale » est la plus utilisée à l'étranger.</p>`:''; })()}
     <label class="f">Ma ville</label>
     <input class="inp" id="villeIn" placeholder="Ex. Caen, Lyon, Bruxelles…" value="${esc(S.cfg.lieu.nom||'')}" oninput="chercherVille(this.value)" autocomplete="off">
@@ -3264,8 +3270,8 @@ const METHODE_PAYS={'Asia/Riyadh':'umq','Africa/Algiers':'mwl'}; // Algérie : m
 function methodeAuto(){ const L=S.cfg.lieu||{}, m=METHODE_PAYS[L.tz]; if(m && S.cfg.priere.methode!==m && !MOSQ[S.cfg.priere.methode]){ S.cfg.priere.methode=m; for(const k in _tcache) delete _tcache[k]; return true; } return false; }
 function choisirVille(nom,lat,lon,tz){
   S.cfg.lieu={nom,lat:+lat.toFixed(4),lon:+lon.toFixed(4),tz:tz||(enFrance({lat,lon})?'Europe/Paris':'')}; for(const k in _tcache) delete _tcache[k];
-  if(!S.cfg.lieu.tz) fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=1`).then(r=>r.json()).then(o=>{ if(o.timezone&&S.cfg.lieu.lat===+lat.toFixed(4)){ S.cfg.lieu.tz=o.timezone; for(const k in _tcache) delete _tcache[k]; methodeAuto(); cfgTouch(); if(S.cfg.onb) render(); } }).catch(()=>{}); if(S.cfg.priere.methode==='hsc') S.cfg.priere.methode='uoif';
-  methodeAuto(); cfgTouch(); if(S.cfg.onb){ render(); toast('🕌 Horaires mis à jour'); } else { const i=document.getElementById('villeIn'); if(i) i.value=nom; document.getElementById('villeSugg').innerHTML=''; }
+  if(!S.cfg.lieu.tz) fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=1`).then(r=>r.json()).then(o=>{ if(o.timezone&&S.cfg.lieu.lat===+lat.toFixed(4)){ S.cfg.lieu.tz=o.timezone; for(const k in _tcache) delete _tcache[k]; methodeAuto(); cfgTouch(); if(S.cfg.onb) render(); } }).catch(()=>{}); if(S.cfg.priere.methode==='hsc'&&S.cfg.onb!==true) S.cfg.priere.methode='uoif';
+  const vm=verifMosq(); methodeAuto(); cfgTouch(); if(S.cfg.onb){ render(); toast(vm==='loin'?'🕌 Tu es loin de ta mosquée : horaires calculés pour '+esc(nom.split(',')[0])+'. Elle reviendra à ton retour.':vm==='retour'?'🕌 De retour : horaires de ta mosquée rétablis':'🕌 Horaires mis à jour',5000); } else { const i=document.getElementById('villeIn'); if(i) i.value=nom; document.getElementById('villeSugg').innerHTML=''; }
 }
 function localiserMoi(){
   if(!navigator.geolocation) return aideLocalisation(0);
