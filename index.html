@@ -396,7 +396,7 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .lune-bg .t b.ar{font-family:'Amiri',serif;font-size:clamp(3.4rem,17vw,6.5rem);line-height:1.3}
 .lune-bg .t i{display:block;font-style:normal;font-size:clamp(1.6rem,7vw,2.4rem);font-weight:900;color:#a16207;margin-top:2px}
 .lune-bg .t small{display:block;margin-top:10px;font-size:1.15rem;font-weight:800;color:#854d0e}
-@keyframes vEntre{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}.vEntre{animation:vEntre .24s ease-out}
+@keyframes vEntre{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}.vEntre{animation:vEntre .42s cubic-bezier(.22,1,.36,1)}
 @keyframes lfond{0%{opacity:0}8%{opacity:1}85%{opacity:1}100%{opacity:0}}
 @keyframes llune{0%{opacity:0;transform:scale(.3) rotate(-25deg)}15%{opacity:1;transform:scale(1.1) rotate(0)}25%{transform:scale(1)}38%{opacity:1;transform:scale(1)}48%{opacity:0;transform:scale(1.4)}100%{opacity:0}}
 @keyframes ltexte{0%,40%{opacity:0;transform:scale(.6)}52%{opacity:1;transform:scale(1.08)}60%{transform:scale(1)}88%{opacity:1}100%{opacity:0}}
@@ -464,7 +464,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-065240'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-065820'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2867,7 +2867,7 @@ function vReglages(){
    ===================================================================== */
 function toast(msg,ms){ const t=document.getElementById('toast'); t.innerHTML=msg; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),ms||2200); }
 function vib(){ // petite vibration quand on coche (prière, essentiel…)
-  try{ if(NATIF&&window.Capacitor&&Capacitor.registerPlugin){ (S._hap=S._hap||Capacitor.registerPlugin('Haptics')).impact({style:'LIGHT'}).catch(()=>{}); return; } }catch(e){}
+  try{ if(NATIF){ const r=Capacitor.registerPlugin?(S._hap=S._hap||Capacitor.registerPlugin('Haptics')).impact({style:'MEDIUM'}):Capacitor.nativePromise('Haptics','impact',{style:'MEDIUM'}); if(r&&r.catch) r.catch(()=>{}); return; } }catch(e){} // appli iPhone : vrai retour haptique (plugin natif)
   try{ if(navigator.vibrate){ navigator.vibrate(15); return; } }catch(e){}
   // iPhone (Safari / appli web) : pas de navigator.vibrate ; un interrupteur caché déclenche le retour haptique d'iOS 18+ — TEST compte admin
   try{ if(S.email!==ADMIN_EMAIL) return; const l=document.createElement('label'), i=document.createElement('input'); l.ariaHidden='true'; l.style.display='none'; i.type='checkbox'; i.setAttribute('switch',''); l.appendChild(i); document.head.appendChild(l); l.click(); document.head.removeChild(l); }catch(e){}
