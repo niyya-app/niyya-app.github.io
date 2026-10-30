@@ -101,6 +101,15 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .noble #nav button i[data-ti]{display:flex;justify-content:center;color:#8a84a8}
 .noble #nav button.on i[data-ti]{color:#f2cf5b}
 
+.pr2{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.pr2:last-child{border-bottom:none}
+.pr2.cur{background:color-mix(in srgb,var(--emerald) 7%,transparent);border-radius:12px}
+.pr2-nm{flex:1;min-width:0}.pr2-nm b{font-size:1.02rem}.pr2-nm .arn{font-family:'Amiri',serif;color:var(--muted);margin-left:4px}.pr2-nm small{display:block;font-size:.76rem;color:var(--muted);font-weight:600}
+.pr2-v{border:none;background:none;cursor:pointer;font-size:.9rem;margin-left:4px;padding:2px}
+.pr2-h{font-weight:800;font-size:1.05rem;min-width:52px;text-align:right}
+.pck{width:44px;height:44px;flex:none;border-radius:50%;border:2px solid var(--line);background:var(--card);color:var(--muted);font-size:1.15rem;font-weight:900;cursor:pointer;transition:transform .15s,background .2s}
+.pck:active{transform:scale(.9)}.pck.ok{background:var(--emerald);border-color:var(--emerald);color:#fff}.pck.late{background:#f59e0b;border-color:#f59e0b;color:#fff}.pck.miss{background:#fee2e2;border-color:#fecaca;color:#b91c1c}
+.pr2.sun{padding:4px 4px 8px;border-bottom:1px dashed var(--line)}
 /* ---------- Entête ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
@@ -498,7 +507,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-141802'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-144027'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2588,7 +2597,24 @@ const prayCount=k=>{ const d=S.jours[k]; return d?PRAYERS.filter(p=>['heure','mo
 
 /* ---------- Dîn ---------- */
 // 🕌 « Mes prières » détaillées (statuts, iqama, Qibla) : sur l'Accueil, ou dans Dîn
+// ✂️ « distill » (TEST admin) : une seule touche ✓ par prière (au lieu de 4 boutons) ; retoucher = choisir mosquée / retard / manquée
+function pTap(k){ const st=J().p[k]; if(!st){ setPrayer(k,'heure'); return; } vib(); choixPriere(k); }
+function prieresDetail2(){
+  const d=J(), t=timesOf(S.sel), isT=S.sel===today(), fri=dateOf(S.sel).getDay()===5, cur=isT?prevPrayer(nowMin(),t):null;
+  const ST={heure:['✓','À l\'heure','ok'],mosquee:['🕌','À la mosquée','ok'],retard:['⏱','En retard','late'],manquee:['✗','Manquée','miss']};
+  return `<h2><span class="ico">🕌</span>Mes prières<span class="cnt">${dispOf(S.sel)?'🌸':prayCount(S.sel)+'/5'}</span></h2>
+    ${isHsc()?'':`<div class="sub">📍 Horaires calculés pour ${esc(((S.cfg.lieu&&S.cfg.lieu.nom)||'ta ville').replace(/\s*\(\d+\)$/,'').split(',')[0])} · <a href="#" onclick="event.preventDefault();go('reglages');setTimeout(()=>{const e=document.getElementById('rPriere');if(e)e.scrollIntoView({block:'start'})},80)" style="font-weight:800;color:var(--indigo,#4f46e5)">Ajuster ›</a></div>`}
+    <div class="sub" style="margin:2px 0 8px">Touche <b>✓</b> quand tu as prié. Touche à nouveau pour « mosquée », « retard »…</div>
+    ${PRAYERS.map((p,i)=>{ const st=d.p[p.k], S2=st?ST[st]:null, fut=isT&&t[p.i]>nowMin();
+      const ligne=`<div class="pr2 ${cur&&cur.k===p.k?'cur':''}">
+        <div class="pr2-nm"><b>${p.k==='dhuhr'&&fri?'Joumouʿa':p.n}</b> <span class="arn">${p.ar}</span>${fut?'':`<button onclick="versetPriere('${p.k}','',S.sel)" class="pr2-v" aria-label="Verset de ${p.n}">📖</button>`}
+          <small>${S2?S2[1]:isHsc()&&p.k==='dhuhr'&&fri?`Khotba ${mosq().jumua.join(' / ')}`:iqamaDe(p.k)!=null?`Iqama ${hm((t[p.i]+iqamaDe(p.k))%1440)}`:'Adhan'}</small></div>
+        <div class="pr2-h tnum">${hm(t[p.i])}</div>
+        <button class="pck ${S2?S2[2]:''}" onclick="pTap('${p.k}')" aria-label="${p.n} : ${S2?S2[1]:'marquer comme priée'}">${S2?S2[0]:'✓'}</button></div>`;
+      return p.k==='fajr'?ligne+`<div class="pr2 sun"><div class="pr2-nm"><span class="muted">☀️ Chourouk · fin de Fajr</span></div><div class="pr2-h tnum muted">${hm(t[1])}</div><span style="width:44px"></span></div>`:ligne; }).join('')}`;
+}
 function prieresDetail(){
+  if(distOk()&&!dispOf(S.sel)&&!(estFemme()&&!dispEnCours()&&S.sel>=addDays(today(),-7))) return prieresDetail2();
   const d=J(), t=timesOf(S.sel), isT=S.sel===today(), fri=dateOf(S.sel).getDay()===5;
   const cur=isT?prevPrayer(nowMin(),t):null;
   return `      <h2><span class="ico">🕌</span>Mes prières<span class="cnt">${dispOf(S.sel)?'🌸':prayCount(S.sel)+'/5'}</span></h2>
@@ -2604,17 +2630,7 @@ function prieresDetail(){
         <div class="seg">${PSTAT.map(s=>`<button class="s-${s.k} ${d.p[p.k]===s.k?'on':''}" onclick="setPrayer('${p.k}','${s.k}')">${s.l}</button>`).join('')}</div>
       </div>${p.k==='fajr'?`<div class="sub" style="display:flex;justify-content:space-between;align-items:center;padding:6px 12px;margin:-2px 0 8px;border:1.5px dashed var(--line);border-radius:12px"><span>☀️ <b>Chourouk</b> · lever du soleil (fin de Fajr)</span><b class="tnum">${hm(t[1])}</b></div>`:''}`).join('')}`;
 }
-function vDin(){
-  const d=J(), t=timesOf(S.sel), isT=S.sel===today(), fri=dateOf(S.sel).getDay()===5;
-  const m=nowMin(); const cur=isT?prevPrayer(m,t):null;
-  const sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
-  const moisSad=monthSadaqa(S.sel);
-  const reg=prayerReg(30);
-  return `${accOk()?`<div style="margin-bottom:14px">${hadMindCartes('h').replace('<div class="mt">','<div>')}</div><div style="margin-bottom:14px">${aimeSunnahCartes().replace('<div class="grid g2 mt">','<div class="grid g2">')}</div><div style="margin-bottom:14px">${bonnesActionsCarte()}</div>`:''}
-  <div class="grid g2">
-    <div class="panel">
-${accOk()?'':prieresDetail()}
-  ${(()=>{ const i=S.nomI??(dayOfYear(S.sel)%99), n=NOMS[i]; return `
+function nomJourCarte(){ return `${(()=>{ const i=S.nomI??(dayOfYear(S.sel)%99), n=NOMS[i]; return `
       <div class="quote k-magenta nomjour mt">
         <span class="q-tag">✨ Nom du jour · ${i+1}/99</span>
         <div class="ar">${n[0]}</div>
@@ -2625,10 +2641,8 @@ ${accOk()?'':prieresDetail()}
           <button class="chip" style="border:none;background:#fff;color:#7c3aed;cursor:pointer;padding:7px 12px" onclick="go('noms')">📿 Voir les 99 noms</button>
           ${partOk()?`<button class="chip" style="border:none;color:#fff;cursor:pointer;padding:7px 12px" onclick="partager({type:'nom',tag:'Nom du jour · ${i+1}/99',ar:NOMS[${i}][0],fr:NOMS[${i}][1]+' — '+NOMS[${i}][2]})">📤 Partager</button>`:''}
         </div>
-      </div>`; })()}
-      ${naflPanel()}
-      ${jeunePanel()}
-      <div class="panel mt">
+      </div>`; })()}`; }
+function sadaqaPanel(){ const d=J(), sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0), moisSad=monthSadaqa(S.sel); return `      <div class="panel mt">
         <h2><span class="ico">💚</span>Sadaqa & zakat<span class="cnt">${sad?sad+' € ce jour':''}</span></h2>
         <div class="sub">${moisSad} € donnés ce mois-ci · ${yearSadaqa()} € depuis le 1er janvier</div>
         <div class="row" style="gap:8px">
@@ -2638,6 +2652,48 @@ ${accOk()?'':prieresDetail()}
         </div>
         ${d.sadaqa.map((x,i)=>`<div class="kv"><span>${esc(x.n||'Sadaqa')}</span><b>${esc(x.m)} € <button class="btn sm" onclick="delSad(${i})" aria-label="Supprimer">✕</button></b></div>`).join('')}
       </div>
+`; }
+function regPanel(){ const reg=prayerReg(30); return `    <div class="panel">
+      <h2><span class="ico">📈</span>Régularité des prières</h2>
+      <div class="sub">30 derniers jours</div>
+      ${PRAYERS.map(p=>`<div class="dom"><span>${p.n}</span><div class="tr"><div style="width:${reg[p.k]}%;background:linear-gradient(90deg,#10b981,#14b8a6)"></div></div><b class="tnum">${reg[p.k]}%</b><span></span></div>`).join('')}
+      <div class="kv"><span>À l'heure ou à la mosquée</span><b>${reg.heure}%</b></div>
+      <div class="kv"><span>Prières en retard</span><b>${reg.retard}</b></div>
+      <div class="kv"><span>Prières manquées / non notées</span><b>${reg.manque}</b></div>
+    </div>
+`; }
+// ✂️ « distill » (TEST compte admin) : Dîn resserré — l'essentiel en haut, le reste dans « Plus de pratiques »
+const distOk=()=>S.email===ADMIN_EMAIL;
+function vDin(){ return distOk()?vDin2():vDin1(); }
+function vDin2(){
+  const d=J(), fri=dateOf(S.sel).getDay()===5, o=!!S.ouv.pdin, n=naflN(d), sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
+  const resume=[`✨ Ce qu'Allah aime`,`☀️ Sunnah du jour`,`🌙 Surérogatoires ${n}/${NAFL.length}`,`🍽️ Jeûne${d.jeune==='fait'?' ✓':''}`,`💚 Sadaqa${sad?' '+sad+' €':''}`,`📈 Régularité`];
+  return `<div style="margin-bottom:14px">${hadMindCartes('h').replace('<div class="mt">','<div>')}</div>
+    <div style="margin-bottom:14px">${bonnesActionsCarte()}</div>
+    ${nomJourCarte().replace('nomjour mt','nomjour')}
+    ${fri?naflPanel().split('<div class="panel mt">\n      <button onclick="S.naflOpen')[0]:''}
+    <div class="panel mt">
+      <button onclick="deroul('pdin')" style="all:unset;display:block;width:100%;cursor:pointer">
+        <h2><span class="ico">🕌</span>Plus de pratiques<span class="cnt"><span style="display:inline-block;transition:.2s;transform:rotate(${o?180:0}deg)">▾</span></span></h2>
+        ${o?'':`<div class="sub" style="line-height:1.7">${resume.join(' · ')}</div>`}
+      </button>
+      ${o?`<div style="margin-top:6px">${aimeSunnahCartes()}${naflPanel(true)}${jeunePanel()}${sadaqaPanel()}<div class="mt">${regPanel()}</div></div>`:''}
+    </div>`;
+}
+function vDin1(){
+  const d=J(), t=timesOf(S.sel), isT=S.sel===today(), fri=dateOf(S.sel).getDay()===5;
+  const m=nowMin(); const cur=isT?prevPrayer(m,t):null;
+  const sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
+  const moisSad=monthSadaqa(S.sel);
+  const reg=prayerReg(30);
+  return `${accOk()?`<div style="margin-bottom:14px">${hadMindCartes('h').replace('<div class="mt">','<div>')}</div><div style="margin-bottom:14px">${aimeSunnahCartes().replace('<div class="grid g2 mt">','<div class="grid g2">')}</div><div style="margin-bottom:14px">${bonnesActionsCarte()}</div>`:''}
+  <div class="grid g2">
+    <div class="panel">
+${accOk()?'':prieresDetail()}
+  ${nomJourCarte()}
+      ${naflPanel()}
+      ${jeunePanel()}
+      ${sadaqaPanel()}
     </div>
     <div>${(baTest()?'':cartesDhikr(d))+'<div style="display:none">'}
       <div class="hero k-teal">
@@ -2664,14 +2720,7 @@ ${accOk()?'':prieresDetail()}
     </div>
   </div>
   <div class="grid g2 mt">
-    <div class="panel">
-      <h2><span class="ico">📈</span>Régularité des prières</h2>
-      <div class="sub">30 derniers jours</div>
-      ${PRAYERS.map(p=>`<div class="dom"><span>${p.n}</span><div class="tr"><div style="width:${reg[p.k]}%;background:linear-gradient(90deg,#10b981,#14b8a6)"></div></div><b class="tnum">${reg[p.k]}%</b><span></span></div>`).join('')}
-      <div class="kv"><span>À l'heure ou à la mosquée</span><b>${reg.heure}%</b></div>
-      <div class="kv"><span>Prières en retard</span><b>${reg.retard}</b></div>
-      <div class="kv"><span>Prières manquées / non notées</span><b>${reg.manque}</b></div>
-    </div>
+    ${regPanel()}
   </div>
   `;
 }
@@ -4339,8 +4388,8 @@ function naflN(d){ return NAFL.filter(([k])=>d.nafl&&d.nafl[k]).length; }
 function toggleNafl(k){ const d=J(); d.nafl=Object.assign({},d.nafl); d.nafl[k]=!d.nafl[k]; vib(); touch(); render(); if(d.nafl[k]) toast('✨ Qu\'Allah accepte ta prière'); }
 function toggleJumua(k){ const d=J(); d[k]=!d[k]; if(k==='jumua'){ if(d.jumua) d.p.dhuhr='mosquee'; else if(d.p.dhuhr==='mosquee') delete d.p.dhuhr; } vib(); touch(); render(); if(d[k]) toast(k==='jumua'?'🕌 Joumouʿa notée, qu\'Allah l\'accepte':'🚿 Ghusl noté'); }
 function srcLines(arr){ return arr.map(([t,r])=>`<div style="font-size:.74rem;font-weight:600;color:var(--muted);margin-top:6px;line-height:1.4">📜 ${esc(t)} <span class="tag">${esc(r)}</span></div>`).join(''); }
-function naflPanel(){
-  const d=J(), n=naflN(d), fri=dateOf(S.sel).getDay()===5;
+function naflPanel(sansJum){
+  const d=J(), n=naflN(d), fri=dateOf(S.sel).getDay()===5&&!sansJum;
   const jum = fri?`<div class="panel mt" style="border-color:#a7f3d0">
       <h2><span class="ico">🕌</span>Vendredi : la Joumouʿa<span class="cnt">${(d.jumua?1:0)+(d.ghusl?1:0)}/2</span></h2>
       <div class="checks" style="margin-top:8px">
