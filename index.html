@@ -26,6 +26,7 @@
 <link rel="manifest" href="manifest.json">
 <title>NIYYA — Foi, discipline, réussite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://acalynsfttpchvnomjwb.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Amiri:wght@700&family=Amiri+Quran&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><!-- non bloquant : si Google est inaccessible (Chine…), l'appli s'affiche quand même -->
 <style>
@@ -549,7 +550,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-201333'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-201631'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1943,7 +1944,8 @@ function icones(){ const H=document.documentElement; H.classList.toggle('icoC',H
     document.documentElement.classList.toggle('noble',true); if(S.pret&&S.cfg&&S.cfg.onb&&!S.cfg.vuTheme1){ S.cfg.vuTheme1=true; cfgTouch(); setTimeout(()=>toast('✨ NIYYA fait peau neuve : des couleurs plus douces, inspirées de son icône. Bonne découverte 🌙',6000),900); } document.documentElement.classList.toggle('bleuNuit',S.email===ADMIN_EMAIL&&THEME_VAR==='bleuNuit'); // TEST thème Nuit · Émeraude · Or
     if(!S.pret) return base.apply(this,arguments);
     const memeVue=vueAvant===S.view+'|'+S.sel, avant=memeVue?barres().map(e=>e.style.width):null;
-    base.apply(this,arguments); try{ icones(); }catch(e){} try{ clarifier(); }catch(e){} try{ a11y(); }catch(e){}
+    try{ base.apply(this,arguments); }catch(e){ console.error(e); try{ diagNotif&&diagNotif('render : '+e.message); }catch(_){} app.innerHTML=`<div class="panel" style="text-align:center;margin-top:20px"><h2 style="justify-content:center">Un petit souci d'affichage</h2><div class="sub" style="margin:8px 0 14px">Tes données sont en sécurité. Reviens à l'écran Prière ou recharge l'appli.</div><button class="btn pri" onclick="S.view='accueil';render()">Revenir à Prière</button> <button class="btn" onclick="location.reload()">Recharger</button></div>`; return; }
+    try{ icones(); }catch(e){} try{ clarifier(); }catch(e){} try{ a11y(); }catch(e){}
     const cle=S.view+'|'+S.sel;
     if(!memeVue&&vueAvant!==null&&vueAvant.split('|')[0]!==S.view){ app.classList.remove('vEntre'); void app.offsetWidth; app.classList.add('vEntre'); }
     vueAvant=cle;
@@ -3505,7 +3507,7 @@ function chercherVille(q){
     const [a,b]=await Promise.all([fr,monde]); res.push(...a,...b);
     if(!document.getElementById('villeSugg')) return;
     box.innerHTML=res.length?`<div class="sugg">${res.slice(0,8).map(x=>`<button onclick='choisirVille(${JSON.stringify(x.nom)},${x.lat},${x.lon},${JSON.stringify(x.tz||'')})'>${esc(x.nom.replace(/ \(\d+\)$/,''))} <span class="muted">${esc(x.info)}</span></button>`).join('')}</div>`
-      :`<p class="muted" style="font-size:.78rem;margin-top:6px">Ville introuvable. Vérifie l'orthographe ou utilise « ma position actuelle ».</p>`;
+      :`<p class="muted" style="font-size:.78rem;margin-top:6px">${navigator.onLine===false?'Pas de connexion internet : la recherche de ville ne marche pas hors ligne. Réessaie dès que tu es connecté.':'Ville introuvable. Vérifie l\'orthographe ou utilise « ma position actuelle ».'}</p>`;
   },350);
 }
 const METHODE_PAYS={'Asia/Riyadh':'umq','Africa/Algiers':'mwl'}; // Algérie : ministère des Affaires religieuses, Fajr 18° / Isha 17° // fuseau horaire → méthode officielle du pays
@@ -3864,7 +3866,7 @@ function vCoran(){
       <div class="h-sub" style="font-size:.95rem">${esc(s[2])} · ${esc(s[1])}</div>
     </div>
     <div class="panel mt" style="--qz:${z}">
-      ${!D?(QC.err?`<div class="coach">Impossible de charger la sourate (${esc(QC.err)}). Vérifie ta connexion. <button class="btn sm" onclick="ouvrirSourate(${n})">Réessayer</button></div>`:'<p class="muted" style="text-align:center;padding:30px 0;font-weight:700">Chargement de la sourate…</p>'):`
+      ${!D?(QC.err?`<div class="coach">${navigator.onLine===false?'Pas de connexion internet : cette sourate n\'a pas encore été enregistrée sur ton téléphone.':'La sourate n\'a pas pu être chargée.'} Vérifie ta connexion, puis réessaie. <button class="btn sm" onclick="ouvrirSourate(${n})">Réessayer</button></div>`:'<p class="muted" style="text-align:center;padding:30px 0;font-weight:700">Chargement de la sourate…</p>'):`
       <div class="coach" style="font-size:.8rem;margin-bottom:8px">🔖 Touche le marque-page à côté d'un verset pour noter où tu t'arrêtes. Ta dernière lecture (📍) est aussi gardée toute seule.</div>
       ${n!==1&&n!==9?`<div class="bism">${BISM}</div>`:''}
       ${D.ar.map((a,i)=>`<div class="ayah ${L&&L.s===n&&L.a===i+1?'mark':''}" id="ay${i+1}">
