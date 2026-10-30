@@ -555,7 +555,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-210942'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-211106'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2605,11 +2605,11 @@ async function partImage(o){ // o : {type, tag, ar, fr, src, style}
   x.fillStyle=St.txt;
   const maxW=W-200; let ar=null, fr=null, tot=0;
   if(o.ar){ x.direction='rtl'; ar=partBloc(x,o.ar,(o.type==='verset'?'$px "Amiri Quran",Amiri,serif':'700 $px Amiri,serif'),o.type==='nom'?150:72,40,maxW,o.type==='nom'?260:620,o.type==='nom'?1.3:1.75); x.direction='ltr'; tot+=ar.h+80; }
-  fr=partBloc(x,o.fr,'700 $px "Plus Jakarta Sans",sans-serif',o.type==='nom'?64:58,30,maxW,o.ar?640:1000,1.45); tot+=fr.h;
+  fr=partBloc(x,o.fr,'700 $px "Plus Jakarta Sans",sans-serif',o.type==='stat'?84:o.type==='nom'?64:58,30,maxW,o.ar?640:1000,1.3); tot+=fr.h;
   let y=Math.max(360,(H-tot)/2-40);
   if(ar){ x.direction='rtl'; x.font=(o.type==='verset'?ar.t+'px "Amiri Quran",Amiri,serif':'700 '+ar.t+'px Amiri,serif'); ar.L.forEach(l=>{ y+=ar.t*(o.type==='nom'?1.3:1.75); x.fillText(l,W/2,y-ar.t*.45); }); x.direction='ltr'; y+=80;
     x.fillStyle=St.acc; x.save(); x.translate(W/2,y-42); x.rotate(Math.PI/4); x.fillRect(-9,-9,18,18); x.restore(); x.fillRect(W/2-120,y-43,90,2); x.fillRect(W/2+30,y-43,90,2); x.fillStyle=St.txt; }
-  else { x.fillStyle=St.acc; x.font='700 150px Amiri,serif'; x.globalAlpha=.5; x.fillText('“',W/2,y+40); x.globalAlpha=1; x.fillStyle=St.txt; y+=60; }
+  else if(o.type!=='stat'){ x.fillStyle=St.acc; x.font='700 150px Amiri,serif'; x.globalAlpha=.5; x.fillText('“',W/2,y+40); x.globalAlpha=1; x.fillStyle=St.txt; y+=60; }
   x.font='700 '+fr.t+'px "Plus Jakarta Sans",sans-serif'; fr.L.forEach(l=>{ y+=fr.t*1.45; x.fillText(l,W/2,y-fr.t*.35); });
   if(o.src){ y+=80; x.fillStyle=St.sub; const s=partBloc(x,o.src,'600 $px "Plus Jakarta Sans",sans-serif',34,24,maxW,140,1.4); s.L.forEach(l=>{ x.fillText(l,W/2,y); y+=s.t*1.4; }); x.fillStyle=St.txt; }
   // signature NIYYA en bas
@@ -2925,11 +2925,11 @@ function moisStats(ym){ const [y,m]=ym.split('-').map(Number), n=new Date(y,m,0)
   f.forEach(k=>{ const d=J(k); PRAYERS.forEach(p=>{ const st=d.p[p.k]; if(st&&st!=='manquee'){ o.prieres++; if(st==='heure'||st==='mosquee'){ o.heure++; o.parP[p.k]=(o.parP[p.k]||0)+1; } if(st==='mosquee') o.mosquee++; } });
     o.ist+=+d.istighfar||0; o.dk+=Object.keys((d.dk&&d.dk.apres)||{}).length; o.ba+=baNb(d); if(d.coran||(d.essX&&d.essX.coran)) o.coran++; });
   const best=Object.entries(o.parP).sort((a,b)=>b[1]-a[1])[0]; o.best=best?PRAYERS.find(p=>p.k===best[0]).n:null; return o; }
-function moisCartes(o){ // juste milieu : 4 cartes, 2 couleurs
-  const C=[{t:`${S.cfg.nom?S.cfg.nom+', ton':'Ton'} mois de ${o.nom}`,n:String(o.jours),l:o.jours>1?'jours avec NIYYA':'jour avec NIYYA',s:[o.serie>1?`Meilleure série : ${o.serie} jours avec les 5 prières`:''],v:'cal',st:'nuit'}];
-  if(o.prieres) C.push({t:'Mes prières',n:String(o.prieres),l:'prières notées',s:[`${o.heure} à l'heure${o.mosquee?' · '+o.mosquee+' à la mosquée':''}`,o.best?`Ma prière la plus régulière : ${o.best}`:''],v:'barres',st:'nuit'});
-  C.push({t:'Mon mois en un coup d\'œil',v:'resume',st:'nuit'});
-  C.push({t:'Qu\'Allah accepte',n:'تَقَبَّلَ اللّٰهُ',l:'Seul Allah connaît la valeur de nos actes.',s:['Renouvelle ton intention pour le mois prochain 🤲'],v:'',st:'emeraude'}); return C; }
+function moisCartes(o){ // même style que les images de partage des versets (partImage)
+  const C=[{tag:`Mon mois de ${o.nom}`,fr:`${o.jours} jour${o.jours>1?'s':''} avec NIYYA`,src:o.serie>1?`Meilleure série : ${o.serie} jours avec les 5 prières`:'Chaque jour compte'}];
+  if(o.prieres) C.push({tag:'Mes prières',fr:`${o.prieres} prières notées, dont ${o.heure} à l'heure${o.mosquee?' et '+o.mosquee+' à la mosquée':''}`,src:o.best?`Ma prière la plus régulière : ${o.best}`:''});
+  if(o.ist||o.ba) C.push({tag:'Mon dhikr et mes bonnes actions',fr:[o.ist?`${o.ist.toLocaleString('fr-FR')} istighfar`:'',o.ba?`${o.ba}\u00a0bonne${o.ba>1?'s':''}\u00a0action${o.ba>1?'s':''}`:''].filter(Boolean).map(t=>t.replace(/ istighfar$/,'\u00a0istighfar')).join(' · '),src:o.dk?`${o.dk} dhikr après la prière`:''});
+  C.push({tag:'Qu\'Allah accepte',ar:'تَقَبَّلَ اللّٰهُ مِنَّا وَمِنْكُمْ',fr:'Seul Allah connaît la valeur de nos actes.',src:'Renouvelle ton intention pour le mois prochain'}); return C; }
 const MOIS_FONDS={nuit:['#120c2e','#21174f','#35237a'],emeraude:['#022c22','#064e3b','#0b6b4f'],bleu:['#0a1230','#16244d','#1d3566'],prune:['#2a1030','#4c2556','#6e3a78']};
 async function moisImage(c,i,n,o){ try{ await Promise.all(['700 60px Amiri','800 60px "Plus Jakarta Sans"','600 40px "Plus Jakarta Sans"'].map(f=>document.fonts.load(f))); }catch(e){}
   const F=MOIS_FONDS[c.st]||MOIS_FONDS.nuit, A='#f2cf5b', SUB='rgba(255,255,255,.76)', W=1080, H=1920, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d');
@@ -2963,7 +2963,7 @@ async function moisImage(c,i,n,o){ try{ await Promise.all(['700 60px Amiri','800
   x.textAlign='left'; x.fillStyle='#fff'; x.font='800 46px "Plus Jakarta Sans",sans-serif'; x.fillText('NIYYA',W/2-40,H-206); x.fillStyle=SUB; x.font='600 28px "Plus Jakarta Sans",sans-serif'; x.fillText('niyya-app.github.io',W/2-40,H-168);
   return cv; }
 async function ouvrirMois(ym){ toast('Création de ton récap…'); const o=moisStats(ym), C=moisCartes(o), urls=[], files=[];
-  for(let i=0;i<C.length;i++){ const cv=await moisImage(C[i],i,C.length,o); urls.push(cv.toDataURL('image/jpeg',.9)); const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',.9)); files.push(new File([b],`niyya-${ym}-${i+1}.jpg`,{type:'image/jpeg'})); }
+  for(let i=0;i<C.length;i++){ const cv=await partImage({type:C[i].ar?'nom':'stat',tag:C[i].tag,ar:C[i].ar,fr:C[i].fr,src:C[i].src}); urls.push(cv.toDataURL('image/jpeg',.9)); const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',.9)); files.push(new File([b],`niyya-${ym}-${i+1}.jpg`,{type:'image/jpeg'})); }
   S._moisFiles=files; const peut=!!(navigator.canShare&&navigator.canShare({files}));
   openSheet(`<h2 style="margin:0 0 4px">🌙 Mon mois de ${esc(o.nom)}</h2><div class="sub">${C.length} cartes à faire défiler, prêtes pour ta story.</div>
     <div style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:12px 2px">${urls.map(u=>`<img src="${u}" alt="" style="flex:none;width:62%;scroll-snap-align:center;border-radius:14px">`).join('')}</div>
