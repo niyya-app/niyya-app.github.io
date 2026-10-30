@@ -528,7 +528,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-192533'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-193028'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1866,7 +1866,7 @@ function scoreColor(s){ return s>=80?'#10b981':s>=60?'#84cc16':s>=40?'#f59e0b':s
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const app=document.getElementById('app');
 // ♿ passe « audit » après chaque affichage (TEST admin) : aucun texte < 13 px, petites cibles agrandies, texte pâle foncé
-const a11yOk=()=>S.email===ADMIN_EMAIL;
+const a11yOk=()=>true; // ouvert à tous le 30/10
 function a11y(){ const H=document.documentElement; H.classList.toggle('a11y',a11yOk()); if(!a11yOk()) return;
   const lum=c=>{ const m=(c||'').match(/[\d.]+/g); if(!m) return null; const v=m.slice(0,3).map(x=>{ x/=255; return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4); }); return {L:.2126*v[0]+.7152*v[1]+.0722*v[2],a:m[3]===undefined?1:+m[3]}; };
   const fond=el=>{ for(let e=el;e&&e!==document.documentElement;e=e.parentElement){ const cs=getComputedStyle(e); if(cs.backgroundImage&&cs.backgroundImage.includes('gradient')){ const m=cs.backgroundImage.match(/rgba?\([^)]*\)|#[0-9a-f]{6}/i); if(m) return m[0].startsWith('#')?'rgb('+[1,3,5].map(i=>parseInt(m[0].slice(i,i+2),16)).join(',')+')':m[0]; } const l=lum(cs.backgroundColor); if(l&&l.a>.5) return cs.backgroundColor; } return getComputedStyle(document.body).backgroundColor||'rgb(250,248,242)'; };
