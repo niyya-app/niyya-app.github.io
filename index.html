@@ -121,6 +121,16 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .noble.bleuNuit .nav button.on{background:#0f1a3a;color:#e9c46a;box-shadow:0 4px 12px rgba(15,26,58,.25)}
 .noble.bleuNuit .panel h2 .ico[data-ti],.noble.bleuNuit .t-ico[data-ti]{background:#0f1a3a;color:#e9c46a}
 .noble.bleuNuit.icoC .panel h2 .ico{background:#f1ece0;color:inherit}
+/* ♿ « audit » (TEST compte admin : classe .a11y) : textes ≥ 13 px, sous-titres 14 px, zones de toucher plus grandes, contrastes */
+.a11y .sub,.a11y .tile small{font-size:.875rem}
+.a11y .q-tag,.a11y .src,.a11y .chip,.a11y .brand p{font-size:.8125rem}
+.a11y .seg button{font-size:.85rem;min-height:44px}
+.a11y button.chip{min-height:38px;padding:8px 13px}
+.a11y .sub a{color:#3f2f8c;font-weight:800}
+.a11y .cTabac{--g:linear-gradient(160deg,#5566c4,#3e4aa6)}
+:root.a11y[data-theme="dark"] .t-ico,:root.a11y[data-theme="dark"] .panel h2 .ico{background:rgba(255,255,255,.09)!important}
+:root.a11y[data-theme="dark"] .sub a{color:#c9bdff}
+@media (prefers-color-scheme: dark){:root.a11y:not([data-theme="light"]) .t-ico,:root.a11y:not([data-theme="light"]) .panel h2 .ico{background:rgba(255,255,255,.09)!important}:root.a11y:not([data-theme="light"]) .sub a{color:#c9bdff}}
 /* ---------- Entête ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
@@ -518,7 +528,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-154019'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-192533'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1855,6 +1865,21 @@ function scoreColor(s){ return s>=80?'#10b981':s>=60?'#84cc16':s>=40?'#f59e0b':s
    ===================================================================== */
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const app=document.getElementById('app');
+// ♿ passe « audit » après chaque affichage (TEST admin) : aucun texte < 13 px, petites cibles agrandies, texte pâle foncé
+const a11yOk=()=>S.email===ADMIN_EMAIL;
+function a11y(){ const H=document.documentElement; H.classList.toggle('a11y',a11yOk()); if(!a11yOk()) return;
+  const lum=c=>{ const m=(c||'').match(/[\d.]+/g); if(!m) return null; const v=m.slice(0,3).map(x=>{ x/=255; return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4); }); return {L:.2126*v[0]+.7152*v[1]+.0722*v[2],a:m[3]===undefined?1:+m[3]}; };
+  const fond=el=>{ for(let e=el;e&&e!==document.documentElement;e=e.parentElement){ const cs=getComputedStyle(e); if(cs.backgroundImage&&cs.backgroundImage.includes('gradient')){ const m=cs.backgroundImage.match(/rgba?\([^)]*\)|#[0-9a-f]{6}/i); if(m) return m[0].startsWith('#')?'rgb('+[1,3,5].map(i=>parseInt(m[0].slice(i,i+2),16)).join(',')+')':m[0]; } const l=lum(cs.backgroundColor); if(l&&l.a>.5) return cs.backgroundColor; } return getComputedStyle(document.body).backgroundColor||'rgb(250,248,242)'; };
+  app.querySelectorAll('*').forEach(el=>{ if(el.closest('.ar,.ayah .ar,svg')) return;
+    const t=[...el.childNodes].some(n=>n.nodeType===3&&/[A-Za-zÀ-ÿ0-9]/.test(n.nodeValue)); const cs=getComputedStyle(el);
+    if(t){ const fs=parseFloat(cs.fontSize); if(fs<13&&!el.style.fontSize) el.style.fontSize='13px';
+      try{ const c=lum(cs.color), b=lum(fond(el)); if(c&&b){ const r=(Math.max(c.L,b.L)+.05)/(Math.min(c.L,b.L)+.05); if(r<4.5) el.style.color=b.L>.45?'#2b2740':'#ffffff'; } }catch(e){} }
+    if(el.tagName==='BUTTON'||el.tagName==='A'||el.hasAttribute('onclick')){ const r=el.getBoundingClientRect(); if(!r.width) return;
+      if(r.height<40&&!el.closest('.tabs,.hpal,.opt')){ if(cs.display==='inline') el.style.display='inline-block'; el.style.minHeight='40px'; if(el.tagName==='A'){ el.style.paddingTop=el.style.paddingBottom='10px'; } else if(cs.display!=='block'){ el.style.display=cs.display==='inline'?'inline-flex':cs.display; el.style.alignItems='center'; } }
+      if(r.width<40&&el.tagName==='BUTTON') el.style.minWidth='40px'; }
+  });
+}
+
 const THEME_VAR='violet'; // TEST : 'bleuNuit' (1re version) ou 'violet' (violet doux)
 // ✍️ « clarify » (ouvert à tous le 30/10) : textes de l'interface plus courts et plus clairs — jamais les hadiths, versets ni invocations
 const clOk=()=>true; // ouvert à tous le 30/10
@@ -1896,7 +1921,7 @@ function icones(){ const H=document.documentElement; H.classList.toggle('icoC',H
     document.documentElement.classList.toggle('noble',true); if(S.pret&&S.cfg&&S.cfg.onb&&!S.cfg.vuTheme1){ S.cfg.vuTheme1=true; cfgTouch(); setTimeout(()=>toast('✨ NIYYA fait peau neuve : des couleurs plus douces, inspirées de son icône. Bonne découverte 🌙',6000),900); } document.documentElement.classList.toggle('bleuNuit',S.email===ADMIN_EMAIL&&THEME_VAR==='bleuNuit'); // TEST thème Nuit · Émeraude · Or
     if(!S.pret) return base.apply(this,arguments);
     const memeVue=vueAvant===S.view+'|'+S.sel, avant=memeVue?barres().map(e=>e.style.width):null;
-    base.apply(this,arguments); try{ icones(); }catch(e){} try{ clarifier(); }catch(e){}
+    base.apply(this,arguments); try{ icones(); }catch(e){} try{ clarifier(); }catch(e){} try{ a11y(); }catch(e){}
     const cle=S.view+'|'+S.sel;
     if(!memeVue&&vueAvant!==null&&vueAvant.split('|')[0]!==S.view){ app.classList.remove('vEntre'); void app.offsetWidth; app.classList.add('vEntre'); }
     vueAvant=cle;
