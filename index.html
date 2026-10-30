@@ -507,7 +507,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-144027'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-145745'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2614,7 +2614,6 @@ function prieresDetail2(){
       return p.k==='fajr'?ligne+`<div class="pr2 sun"><div class="pr2-nm"><span class="muted">☀️ Chourouk · fin de Fajr</span></div><div class="pr2-h tnum muted">${hm(t[1])}</div><span style="width:44px"></span></div>`:ligne; }).join('')}`;
 }
 function prieresDetail(){
-  if(distOk()&&!dispOf(S.sel)&&!(estFemme()&&!dispEnCours()&&S.sel>=addDays(today(),-7))) return prieresDetail2();
   const d=J(), t=timesOf(S.sel), isT=S.sel===today(), fri=dateOf(S.sel).getDay()===5;
   const cur=isT?prevPrayer(nowMin(),t):null;
   return `      <h2><span class="ico">🕌</span>Mes prières<span class="cnt">${dispOf(S.sel)?'🌸':prayCount(S.sel)+'/5'}</span></h2>
