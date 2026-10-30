@@ -125,6 +125,7 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .a11y .sub,.a11y .tile small{font-size:.875rem}
 .a11y .q-tag,.a11y .src,.a11y .chip,.a11y .brand p{font-size:.8125rem}
 .a11y .seg button{font-size:.85rem;min-height:44px}
+.a11y .hpal-pt{width:38px;height:38px}
 .a11y button.chip{min-height:38px;padding:8px 13px}
 .a11y .sub a{color:#3f2f8c;font-weight:800}
 .a11y .cTabac{--g:linear-gradient(160deg,#5566c4,#3e4aa6)}
@@ -150,6 +151,7 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .dk2 .dkpied{display:flex;align-items:center;gap:6px;margin-top:12px;flex-wrap:wrap}
 .dk2 .dkpr{border:none;background:none;color:#fff;font:inherit;font-weight:800;font-size:.88rem;cursor:pointer;padding:8px 0;min-height:40px}
 .dk2 .dkpq{all:unset;display:block;cursor:pointer;font-size:.85rem;font-weight:700;opacity:.85;margin-top:8px;padding:6px 0}
+.hc-nuit{--g:linear-gradient(160deg,#1d2b5a,#0f1a3a);background:var(--g)}.hc-prune{--g:linear-gradient(160deg,#6e3a78,#4c2556);background:var(--g)}
 /* ---------- Entête ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
@@ -547,7 +549,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-193638'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-193821'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1895,7 +1897,7 @@ function a11y(){ const H=document.documentElement; H.classList.toggle('a11y',a11
       try{ const c=lum(cs.color), b=lum(fond(el)); if(c&&b){ const r=(Math.max(c.L,b.L)+.05)/(Math.min(c.L,b.L)+.05); if(r<4.5) el.style.color=b.L>.45?'#2b2740':'#ffffff'; } }catch(e){} }
     if(el.tagName==='BUTTON'||el.tagName==='A'||el.hasAttribute('onclick')){ const r=el.getBoundingClientRect(); if(!r.width) return;
       if(r.height<40&&!el.closest('.tabs,.hpal,.opt')){ if(cs.display==='inline') el.style.display='inline-block'; el.style.minHeight='40px'; if(el.tagName==='A'){ el.style.paddingTop=el.style.paddingBottom='10px'; } else if(cs.display!=='block'){ el.style.display=cs.display==='inline'?'inline-flex':cs.display; el.style.alignItems='center'; } }
-      if(r.width<40&&el.tagName==='BUTTON') el.style.minWidth='40px'; }
+      if(r.width<40&&el.tagName==='BUTTON'&&!el.closest('.hpal')) el.style.minWidth='40px'; }
   });
 }
 
@@ -2282,6 +2284,8 @@ function ring(score,size){
   return `<div class="ring" style="width:${size}px;height:${size}px"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="10"/>
     <circle cx="50" cy="50" r="${r}" fill="none" stroke="#fde047" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><b class="tnum">${score}</b></div>`;
 }
+const HERO_COULEURS_NOBLE=[['blanc','Blanc'],['k-violet','Violet'],['hc-nuit','Bleu nuit'],['k-sky','Bleu doux'],['k-emerald','Émeraude'],['hc-prune','Prune'],['k-gold','Or']]; // thème actuel : 7 couleurs toutes différentes
+const heroCouleurs=()=>document.documentElement.classList.contains('noble')?HERO_COULEURS_NOBLE:HERO_COULEURS;
 const HERO_COULEURS=[['blanc','Blanc'],['k-emerald','Vert'],['k-violet','Violet'],['k-sky','Bleu'],['k-teal','Turquoise'],['k-pink','Rose'],['k-magenta','Magenta'],['k-sunset','Coucher de soleil'],['k-gold','Or']];
 function choisirCouleurMind(k){ S.cfg.mindCouleur=k; S.palMind=false; cfgTouch(); render(); }
 function choisirCouleurHero(k){ S.cfg.heroCouleur=k; S.paletteOuverte=false; cfgTouch(); render(); }
@@ -2295,7 +2299,7 @@ function heroPriere(){
     return plusHoraires&&p.k==='fajr'?b+`<div class="pmini sun" title="Lever du soleil : fin du temps de Fajr">Chourouk<small>${hm(t[1])}</small></div>`:b;}).join('');
   const essai=true; // choix de la couleur de la carte (blanc par défaut)
   const coul=essai?(S.cfg.heroCouleur||'blanc'):'blanc', blanc=coul==='blanc';
-  const palette=essai&&S.paletteOuverte?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:'';
+  const palette=essai&&S.paletteOuverte?`<div class="hpal">${heroCouleurs().map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:'';
   return `<div class="hero ${blanc?'k-emerald blanc':coul}">
     <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
     <div class="h-lbl" style="padding-right:80px">🕌 ${isT?'Prochaine prière':'Prières du jour'} · ${esc(lieuNom())}</div>
@@ -2617,7 +2621,7 @@ function hadMindCartes(q){ // q : 'h' hadith seul, 'm' phrase seule, sinon les d
       <div class="src">D'après ${b.a?esc(b.t):'« '+esc(b.t)+' »'}<button onclick="nextMind()">Une autre ↻</button></div>
       ${partBtn(`partager({type:'mind',tag:'Mindset du jour',fr:MINDSET[${mi}][1],src:'D’après '+BOOKS[MINDSET[${mi}][0]].t})`)}
       <div class="hpal-bas"><button class="hpal-btn" onclick="S.palMind=!S.palMind;render()">🎨 ${S.palMind?'Fermer':'Couleur'}</button></div>
-      ${S.palMind?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===mc?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurMind('${k}')"></button>`).join('')}</div>`:''}
+      ${S.palMind?`<div class="hpal">${heroCouleurs().map(([k,l])=>`<button class="hpal-pt ${k} ${k===mc?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurMind('${k}')"></button>`).join('')}</div>`:''}
     </div>`;
   return q==='h'?`<div class="mt">${H}</div>`:q==='m'?`<div class="mb">${M}</div>`:`<div class="grid g2 mt">${H}${M}</div>`;
 }
@@ -2636,7 +2640,7 @@ function vAccueil(){
     <div id="npCount" class="tnum" style="font-size:1.35rem;font-weight:800;opacity:.95"></div>
     <div class="h-sub" style="font-size:1rem">Adhan ${hm(at)}${iq!=null?` · Iqama ${hm((at+iq)%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${mosq().jumua.join(' / ')}`:''}</div>
     <div class="hpal-bas"><button class="hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()">🎨 ${S.paletteOuverte?'Fermer':'Couleur'}</button></div>
-    ${S.paletteOuverte?`<div class="hpal">${HERO_COULEURS.map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:''}
+    ${S.paletteOuverte?`<div class="hpal">${heroCouleurs().map(([k,l])=>`<button class="hpal-pt ${k} ${k===coul?'on':''}" title="${l}" aria-label="${l}" onclick="choisirCouleurHero('${k}')"></button>`).join('')}</div>`:''}
   </div>
   <div class="panel mt">
     <div class="row" style="align-items:center;gap:8px;margin-bottom:10px">
