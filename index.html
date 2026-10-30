@@ -549,7 +549,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-194453'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-195109'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3201,6 +3201,7 @@ function dkTap(n){ const d=J(), o=d.dk||{}, m=S.dhikrMode||'tasbih', libre=m==='
   S._dkPulse=1; compterDhikr(n); vib();
   const o2=J().dk||{}, ap=libre?(o2.libre||0):(o2[m]||0), ib=m==='tasbih'?dhikrEtape('tasbih',ap)[0]:0;
   if(ib!==ia||ap<av||ap===100) vibFort(); }
+function istTap(n){ const av=J().istighfar||0; S._istPulse=1; dhikr(n); if(av<100&&(J().istighfar||0)>=100) vibFort(); }
 function vibFort(){ try{ if(NATIF){ const r=Capacitor.registerPlugin?(S._hap=S._hap||Capacitor.registerPlugin('Haptics')).notification({type:'SUCCESS'}):Capacitor.nativePromise('Haptics','notification',{type:'SUCCESS'}); if(r&&r.catch) r.catch(()=>{}); return; } }catch(e){} try{ navigator.vibrate&&navigator.vibrate([35,45,35]); }catch(e){} }
 function dkChoixPriere(){ const d=J(), o=d.dk||{}, A=o.apres||{}, cib=dhikrCible(d);
   openSheet(`<h2 style="margin:0 0 4px">📿 Dhikr d'après quelle prière ?</h2><div class="sub">Le dhikr compte pour la prière choisie.</div>
@@ -3241,6 +3242,20 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
       <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(-1)">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(10)">+10</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(33)">+33</button></div>
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 « Je demande pardon à Allah cent fois par jour », disait le Prophète ﷺ. — Muslim n° 2702</div>
     </div>`;
+  const carteIst2=()=>{ // ✂️ istighfar épuré (TEST compte admin), même forme que le dhikr
+    const pulse=S._istPulse; S._istPulse=0; const pb='background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:12px;min-width:52px;height:40px;font:inherit;font-weight:800;cursor:pointer';
+    return `<div class="hero k-teal dk2">
+      <div class="row" style="align-items:center"><div class="h-lbl">📿 Istighfar</div><div class="sp"></div><span class="chip">${ist>=100?'✓ +'+PTS_ISTIGHFAR+' points':'+'+PTS_ISTIGHFAR+' pts à 100'}</span>${repli('ist')}</div>
+      <button class="dktap" onclick="istTap(1)" aria-label="Compter : Astaghfiroullâh, ${ist} sur 100">
+        <span lang="ar" dir="rtl" class="dkar" style="font-size:2.3rem">أَسْتَغْفِرُ اللّٰهَ</span>
+        <span class="dktr">Astaghfiroullâh · Je demande pardon à Allah</span>
+        <span class="dkn tnum${pulse?' pulse':''}">${ist}<small> / 100</small></span>
+        <span class="dkbar"><i style="width:${Math.min(100,ist)}%"></i></span>
+      </button>
+      <div class="dkpied"><span class="dkpr" style="cursor:default">${ist>=100?'✓ Objectif du jour atteint':'Objectif : 100 par jour'}</span><span class="sp"></span><button style="${pb}" onclick="dhikr(-1)" aria-label="Retirer 1">−1</button><button style="${pb}" onclick="istTap(10)">+10</button><button style="${pb}" onclick="istTap(33)">+33</button></div>
+      <button class="dkpq" onclick="S.istPq=!S.istPq;render()">${S.istPq?'▾':'›'} Pourquoi l'istighfar ?</button>
+      ${S.istPq?`<div class="h-sub" style="margin-top:6px;font-size:.85rem;line-height:1.5">« Je demande pardon à Allah cent fois par jour », disait le Prophète ﷺ. — Muslim n° 2702</div>`:''}
+    </div>`; };
   const resumeDk=`${esc(D.l)} · ${m==='tasbih'?`<b class="tnum">${Object.keys(o.apres||{}).length}</b>/5 prières <span style="display:inline-block;vertical-align:middle;width:70px;height:7px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden"><span style="display:block;height:100%;width:${Object.keys(o.apres||{}).length/5*100}%;background:#fde047"></span></span>`:`<b class="tnum">${n}</b>/100`} · touche pour ouvrir`;
   const carteDk2=()=>{ // ✂️ dhikr épuré (ouvert à tous le 30/10) : 3 zones — choix, grande zone à toucher, suivi discret
     const ST=m==='tasbih'?DHIKRS.tasbih.etapes:null, cib=dhikrCible(d), A=o.apres||{}, pr=S.sel===today()?dkProchaine():null, pulse=S._dkPulse; S._dkPulse=0;
@@ -3277,7 +3292,8 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 ${esc(D.r)} — ${esc(D.src)}</div>
     </div>`;
   const cDk=S.ouv.dk?carteDk2():carteDk; // dhikr épuré ouvert à tous le 30/10
-  return dkDabord?cDk+'<div class="mt">'+carteIst+'</div>':carteIst+cDk;
+  const cIst=S.ouv.ist&&S.email===ADMIN_EMAIL?carteIst2():carteIst;
+  return dkDabord?cDk+'<div class="mt">'+cIst+'</div>':cIst+cDk;
 }
 function dhikr(n){ const d=J(); d.istighfar=Math.max(0,d.istighfar+n); vib(); touch(); render(); if(d.istighfar>=100&&d.istighfar-n<100){ if(true) celebrer('أَسْتَغْفِرُ اللّٰهَ','100 istighfar','Qu\'Allah te pardonne · +'+PTS_ISTIGHFAR+' points'); else toast('🤲 100 istighfar, qu\'Allah te pardonne'); } }
 /* ---------- Faire un don ---------- */
