@@ -111,6 +111,16 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .pck{width:44px;height:44px;flex:none;border-radius:50%;border:2px solid var(--line);background:var(--card);color:var(--muted);font-size:1.15rem;font-weight:900;cursor:pointer;transition:transform .15s,background .2s}
 .pck:active{transform:scale(.9)}.pck.ok{background:var(--emerald);border-color:var(--emerald);color:#fff}.pck.late{background:#f59e0b;border-color:#f59e0b;color:#fff}.pck.miss{background:#fee2e2;border-color:#fecaca;color:#b91c1c}
 .pr2.sun{padding:4px 4px 8px;border-bottom:1px dashed var(--line)}
+/* variante « Bleu nuit » du thème (1re version), activée par la classe .bleuNuit */
+:root.noble.bleuNuit{--indigo:#0f1a3a;--violet:#0f1a3a}
+.noble.bleuNuit .k-violet,.noble.bleuNuit .k-pink,.noble.bleuNuit .k-magenta{--g:linear-gradient(160deg,#16244d,#0f1a3a);background:var(--g)}
+.noble.bleuNuit .k-sky{--g:linear-gradient(160deg,#1d3566,#14264d);background:var(--g)}
+.noble.bleuNuit .hero,.noble.bleuNuit .quote{box-shadow:0 8px 22px rgba(15,26,58,.14)}
+.noble.bleuNuit .logo{background:#0f1a3a;color:#e9c46a;box-shadow:0 4px 12px rgba(15,26,58,.25)}
+.noble.bleuNuit .panel h2 .ico{background:#0f1a3a;color:#e9c46a}
+.noble.bleuNuit .nav button.on{background:#0f1a3a;color:#e9c46a;box-shadow:0 4px 12px rgba(15,26,58,.25)}
+.noble.bleuNuit .panel h2 .ico[data-ti],.noble.bleuNuit .t-ico[data-ti]{background:#0f1a3a;color:#e9c46a}
+.noble.bleuNuit.icoC .panel h2 .ico{background:#f1ece0;color:inherit}
 /* ---------- Entête ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
@@ -508,7 +518,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-152854'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-153102'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1845,6 +1855,7 @@ function scoreColor(s){ return s>=80?'#10b981':s>=60?'#84cc16':s>=40?'#f59e0b':s
    ===================================================================== */
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const app=document.getElementById('app');
+const THEME_VAR='bleuNuit'; // TEST : 'bleuNuit' (1re version) ou 'violet' (violet doux)
 // ✍️ « clarify » (ouvert à tous le 30/10) : textes de l'interface plus courts et plus clairs — jamais les hadiths, versets ni invocations
 const clOk=()=>true; // ouvert à tous le 30/10
 const CL_TXT=[
@@ -1882,7 +1893,7 @@ function icones(){ const H=document.documentElement; H.classList.toggle('icoC',H
   const base=render; let vueAvant=null;
   const barres=()=>[...app.querySelectorAll('[style*="width:"]')].filter(e=>/width:\s*[\d.]+%/.test(e.getAttribute('style')||''));
   render=function(){
-    document.documentElement.classList.toggle('noble',S.email===ADMIN_EMAIL); // TEST thème Nuit · Émeraude · Or
+    document.documentElement.classList.toggle('noble',S.email===ADMIN_EMAIL); document.documentElement.classList.toggle('bleuNuit',S.email===ADMIN_EMAIL&&THEME_VAR==='bleuNuit'); // TEST thème Nuit · Émeraude · Or
     if(!S.pret) return base.apply(this,arguments);
     const memeVue=vueAvant===S.view+'|'+S.sel, avant=memeVue?barres().map(e=>e.style.width):null;
     base.apply(this,arguments); try{ icones(); }catch(e){} try{ clarifier(); }catch(e){}
