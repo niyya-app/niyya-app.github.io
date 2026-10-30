@@ -555,7 +555,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-210835'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-210942'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2925,10 +2925,9 @@ function moisStats(ym){ const [y,m]=ym.split('-').map(Number), n=new Date(y,m,0)
   f.forEach(k=>{ const d=J(k); PRAYERS.forEach(p=>{ const st=d.p[p.k]; if(st&&st!=='manquee'){ o.prieres++; if(st==='heure'||st==='mosquee'){ o.heure++; o.parP[p.k]=(o.parP[p.k]||0)+1; } if(st==='mosquee') o.mosquee++; } });
     o.ist+=+d.istighfar||0; o.dk+=Object.keys((d.dk&&d.dk.apres)||{}).length; o.ba+=baNb(d); if(d.coran||(d.essX&&d.essX.coran)) o.coran++; });
   const best=Object.entries(o.parP).sort((a,b)=>b[1]-a[1])[0]; o.best=best?PRAYERS.find(p=>p.k===best[0]).n:null; return o; }
-function moisCartes(o){ const C=[{t:`${S.cfg.nom?S.cfg.nom+', ton':'Ton'} mois de ${o.nom}`,n:String(o.jours),l:o.jours>1?'jours avec NIYYA':'jour avec NIYYA',s:[o.serie>1?`Meilleure série : ${o.serie} jours avec les 5 prières`:''],v:'cal',st:'nuit'}];
-  if(o.prieres) C.push({t:'Mes prières',n:String(o.prieres),l:'prières notées',s:[`${o.heure} à l'heure${o.mosquee?' · '+o.mosquee+' à la mosquée':''}`,o.best?`Ma prière la plus régulière : ${o.best}`:''],v:'barres',st:'emeraude'});
-  if(o.ist||o.dk) C.push({t:'Mon dhikr',n:o.ist.toLocaleString('fr-FR'),l:'istighfar',s:[o.dk?`${o.dk} dhikr après la prière`:''],v:'anneau',st:'bleu'});
-  if(o.ba||o.coran) C.push({t:'Mes bonnes actions',n:String(o.ba),l:'bonnes actions',s:[o.coran?`${o.coran} jour${o.coran>1?'s':''} de Coran`:''],v:'points',st:'prune'});
+function moisCartes(o){ // juste milieu : 4 cartes, 2 couleurs
+  const C=[{t:`${S.cfg.nom?S.cfg.nom+', ton':'Ton'} mois de ${o.nom}`,n:String(o.jours),l:o.jours>1?'jours avec NIYYA':'jour avec NIYYA',s:[o.serie>1?`Meilleure série : ${o.serie} jours avec les 5 prières`:''],v:'cal',st:'nuit'}];
+  if(o.prieres) C.push({t:'Mes prières',n:String(o.prieres),l:'prières notées',s:[`${o.heure} à l'heure${o.mosquee?' · '+o.mosquee+' à la mosquée':''}`,o.best?`Ma prière la plus régulière : ${o.best}`:''],v:'barres',st:'nuit'});
   C.push({t:'Mon mois en un coup d\'œil',v:'resume',st:'nuit'});
   C.push({t:'Qu\'Allah accepte',n:'تَقَبَّلَ اللّٰهُ',l:'Seul Allah connaît la valeur de nos actes.',s:['Renouvelle ton intention pour le mois prochain 🤲'],v:'',st:'emeraude'}); return C; }
 const MOIS_FONDS={nuit:['#120c2e','#21174f','#35237a'],emeraude:['#022c22','#064e3b','#0b6b4f'],bleu:['#0a1230','#16244d','#1d3566'],prune:['#2a1030','#4c2556','#6e3a78']};
