@@ -498,7 +498,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-140611'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-141201'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1868,6 +1868,7 @@ function render(){
   const nav=document.getElementById('nav');
   if(!S.uid){ nav.classList.add('hide'); app.innerHTML=vAuth(); return; }
   if(!S.pret){ nav.classList.add('hide'); app.innerHTML=`<div class="auth"><div class="logo" style="font-family:'Amiri',serif">نية</div><p class="tag-l">Chargement de ton espace…</p></div>`; return; }
+  if(S.onbApercu){ nav.classList.add('hide'); app.innerHTML=vOnb2(); return; }
   if(!S.cfg.onb){ nav.classList.add('hide'); app.innerHTML=vOnb(); return; }
   nav.classList.remove('hide');
   if(S.view==='tabac' && !S.cfg.fumeur) S.view='jour';
@@ -2900,7 +2901,8 @@ function vReglages(){
     <div class="sub">À une association, ou pour faire vivre NIYYA (gratuite et sans publicité).</div>
     <button class="btn green" onclick="ouvrirDons()">💚 Faire un don</button></div>
   ${S.email===ADMIN_EMAIL?`<div class="panel mt"><h2><span class="ico">📳</span>Test vibration (admin)</h2><div class="sub">Appli iPhone : ${NATIF?'oui':'non (web)'} · registerPlugin : ${NATIF&&window.Capacitor&&Capacitor.registerPlugin?'oui':'non'}</div>
-    <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" onclick="testVib('impact')">Tic léger</button><button class="btn sm" onclick="testVib('notification')">Notification</button><button class="btn sm" onclick="testVib('vibrate')">Vibration forte</button></div><div id="vibRes" class="sub mt"></div></div>`:''}
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" onclick="testVib('impact')">Tic léger</button><button class="btn sm" onclick="testVib('notification')">Notification</button><button class="btn sm" onclick="testVib('vibrate')">Vibration forte</button></div><div id="vibRes" class="sub mt"></div>
+    <button class="btn pri mt" style="width:100%" onclick="onbApercuDebut()">👀 Prévisualiser la nouvelle inscription</button></div>`:''}
   <div class="panel mt" id="rPriere"><h2><span class="ico">🕌</span>Horaires de prière</h2>
     <div class="sub">${isHsc()?`Calendrier annuel de la ${mosq().nom.replace('Mosquée','mosquée')} (${mosq().ville}), relevé sur Mawaqit. Iqama : ${PRAYERS.map(p=>p.n+' +'+mosq().iq[p.k]).join(', ')} min. Joumouʿa ${mosq().jumua.join(' et ')}.`:`Calculés pour <b>${esc(C.lieu.nom||'—')}</b>, à l'heure locale (${esc(lieuTz())}).`}</div>
     ${lieuForm()}
@@ -3358,6 +3360,74 @@ function aideLocalisation(code){
 }
 /* ---------- Questionnaire de départ ---------- */
 const ONB={};
+/* ---------- 🌱 Nouvelle inscription en 4 étapes (TEST : aperçu admin, ne modifie pas le compte) ---------- */
+const ONB_OBJ=[['prieres','🕌','Prier à l\'heure'],['coran','📖','Lire plus le Coran'],['dhikr','🤲','Faire mes invocations'],['sport','💪','Faire du sport'],['poids','⚖️','Gérer mon poids'],['tabac','🚭','Arrêter de fumer']];
+function onbApercuDebut(){ S._cfgSauve=JSON.parse(JSON.stringify(S.cfg)); S.onbApercu=true; S.cfg.lieu={nom:''}; S.cfg.priere=Object.assign({},S.cfg.priere,{methode:'uoif'}); delete S.cfg.priere.mosqAvant; for(const k in _tcache) delete _tcache[k]; Object.keys(ONB).forEach(k=>delete ONB[k]); ONB.step=1; ONB.obj=['prieres']; closeSheet(); render(); window.scrollTo({top:0}); }
+function onbApercuFin(msg){ if(S._cfgSauve){ S.cfg=S._cfgSauve; delete S._cfgSauve; for(const k in _tcache) delete _tcache[k]; cfgTouch(); } S.onbApercu=false; S.view='accueil'; S.sel=today(); render(); window.scrollTo({top:0}); if(msg) toast(msg,5000); }
+function onbEtape(n){
+  const v=id=>document.getElementById(id);
+  if(n>ONB.step){
+    if(ONB.step===1){ const nom=(v('onbNom')||{}).value||''; if(!nom.trim()) return toast('Indique ton prénom'); ONB.nom=nom.trim(); }
+    if(ONB.step===2&&S.cfg.lieu.lat==null) return toast('Choisis ta ville pour avoir tes horaires',3000);
+  }
+  ONB.step=n; render(); window.scrollTo({top:0});
+}
+function onbObj(k,el){ const i=ONB.obj.indexOf(k); if(i<0) ONB.obj.push(k); else ONB.obj.splice(i,1); el.classList.toggle('on',i<0); const t=v=>document.getElementById(v); if(t('onbTabac')) t('onbTabac').classList.toggle('hide',!ONB.obj.includes('tabac')); if(t('onbPds')) t('onbPds').classList.toggle('hide',!ONB.obj.includes('poids')); vib(); }
+function onbAdhan(){ vib(); if(S.onbApercu){ ONB.adhan=true; toast('🔔 (Aperçu) Ici, le téléphone demanderait l\'autorisation d\'envoyer l\'adhan.',4000); return onbEtape(4); } ONB.adhan=true; onbEtape(4); }
+function onbFin(){ if(!document.getElementById('onbOk').checked) return toast('Coche la case d\'accord pour continuer',3000);
+  if(S.onbApercu) return onbApercuFin('✅ Aperçu terminé : le nouvel inscrit arriverait ici, sur l\'onglet Prière, avec une bulle « Quand tu as prié, touche À l\'heure ✓ ». Ton compte n\'a pas été modifié.');
+}
+function vOnb2(){
+  const C=S.cfg, st=ONB.step||1, pts=[1,2,3,4].map(i=>`<span style="width:${i===st?22:8}px;height:8px;border-radius:9px;background:${i<=st?'var(--violet)':'var(--line)'};display:inline-block;transition:.3s"></span>`).join(''),
+    tete=(t,sub)=>`<div style="display:flex;gap:6px;justify-content:center;margin-bottom:18px">${pts}</div><h1 style="text-align:center">${t}</h1><p class="tag-l" style="text-align:center">${sub}</p>`,
+    retour=st>1?`<button onclick="onbEtape(${st-1})" style="all:unset;cursor:pointer;font-weight:800;color:var(--muted);font-size:.85rem">‹ Retour</button>`:'',
+    apercu=S.onbApercu?`<div style="text-align:center;margin-bottom:10px"><span class="chip" style="background:#fef3c7;color:#92400e">👀 Aperçu — ton compte ne sera pas modifié · <a href="#" onclick="event.preventDefault();onbApercuFin()" style="color:#92400e">Quitter</a></span></div>`:'';
+  let corps='';
+  if(st===1) corps=`${tete('Salam, bienvenue sur NIYYA 🌙','Ta journée de musulman, simplement.')}
+    <div class="panel">
+      <div class="checks" style="gap:10px;font-weight:700;line-height:1.4;margin-bottom:14px">
+        <div>🕌 L'adhan à l'heure exacte de ta ville</div><div>📖 Un verset et un hadith authentique chaque jour</div><div>🌱 Tes bonnes habitudes, sans te comparer aux autres</div></div>
+      <label class="f" style="margin-top:0">Ton prénom</label>
+      <input class="inp" id="onbNom" value="${esc(ONB.nom||'')}" placeholder="Prénom" autocomplete="given-name">
+      <label class="f">Je suis</label>
+      <div class="opt" id="onbGenre">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${ONB.genre===g?'on':''}" onclick="ONB.genre='${g}';document.querySelectorAll('#onbGenre button').forEach(x=>x.classList.toggle('on',x===this))">${l}</button>`).join('')}</div>
+      <button class="btn pri" style="width:100%;margin-top:16px;padding:13px" onclick="onbEtape(2)">Continuer</button></div>`;
+  if(st===2){ const ok=C.lieu.lat!=null, np=ok?nextPrayer():null;
+    corps=`${tete('Où es-tu ?','Pour calculer tes horaires de prière, à la minute près.')}
+    <div class="panel">
+      <label class="f" style="margin-top:0">Ma ville</label>
+      <input class="inp" id="villeIn" placeholder="Ex. Caen, Lyon, Bruxelles…" value="${esc((C.lieu.nom||'').replace(/ \(\d+\)$/,''))}" oninput="chercherVille(this.value)" autocomplete="off">
+      <div id="villeSugg"></div>
+      <button class="btn sm mt" onclick="localiserMoi()">📍 Utiliser ma position actuelle</button>
+      ${ok?`<div class="quote k-emerald" style="margin-top:14px;padding:16px"><span class="q-tag">🕌 Prochaine prière</span><div style="font-size:1.9rem;font-weight:800;margin-top:4px">${np.p.n} à ${hm(np.at%1440)}</div><div class="src">📍 ${esc(C.lieu.nom.replace(/ \(\d+\)$/,'').split(',')[0])}${isHsc()?' · '+esc(METHODES[C.priere.methode].l.split(',')[0]):''}</div></div>`:''}
+      <details style="margin-top:12px"><summary class="muted" style="font-size:.8rem;font-weight:700;cursor:pointer">Méthode de calcul / ma mosquée</summary>${lieuForm().split('<label class="f">Ma ville</label>')[0]}</details>
+      <button class="btn pri" style="width:100%;margin-top:16px;padding:13px" onclick="onbEtape(3)">${ok?'C\'est bien ça, continuer':'Continuer'}</button>
+      <div style="text-align:center;margin-top:10px">${retour}</div></div>`; }
+  if(st===3){ const t=C.lieu.lat!=null?nextPrayer():null;
+    corps=`${tete('L\'adhan sur ton téléphone','C\'est ce qui aide le plus à rester régulier.')}
+    <div class="panel">
+      <div style="background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+        <img src="niyya-logo-180.png" alt="" style="width:36px;height:36px;border-radius:9px">
+        <div style="min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><b>🕌 ${t?t.p.n+' · '+hm(t.at%1440):'Asr · 15:16'}</b><span class="muted" style="font-size:.72rem">maintenant</span></div>
+          <div style="font-size:.86rem;line-height:1.4">C'est l'heure de la prière. 📖 « Certes, c'est par l'évocation d'Allah que les cœurs se tranquillisent. » — Le Tonnerre 13:28</div></div></div>
+      <div class="checks" style="gap:8px;font-weight:600;margin:14px 0 4px;line-height:1.4"><div>✓ Un verset différent à chaque prière</div><div>✓ Adhan ou simple bip, prière par prière</div><div>✓ Aucune publicité, jamais</div></div>
+      <button class="btn pri" style="width:100%;margin-top:12px;padding:13px" onclick="onbAdhan()">🔔 Activer l'adhan</button>
+      <button onclick="onbEtape(4)" style="all:unset;display:block;width:100%;text-align:center;margin-top:12px;font-size:.82rem;font-weight:700;color:var(--muted);cursor:pointer">Plus tard</button>
+      <div style="text-align:center;margin-top:8px">${retour}</div></div>`; }
+  if(st===4) corps=`${tete('Qu\'est-ce qui compte pour toi ?','Choisis ce que tu veux améliorer. Tu pourras tout changer ensuite.')}
+    <div class="panel">
+      <div class="opt" style="flex-wrap:wrap">${ONB_OBJ.map(([k,i,l])=>`<button class="${ONB.obj.includes(k)?'on':''}" onclick="onbObj('${k}',this)">${i} ${l}</button>`).join('')}</div>
+      <div id="onbTabac" class="${ONB.obj.includes('tabac')?'':'hide'} grid g2" style="gap:8px;margin-top:10px">
+        <div><label class="f">Cigarettes par jour</label><input class="inp" id="onbCig" type="number" min="1" value="${C.tabac.base}"></div>
+        <div><label class="f">Prix du paquet (€)</label><input class="inp" id="onbPrix" type="number" step="0.1" value="${C.tabac.prix}"></div></div>
+      <div id="onbPds" class="${ONB.obj.includes('poids')?'':'hide'} grid g2" style="gap:8px;margin-top:10px">
+        <div><label class="f">Poids actuel (kg)</label><input class="inp" id="onbPoids" type="number" step="0.1" inputmode="decimal"></div>
+        <div><label class="f">Objectif (kg)</label><input class="inp" id="onbObj" type="number" step="0.1" inputmode="decimal"></div></div>
+      <label class="consent" style="margin-top:14px"><input type="checkbox" id="onbOk"> <span>J'accepte que NIYYA enregistre mes données <b>uniquement pour mon usage personnel</b>. Elles ne sont ni vendues ni partagées, et je peux les supprimer à tout moment.</span></label>
+      <button class="btn pri" style="width:100%;margin-top:14px;padding:13px" onclick="onbFin()">Bismillah, c'est parti 🌙</button>
+      <div style="text-align:center;margin-top:10px">${retour}</div></div>`;
+  return `<div class="auth" style="max-width:520px;margin-top:3vh">${apercu}${corps}</div>`;
+}
 function vOnb(){
   const C=S.cfg;
   return `<div class="auth" style="max-width:560px;margin-top:3vh">
