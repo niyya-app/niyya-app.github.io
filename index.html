@@ -498,7 +498,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-141201'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-141802'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1869,7 +1869,7 @@ function render(){
   if(!S.uid){ nav.classList.add('hide'); app.innerHTML=vAuth(); return; }
   if(!S.pret){ nav.classList.add('hide'); app.innerHTML=`<div class="auth"><div class="logo" style="font-family:'Amiri',serif">نية</div><p class="tag-l">Chargement de ton espace…</p></div>`; return; }
   if(S.onbApercu){ nav.classList.add('hide'); app.innerHTML=vOnb2(); return; }
-  if(!S.cfg.onb){ nav.classList.add('hide'); app.innerHTML=vOnb(); return; }
+  if(!S.cfg.onb){ nav.classList.add('hide'); if(!ONB.step){ ONB.step=1; ONB.obj=['prieres']; } app.innerHTML=vOnb2(); return; } // nouvelle inscription en 4 étapes (30/10)
   nav.classList.remove('hide');
   if(S.view==='tabac' && !S.cfg.fumeur) S.view='jour';
   if(accOk()&&!S._acc){ S._acc=true; if(S.view==='jour'&&S.sel===today()) S.view='accueil'; } // à l'ouverture : l'accueil (avant le menu du bas, pour le bon onglet allumé)
@@ -3326,7 +3326,7 @@ function methodeAuto(){ const L=S.cfg.lieu||{}, m=METHODE_PAYS[L.tz]; if(m && S.
 function choisirVille(nom,lat,lon,tz){
   S.cfg.lieu={nom,lat:+lat.toFixed(4),lon:+lon.toFixed(4),tz:tz||(enFrance({lat,lon})?'Europe/Paris':'')}; for(const k in _tcache) delete _tcache[k];
   if(!S.cfg.lieu.tz) fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&timezone=auto&forecast_days=1`).then(r=>r.json()).then(o=>{ if(o.timezone&&S.cfg.lieu.lat===+lat.toFixed(4)){ S.cfg.lieu.tz=o.timezone; for(const k in _tcache) delete _tcache[k]; methodeAuto(); cfgTouch(); if(S.cfg.onb) render(); } }).catch(()=>{}); if(S.cfg.priere.methode==='hsc'&&S.cfg.onb!==true) S.cfg.priere.methode='uoif';
-  const vm=verifMosq(); methodeAuto(); cfgTouch(); if(S.cfg.onb){ render(); toast(vm==='loin'?'🕌 Tu es loin de ta mosquée : horaires calculés pour '+esc(nom.split(',')[0])+'. Elle reviendra à ton retour.':vm==='retour'?'🕌 De retour : horaires de ta mosquée rétablis':'🕌 Horaires mis à jour',5000); } else { const i=document.getElementById('villeIn'); if(i) i.value=nom; document.getElementById('villeSugg').innerHTML=''; }
+  const vm=verifMosq(); methodeAuto(); cfgTouch(); if(S.cfg.onb||ONB.step){ render(); if(ONB.step&&!S.cfg.onb) return; toast(vm==='loin'?'🕌 Tu es loin de ta mosquée : horaires calculés pour '+esc(nom.split(',')[0])+'. Elle reviendra à ton retour.':vm==='retour'?'🕌 De retour : horaires de ta mosquée rétablis':'🕌 Horaires mis à jour',5000); } else { const i=document.getElementById('villeIn'); if(i) i.value=nom; document.getElementById('villeSugg').innerHTML=''; }
 }
 function localiserMoi(){
   if(!navigator.geolocation) return aideLocalisation(0);
@@ -3373,9 +3373,22 @@ function onbEtape(n){
   ONB.step=n; render(); window.scrollTo({top:0});
 }
 function onbObj(k,el){ const i=ONB.obj.indexOf(k); if(i<0) ONB.obj.push(k); else ONB.obj.splice(i,1); el.classList.toggle('on',i<0); const t=v=>document.getElementById(v); if(t('onbTabac')) t('onbTabac').classList.toggle('hide',!ONB.obj.includes('tabac')); if(t('onbPds')) t('onbPds').classList.toggle('hide',!ONB.obj.includes('poids')); vib(); }
-function onbAdhan(){ vib(); if(S.onbApercu){ ONB.adhan=true; toast('🔔 (Aperçu) Ici, le téléphone demanderait l\'autorisation d\'envoyer l\'adhan.',4000); return onbEtape(4); } ONB.adhan=true; onbEtape(4); }
+async function onbAdhan(){ vib(); if(S.onbApercu){ ONB.adhan=true; toast('🔔 (Aperçu) Ici, le téléphone demanderait l\'autorisation d\'envoyer l\'adhan.',4000); return onbEtape(4); }
+  ONB.adhan=true; if(!NATIF&&estIOS()&&!estInstallee()) return onbEtape(4); // iPhone dans Safari : il faut d'abord installer l'icône (expliqué juste après l'inscription)
+  try{ await activerNotifs(); }catch(e){} onbEtape(4); }
 function onbFin(){ if(!document.getElementById('onbOk').checked) return toast('Coche la case d\'accord pour continuer',3000);
   if(S.onbApercu) return onbApercuFin('✅ Aperçu terminé : le nouvel inscrit arriverait ici, sur l\'onglet Prière, avec une bulle « Quand tu as prié, touche À l\'heure ✓ ». Ton compte n\'a pas été modifié.');
+  const v=id=>document.getElementById(id), num=id=>{ const e=v(id); const x=e?parseFloat((e.value||'').replace(',','.')):NaN; return isNaN(x)?null:x; };
+  const C=S.cfg, O=ONB.obj||[]; C.nom=ONB.nom||C.nom||''; if(ONB.genre) C.genre=ONB.genre; C.objectifs=O.slice();
+  C.travail=Object.assign({debut:'09:00',fin:'18:00',mode:'fixe'},C.travail); if(!C.sportSemaine&&C.sportSemaine!==0) C.sportSemaine=3;
+  if(O.includes('poids')){ const pd=num('onbPoids'), po=num('onbObjKg'); C.poidsObj=po; C.poidsDepart=pd?{k:today(),v:pd}:null; if(pd){ J(today()).poids=pd; touch(today()); } if(pd&&po) C.poidsBut=po>pd?'prendre':po<pd?'perdre':'garder'; }
+  C.fumeur=O.includes('tabac'); if(C.fumeur){ C.tabac.base=Math.max(1,Math.round(num('onbCig')??20)); C.tabac.prix=num('onbPrix')??12.5; C.tabac.debut=today(); C.tabac.pas=Math.max(1,Math.round(C.tabac.base/10)); }
+  try{ const pr=localStorage.getItem('nya_parrain'); if(pr && !C.parrain && pr!==String(S.uid||'').slice(0,8)) C.parrain=pr; }catch(e){}
+  if(!C.essNb) C.essNb=4;
+  C.consent=new Date().toISOString(); C.onb=true; cfgTouch(); compter('inscription_v2');
+  const nom=C.nom; Object.keys(ONB).forEach(k=>delete ONB[k]); S._acc=true; S.view='accueil'; S.sel=today(); render(); window.scrollTo({top:0});
+  toast(`Bienvenue ${esc(nom)} 🌙 Quand tu as prié, touche « À l'heure » ✓`,5000);
+  setTimeout(()=>{ if(S.cfg.notifOn||S.pushEtat==='actif') essChoisir(null,true); else proposerRappels(true,()=>essChoisir(null,true)); },1800);
 }
 function vOnb2(){
   const C=S.cfg, st=ONB.step||1, pts=[1,2,3,4].map(i=>`<span style="width:${i===st?22:8}px;height:8px;border-radius:9px;background:${i<=st?'var(--violet)':'var(--line)'};display:inline-block;transition:.3s"></span>`).join(''),
@@ -3411,7 +3424,8 @@ function vOnb2(){
         <div style="min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><b>🕌 ${t?t.p.n+' · '+hm(t.at%1440):'Asr · 15:16'}</b><span class="muted" style="font-size:.72rem">maintenant</span></div>
           <div style="font-size:.86rem;line-height:1.4">C'est l'heure de la prière. 📖 « Certes, c'est par l'évocation d'Allah que les cœurs se tranquillisent. » — Le Tonnerre 13:28</div></div></div>
       <div class="checks" style="gap:8px;font-weight:600;margin:14px 0 4px;line-height:1.4"><div>✓ Un verset différent à chaque prière</div><div>✓ Adhan ou simple bip, prière par prière</div><div>✓ Aucune publicité, jamais</div></div>
-      <button class="btn pri" style="width:100%;margin-top:12px;padding:13px" onclick="onbAdhan()">🔔 Activer l'adhan</button>
+      ${!S.onbApercu&&!NATIF&&estIOS()&&!estInstallee()?'<p class="muted" style="font-size:.8rem;margin-top:10px">📱 Sur iPhone, l\'adhan fonctionne une fois NIYYA ajoutée à ton écran d\'accueil : on te montre comment juste après, en 20 secondes.</p>':''}
+      <button class="btn pri" style="width:100%;margin-top:12px;padding:13px" onclick="onbAdhan()">🔔 ${!S.onbApercu&&!NATIF&&estIOS()&&!estInstallee()?'D\'accord, continuer':'Activer l\'adhan'}</button>
       <button onclick="onbEtape(4)" style="all:unset;display:block;width:100%;text-align:center;margin-top:12px;font-size:.82rem;font-weight:700;color:var(--muted);cursor:pointer">Plus tard</button>
       <div style="text-align:center;margin-top:8px">${retour}</div></div>`; }
   if(st===4) corps=`${tete('Qu\'est-ce qui compte pour toi ?','Choisis ce que tu veux améliorer. Tu pourras tout changer ensuite.')}
@@ -3422,7 +3436,7 @@ function vOnb2(){
         <div><label class="f">Prix du paquet (€)</label><input class="inp" id="onbPrix" type="number" step="0.1" value="${C.tabac.prix}"></div></div>
       <div id="onbPds" class="${ONB.obj.includes('poids')?'':'hide'} grid g2" style="gap:8px;margin-top:10px">
         <div><label class="f">Poids actuel (kg)</label><input class="inp" id="onbPoids" type="number" step="0.1" inputmode="decimal"></div>
-        <div><label class="f">Objectif (kg)</label><input class="inp" id="onbObj" type="number" step="0.1" inputmode="decimal"></div></div>
+        <div><label class="f">Objectif (kg)</label><input class="inp" id="onbObjKg" type="number" step="0.1" inputmode="decimal"></div></div>
       <label class="consent" style="margin-top:14px"><input type="checkbox" id="onbOk"> <span>J'accepte que NIYYA enregistre mes données <b>uniquement pour mon usage personnel</b>. Elles ne sont ni vendues ni partagées, et je peux les supprimer à tout moment.</span></label>
       <button class="btn pri" style="width:100%;margin-top:14px;padding:13px" onclick="onbFin()">Bismillah, c'est parti 🌙</button>
       <div style="text-align:center;margin-top:10px">${retour}</div></div>`;
