@@ -549,7 +549,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-200219'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-201333'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3251,7 +3251,7 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
       <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(-1)">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(10)">+10</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="dhikr(33)">+33</button></div>
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 « Je demande pardon à Allah cent fois par jour », disait le Prophète ﷺ. — Muslim n° 2702</div>
     </div>`;
-  const carteIst2=()=>{ // ✂️ istighfar épuré (TEST compte admin), même forme que le dhikr
+  const carteIst2=()=>{ // ✂️ istighfar épuré, même forme que le dhikr
     const pulse=S._istPulse; S._istPulse=0; const pb='background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:12px;min-width:52px;height:40px;font:inherit;font-weight:800;cursor:pointer';
     return `<div class="hero k-teal dk2">
       <div class="row" style="align-items:center"><div class="h-lbl">📿 Istighfar</div><div class="sp"></div><span class="chip">${ist>=100?'✓ +'+PTS_ISTIGHFAR+' points':'+'+PTS_ISTIGHFAR+' pts à 100'}</span>${repli('ist')}</div>
@@ -3301,7 +3301,7 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 ${esc(D.r)} — ${esc(D.src)}</div>
     </div>`;
   const cDk=S.ouv.dk?carteDk2():carteDk; // dhikr épuré ouvert à tous le 30/10
-  const cIst=S.ouv.ist&&S.email===ADMIN_EMAIL?carteIst2():carteIst;
+  const cIst=S.ouv.ist?carteIst2():carteIst; // istighfar épuré ouvert à tous le 30/10
   return dkDabord?cDk+'<div class="mt">'+cIst+'</div>':cIst+cDk;
 }
 function dhikr(n){ const d=J(); d.istighfar=Math.max(0,d.istighfar+n); vib(); touch(); render(); if(d.istighfar>=100&&d.istighfar-n<100){ if(true) celebrer('أَسْتَغْفِرُ اللّٰهَ','100 istighfar','Qu\'Allah te pardonne · +'+PTS_ISTIGHFAR+' points'); else toast('🤲 100 istighfar, qu\'Allah te pardonne'); } }
