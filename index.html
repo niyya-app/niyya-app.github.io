@@ -549,7 +549,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-195705'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-200219'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2519,8 +2519,6 @@ function bonnesActionsCarte(){
         <div class="sub" style="margin-bottom:8px">${nb>=1?`✓ Score max atteint${nb>1?` · ${nb} actions, chacune en plus est un bonus 🌟`:' · chaque action en plus est un bonus'}`:'Une seule bonne action suffit pour le score max. Touche pour ouvrir la liste.'}</div>
         <div class="wbar"><div style="width:${nb>=1?100:0}%;background:linear-gradient(90deg,#10b981,#14b8a6)"></div></div>
       </button>
-      ${S.baOpen&&S.email===ADMIN_EMAIL?(()=>{ const di=dayOfYear(S.sel); return `<div class="coach" style="margin-top:12px;background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0"><b>☀️ Sunnah du jour</b><br>${esc(SUNNAH[di%SUNNAH.length])}${sunnahPreuve(di%SUNNAH.length)}
-        <button class="ck ${d.sunnahOk?'on':''}" style="margin-top:8px" onclick="toggle('sunnahOk')"><span class="box"></span>J'ai fait cette Sunnah</button></div>`; })():''}
       ${S.baOpen?`<div class="checks" style="margin-top:12px">${baJour(S.sel).map((id,i)=>{ const a=BA_POOL[id], h=a[1]>=0?[HADITHS[a[1]][0],HADITHS[a[1]][1]]:a[1]===-2?[a[3],a[4]]:null, src=h?baSource(h[0],h[1]):`📖 « ${esc(a[3])} » — Coran, ${esc(SURATES[parseInt(a[4])-1][2])} ${esc(a[4])}`; return `<button class="ck ${d.ba[i]?'on':''}" onclick="ba(${i})" style="align-items:flex-start"><span class="box" style="margin-top:2px"></span><span>${esc(a[0])}<small style="display:block;font-weight:600;color:var(--muted);font-size:.72rem;margin-top:3px;line-height:1.35">${src}</small></span></button>`; }).join('')}
         <p class="muted" style="font-size:.7rem;font-weight:600;margin-top:4px">${BA_PAR_JOUR()} nouvelles actions chaque jour, chacune appuyée par un verset du Coran (trad. Hamidullah) ou un hadith authentique vérifié (Bukhari / Muslim).</p>
         <div style="margin-top:14px;font-weight:800;font-size:.9rem">✍️ Mes bonnes actions</div>
@@ -2751,7 +2749,7 @@ const distOk=()=>S.email===ADMIN_EMAIL;
 function vDin(){ return vDin2(); } // Dîn resserré ouvert à tous le 30/10 (vDin1 = ancienne version)
 function vDin2(){
   const d=J(), fri=dateOf(S.sel).getDay()===5, o=!!S.ouv.pdin, n=naflN(d), sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
-  const resume=[`✨ Ce qu'Allah aime`,...(S.email===ADMIN_EMAIL?[]:[`☀️ Sunnah du jour`]),`🌙 Surérogatoires ${n}/${NAFL.length}`,`🍽️ Jeûne${d.jeune==='fait'?' ✓':''}`,`💚 Sadaqa${sad?' '+sad+' €':''}`,`📈 Régularité`];
+  const resume=[`✨ Ce qu'Allah aime`,`☀️ Sunnah du jour`,`🌙 Surérogatoires ${n}/${NAFL.length}`,`🍽️ Jeûne${d.jeune==='fait'?' ✓':''}`,`💚 Sadaqa${sad?' '+sad+' €':''}`,`📈 Régularité`];
   return `<div style="margin-bottom:14px">${hadMindCartes('h').replace('<div class="mt">','<div>')}</div>
     <div style="margin-bottom:14px">${bonnesActionsCarte()}</div>
     ${nomJourCarte().replace('nomjour mt','nomjour')}
@@ -2761,7 +2759,7 @@ function vDin2(){
         <h2><span class="ico">🕌</span>Plus de pratiques<span class="cnt"><span style="display:inline-block;transition:.2s;transform:rotate(${o?180:0}deg)">▾</span></span></h2>
         ${o?'':`<div class="sub" style="line-height:1.7">${resume.join(' · ')}</div>`}
       </button>
-      ${o?`<div style="margin-top:6px">${(()=>{ S._sansSun=S.email===ADMIN_EMAIL; const h=aimeSunnahCartes(); S._sansSun=false; return h; })()}${naflPanel(true)}${jeunePanel()}${sadaqaPanel()}<div class="mt">${regPanel()}</div></div>`:''}
+      ${o?`<div style="margin-top:6px">${aimeSunnahCartes()}${naflPanel(true)}${jeunePanel()}${sadaqaPanel()}<div class="mt">${regPanel()}</div></div>`:''}
     </div>`;
 }
 function vDin1(){

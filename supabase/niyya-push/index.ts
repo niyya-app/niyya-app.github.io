@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
         const vs = (await quotidien())?.[H.jour]?.v?.[PRIERES.findIndex((p) => p[0] === k)];
         const corps = "C'est l'heure de la prière. Qu'Allah l'accepte. 🤲" + (vs ? `\n📖 « ${vs[0]} » — ${vs[1]}` : "");
         const ok = await envoyer(row, { title: titre, body: corps, tag: "priere-" + k, url: params.url || "./" });
-        if (ok) parType.priere++;
+        if (ok && !params.exclu) parType.priere++; // les comptes exclus (Mehdi, démo, Apple) ne comptent pas
         await sb.from("niyya_push").update({ dernier: cle, envoye_le: new Date().toISOString() }).eq("endpoint", row.endpoint);
         if (ok) envoyes++;
       }
@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
           ? { title: "📜 Hadith du jour", body: `« ${x.h[0]} »\n— ${x.h[1]}`, tag: "hadith", url: params.url || "./" }
           : { title: "💡 Mindset du jour", body: `« ${x.m[0]} »\n— ${x.m[1]}`, tag: "mindset", url: params.url || "./" };
         const ok = await envoyer(row, payload);
-        if (ok) parType[q === "h" ? "hadith" : "mindset"]++;
+        if (ok && !params.exclu) parType[q === "h" ? "hadith" : "mindset"]++;
         await sb.from("niyya_push").update({ dernier_q: cleq }).eq("endpoint", row.endpoint);
         if (ok) envoyes++;
       }
@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
       if (H.min === 21 * 60 && params.soir !== false && row.user_id && row.dernier_q !== `${H.jour}|r`) {
         try {
           const { count } = await sb.from("niyya_jours").select("jour", { count: "exact", head: true }).eq("user_id", row.user_id).eq("jour", H.jour);
-          if (!count && await envoyer(row, { title: "🌙 Ta journée NIYYA", body: "Tu n'as encore rien coché aujourd'hui. 30 secondes pour tes prières et tes essentiels 🤲", tag: "soir", url: params.url || "./" })) { envoyes++; parType.soir++; }
+          if (!count && await envoyer(row, { title: "🌙 Ta journée NIYYA", body: "Tu n'as encore rien coché aujourd'hui. 30 secondes pour tes prières et tes essentiels 🤲", tag: "soir", url: params.url || "./" })) { envoyes++; if (!params.exclu) parType.soir++; }
         } catch (e) { console.error("soir", e); }
         await sb.from("niyya_push").update({ dernier_q: `${H.jour}|r` }).eq("endpoint", row.endpoint);
       }
@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
       if (H.dimanche && H.min === 20 * 60 && params.recap !== false && row.user_id && row.dernier_q !== `${H.jour}|s`) {
         try {
           const r = await recap(row.user_id, H.jour);
-          if (r && await envoyer(row, { ...r, url: params.url || "./" })) { envoyes++; parType.recap++; }
+          if (r && await envoyer(row, { ...r, url: params.url || "./" })) { envoyes++; if (!params.exclu) parType.recap++; }
         } catch (e) { console.error("recap", e); }
         await sb.from("niyya_push").update({ dernier_q: `${H.jour}|s` }).eq("endpoint", row.endpoint);
       }
