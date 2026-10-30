@@ -551,7 +551,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-202552'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-202813'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2446,7 +2446,7 @@ function vJour(){
       <textarea rows="2" oninput="setTxt('ameliorer',this.value)" placeholder="Ex. Ne pas fumer avant le sport">${esc(d.ameliorer)}</textarea>`:''}
     </div>`;
   const mouh=true; // Mouhâsaba du soir pour tous
-  const soirMode=mouhSoirMode(); // TEST admin : 'cache' (journée), 'haut' (après Maghrib), sinon en bas comme avant
+  const soirMode=mouhSoirMode(); // 'cache' (journée), 'haut' (après Maghrib), sinon en bas comme avant
   const soir=soirMode!=='bas'?'':mouh?mouhasabaCarte(d):soirAncien;
   return `${bandeauNotif()}
   ${mouh?intentionMatin():''}
@@ -3149,8 +3149,8 @@ const BIENFAITS=['🫀 La santé','👨‍👩‍👧 Ma famille','🕌 Une pri�
 function setHumeur(n){ const d=J(); d.humeur=d.humeur===n?null:n; touch(); render(); }
 function toggleBienfait(t){ const d=J(); const L=(d.bienfaits||[]).slice(); const i=L.indexOf(t); if(i>=0) L.splice(i,1); else L.push(t); d.bienfaits=L; touch(); render(); if(i<0&&L.length===3) toast('🤲 Al-hamdou lillâh pour ces bienfaits',2500); }
 function mouhFaite(d){ return !!(d.humeur||(d.bienfaits||[]).length||(d.intention||'').trim()); }
-// 🌙 Mouhâsaba seulement le soir (TEST compte admin) : cachée en journée, en haut d'Aujourd'hui après Maghrib, toujours dans le Menu
-function mouhSoirMode(){ if(S.email!==ADMIN_EMAIL||S.sel!==today()) return 'bas'; return nowMin()>=timesOf(today())[4]?'haut':'cache'; }
+// 🌙 Mouhâsaba seulement le soir (ouvert à tous le 30/10) : cachée en journée, en haut d'Aujourd'hui après Maghrib, toujours dans le Menu
+function mouhSoirMode(){ if(S.sel!==today()) return 'bas'; return nowMin()>=timesOf(today())[4]?'haut':'cache'; }
 function vMouhasaba(){ S.ouv.soir=true; return `<button class="btn sm" onclick="go('plus')">‹ Menu</button><div class="mt">${mouhasabaCarte(J())}</div>`; }
 function mouhCompter(d){ try{ const k='nya_mouh_'+S.sel; if(mouhFaite(d)&&!localStorage.getItem(k)){ localStorage.setItem(k,'1'); compter('mouhasaba_faite'); } }catch(e){} }
 function mouhasabaCarte(d){
@@ -4307,7 +4307,7 @@ function plusTuiles(){
   const T=[['quiz','🎯','Quiz','Quiz du jour, en famille','k-violet'],['calendrier','📅','Calendrier','Mois hégiriens, dates clés','k-emerald'],['bilan','📊','Bilan','Score, semaine, poids','k-violet'],['apprendre','✍️','Apprendre','L\'alphabet arabe','k-sky'],['citadelle','🛡️','Citadelle','Invocations du musulman','k-teal'],
     ...(S.cfg.fumeur?[['tabac','🚭','Tabac','Mon programme','k-sunset']]:[]),['don','💚','Don','Soutenir NIYYA','k-emerald'],['inviter','💌','Inviter','Partager NIYYA','k-pink'],
     ['boutique','🛍️','Boutique','Bientôt disponible','k-gold'],...(accOk()?[['qibla','🧭','Qibla','Direction de la Mecque','k-sky']]:[]),
-    ...(S.email===ADMIN_EMAIL?[['mouhasaba','🌙','Mouhâsaba','Mon moment du soir','k-violet']]:[]),['contact','✉️','Nous contacter','Une idée, un souci ?','k-sky'],['reglages','⚙️','Réglages','Profil, rappels, essentiels','k-magenta']];
+    ['mouhasaba','🌙','Mouhâsaba','Mon moment du soir','k-violet'],['contact','✉️','Nous contacter','Une idée, un souci ?','k-sky'],['reglages','⚙️','Réglages','Profil, rappels, essentiels','k-magenta']];
   const ord=S.cfg.plusOrdre||[], pos=k=>{ const i=ord.indexOf(k); return i<0?999+T.findIndex(x=>x[0]===k):i; };
   return T.slice().sort((x,y)=>pos(x[0])-pos(y[0]));
 }
