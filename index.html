@@ -555,7 +555,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-211106'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-211200'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2609,7 +2609,7 @@ async function partImage(o){ // o : {type, tag, ar, fr, src, style}
   let y=Math.max(360,(H-tot)/2-40);
   if(ar){ x.direction='rtl'; x.font=(o.type==='verset'?ar.t+'px "Amiri Quran",Amiri,serif':'700 '+ar.t+'px Amiri,serif'); ar.L.forEach(l=>{ y+=ar.t*(o.type==='nom'?1.3:1.75); x.fillText(l,W/2,y-ar.t*.45); }); x.direction='ltr'; y+=80;
     x.fillStyle=St.acc; x.save(); x.translate(W/2,y-42); x.rotate(Math.PI/4); x.fillRect(-9,-9,18,18); x.restore(); x.fillRect(W/2-120,y-43,90,2); x.fillRect(W/2+30,y-43,90,2); x.fillStyle=St.txt; }
-  else if(o.type!=='stat'){ x.fillStyle=St.acc; x.font='700 150px Amiri,serif'; x.globalAlpha=.5; x.fillText('“',W/2,y+40); x.globalAlpha=1; x.fillStyle=St.txt; y+=60; }
+  else { x.fillStyle=St.acc; x.font='700 150px Amiri,serif'; x.globalAlpha=.5; x.fillText('“',W/2,y+40); x.globalAlpha=1; x.fillStyle=St.txt; y+=60; }
   x.font='700 '+fr.t+'px "Plus Jakarta Sans",sans-serif'; fr.L.forEach(l=>{ y+=fr.t*1.45; x.fillText(l,W/2,y-fr.t*.35); });
   if(o.src){ y+=80; x.fillStyle=St.sub; const s=partBloc(x,o.src,'600 $px "Plus Jakarta Sans",sans-serif',34,24,maxW,140,1.4); s.L.forEach(l=>{ x.fillText(l,W/2,y); y+=s.t*1.4; }); x.fillStyle=St.txt; }
   // signature NIYYA en bas
