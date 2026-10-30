@@ -131,6 +131,25 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 :root.a11y[data-theme="dark"] .t-ico,:root.a11y[data-theme="dark"] .panel h2 .ico{background:rgba(255,255,255,.09)!important}
 :root.a11y[data-theme="dark"] .sub a{color:#c9bdff}
 @media (prefers-color-scheme: dark){:root.a11y:not([data-theme="light"]) .t-ico,:root.a11y:not([data-theme="light"]) .panel h2 .ico{background:rgba(255,255,255,.09)!important}:root.a11y:not([data-theme="light"]) .sub a{color:#c9bdff}}
+.dk2 .dkmodes{display:flex;gap:4px;background:rgba(0,0,0,.16);border-radius:14px;padding:4px;margin-top:10px}
+.dk2 .dkmodes button{flex:1;border:none;background:none;color:rgba(255,255,255,.85);font:inherit;font-weight:700;font-size:.82rem;padding:9px 4px;border-radius:10px;cursor:pointer;min-height:40px}
+.dk2 .dkmodes button.on{background:#fff;color:#3f2f8c}
+.dk2 .dktap{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;margin:12px 0 6px;padding:16px 14px 14px;border:none;border-radius:20px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;-webkit-user-select:none;user-select:none;transition:background .15s}
+.dk2 .dktap:active{background:rgba(255,255,255,.18)}
+.dk2 .dkar{font-family:'Amiri',serif;line-height:1.6;text-align:center}
+.dk2 .dktr{font-size:.85rem;opacity:.9;text-align:center}
+.dk2 .dkn{font-size:2.8rem;font-weight:900;line-height:1.1;margin-top:4px}.dk2 .dkn small{font-size:1rem;font-weight:800;opacity:.75}
+.dk2 .dkn.pulse{animation:dkpulse .28s ease-out}
+@keyframes dkpulse{0%{transform:scale(1)}40%{transform:scale(1.14)}100%{transform:scale(1)}}
+.dk2 .dkbar{display:block;width:100%;height:10px;border-radius:99px;background:rgba(255,255,255,.18);overflow:hidden;margin-top:6px}
+.dk2 .dkbar i{display:block;height:100%;background:#fde68a;border-radius:99px;transition:width .2s}
+.dk2 .dksteps{display:flex;gap:8px;margin-top:4px}
+.dk2 .dksteps>div{flex:1;min-width:0}.dk2 .dksteps span{display:block;height:5px;border-radius:9px;background:rgba(255,255,255,.18);overflow:hidden}
+.dk2 .dksteps span i{display:block;height:100%;background:#fde68a}.dk2 .dksteps .ok span i{background:#6ee7b7}
+.dk2 .dksteps small{display:block;font-size:.78rem;font-weight:700;opacity:.75;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dk2 .dksteps .cur small{opacity:1}
+.dk2 .dkpied{display:flex;align-items:center;gap:6px;margin-top:12px;flex-wrap:wrap}
+.dk2 .dkpr{border:none;background:none;color:#fff;font:inherit;font-weight:800;font-size:.88rem;cursor:pointer;padding:8px 0;min-height:40px}
+.dk2 .dkpq{all:unset;display:block;cursor:pointer;font-size:.85rem;font-weight:700;opacity:.85;margin-top:8px;padding:6px 0}
 /* ---------- Entête ---------- */
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
@@ -528,7 +547,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-193028'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-193424'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3172,6 +3191,17 @@ function dhikrCible(d){
   return (PRAYERS.find(p=>!A[p.k])||{}).k||null;
 }
 function dkProchaine(){ const t=timesOf(today()), m=nowMin(); return PRAYERS.find(p=>t[p.i]>m)||null; }
+// dhikr épuré : toucher = compter, avec retour au doigt (fort quand une formule ou le tour est terminé)
+function dkTap(n){ const d=J(), o=d.dk||{}, m=S.dhikrMode||'tasbih', libre=m==='tasbih'&&!dhikrCible(d), av=libre?(o.libre||0):(o[m]||0), ia=m==='tasbih'?dhikrEtape('tasbih',av)[0]:0;
+  S._dkPulse=1; compterDhikr(n); vib();
+  const o2=J().dk||{}, ap=libre?(o2.libre||0):(o2[m]||0), ib=m==='tasbih'?dhikrEtape('tasbih',ap)[0]:0;
+  if(ib!==ia||ap<av||ap===100) vibFort(); }
+function vibFort(){ try{ if(NATIF){ const r=Capacitor.registerPlugin?(S._hap=S._hap||Capacitor.registerPlugin('Haptics')).notification({type:'SUCCESS'}):Capacitor.nativePromise('Haptics','notification',{type:'SUCCESS'}); if(r&&r.catch) r.catch(()=>{}); return; } }catch(e){} try{ navigator.vibrate&&navigator.vibrate([35,45,35]); }catch(e){} }
+function dkChoixPriere(){ const d=J(), o=d.dk||{}, A=o.apres||{}, cib=dhikrCible(d);
+  openSheet(`<h2 style="margin:0 0 4px">📿 Dhikr d'après quelle prière ?</h2><div class="sub">Le dhikr compte pour la prière choisie.</div>
+    <div class="checks" style="margin-top:12px">${PRAYERS.map(p=>{ const fait=A[p.k], lock=!fait&&!dkDispo(p.k);
+      return `<button class="ck ${fait||cib===p.k?'on':''}" ${fait||lock?'disabled':''} style="${lock?'opacity:.5':''}" onclick="S.dkPriere='${p.k}';closeSheet();render()"><span class="box"></span>${p.n}${fait?' · fait ✓':lock?' · 🔒 après '+hm(timesOf(S.sel)[p.i]):cib===p.k?' · en cours':''}</button>`; }).join('')}</div>
+    <button class="btn mt" style="width:100%" onclick="closeSheet()">Fermer</button>`); }
 function compterDhikr(n){
   n=n||1; const d=J(), o=dk(d), m=S.dhikrMode||'tasbih', avant=dhikrFait(d); let fete=null;
   if(m==='tasbih' && !dhikrCible(d)){ // compte libre : on peut faire du dhikr quand on veut, sans cocher de prière ni gagner de points
@@ -3207,6 +3237,25 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 « Je demande pardon à Allah cent fois par jour », disait le Prophète ﷺ. — Muslim n° 2702</div>
     </div>`;
   const resumeDk=`${esc(D.l)} · ${m==='tasbih'?`<b class="tnum">${Object.keys(o.apres||{}).length}</b>/5 prières <span style="display:inline-block;vertical-align:middle;width:70px;height:7px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden"><span style="display:block;height:100%;width:${Object.keys(o.apres||{}).length/5*100}%;background:#fde047"></span></span>`:`<b class="tnum">${n}</b>/100`} · touche pour ouvrir`;
+  const carteDk2=()=>{ // ✂️ dhikr épuré (TEST compte admin) : 3 zones — choix, grande zone à toucher, suivi discret
+    const ST=m==='tasbih'?DHIKRS.tasbih.etapes:null, cib=dhikrCible(d), A=o.apres||{}, pr=S.sel===today()?dkProchaine():null, pulse=S._dkPulse; S._dkPulse=0;
+    const statut=m!=='tasbih'?'':cib?`Après ${PRAYERS.find(p=>p.k===cib).n} ▾`:PRAYERS.every(p=>A[p.k])?'✓ Fait après les 5 prières':pr?`Compte libre · prochain après ${pr.n} ▾`:'Compte libre ▾';
+    const pb='background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:12px;min-width:52px;height:40px;font:inherit;font-weight:800;cursor:pointer';
+    return `<div class="hero k-violet mt dk2">
+      <div class="row" style="align-items:center"><div class="h-lbl">📿 Dhikr</div><div class="sp"></div><span class="chip">${dhikrFait(d)?'✓ +'+PTS_DHIKR+' points':'+'+PTS_DHIKR+' pts'}</span>${repli('dk')}</div>
+      <div class="dkmodes" role="tablist">${Object.entries(DHIKRS).map(([k,x])=>`<button role="tab" aria-selected="${m===k}" class="${m===k?'on':''}" onclick="S.dhikrMode='${k}';render()">${({tasbih:'Après la prière',sbh:'SubhânAllâhi…',tahlil:'Lâ ilâha…'})[k]}</button>`).join('')}</div>
+      <button class="dktap" onclick="dkTap(1)" aria-label="Compter : ${esc(E[1])}, ${r} sur ${E[3]}">
+        <span lang="ar" dir="rtl" class="dkar" style="font-size:${E[0].length>40?'1.3rem':'2.3rem'}">${E[0]}</span>
+        <span class="dktr">${esc(E[1])} · ${esc(E[2])}</span>
+        <span class="dkn tnum${pulse?' pulse':''}">${r}<small> / ${E[3]}</small></span>
+        <span class="dkbar"><i style="width:${Math.min(100,r/E[3]*100)}%"></i></span>
+      </button>
+      ${ST?`<div class="dksteps">${ST.map((x,j)=>`<div class="${j<i?'ok':j===i?'cur':''}"><span><i style="width:${j<i?100:j===i?Math.min(100,r/x[3]*100):0}%"></i></span><small>${j<i?'✓ ':''}${esc(x[1])}</small></div>`).join('')}</div>`:''}
+      <div class="dkpied">${m==='tasbih'?`<button class="dkpr" onclick="dkChoixPriere()">${statut}</button>`:`<span class="dkpr" style="cursor:default">${n} / 100 aujourd'hui</span>`}
+        <span class="sp"></span><button style="${pb}" onclick="annulerDhikr()" aria-label="Retirer 1">−1</button><button style="${pb}" onclick="dkTap(10)">+10</button><button style="${pb}" onclick="dkTap(33)">+33</button><button style="${pb}" onclick="dkTap(34)">+34</button></div>
+      <button class="dkpq" onclick="S.dkPq=!S.dkPq;render()">${S.dkPq?'▾':'›'} Pourquoi ce dhikr ?</button>
+      ${S.dkPq?`<div class="h-sub" style="margin-top:6px;font-size:.85rem;line-height:1.5">${esc(D.r)} — ${esc(D.src)}</div>`:''}
+    </div>`; };
   const carteDk=!S.ouv.dk?ferme('dk','k-violet','📿 Dhikr',resumeDk,dhikrFait(d)?'✓ +'+PTS_DHIKR+' pts':'+'+PTS_DHIKR+' pts'):`<div class="hero k-violet mt">
       <div class="row" style="align-items:center"><div class="h-lbl">📿 Dhikr</div><div class="sp"></div><span class="chip">${dhikrFait(d)?'✓ +'+PTS_DHIKR+' points':'+'+PTS_DHIKR+' pts'}</span>${repli('dk')}</div>
       <div class="h-sub" style="margin-top:8px;font-weight:800">Choisis ton dhikr :</div>
@@ -3222,7 +3271,8 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
       <div class="row" style="justify-content:center;gap:6px;margin-top:8px"><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="annulerDhikr()">−1</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(10)">+10</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(33)">+33</button><button class="btn sm" style="background:rgba(255,255,255,.22);border:none;color:#fff" onclick="compterDhikr(34)">+34</button></div>
       <div class="h-sub" style="margin-top:10px;font-size:.78rem">🎁 ${esc(D.r)} — ${esc(D.src)}</div>
     </div>`;
-  return dkDabord?carteDk+'<div class="mt">'+carteIst+'</div>':carteIst+carteDk;
+  const cDk=S.ouv.dk&&S.email===ADMIN_EMAIL?carteDk2():carteDk;
+  return dkDabord?cDk+'<div class="mt">'+carteIst+'</div>':carteIst+cDk;
 }
 function dhikr(n){ const d=J(); d.istighfar=Math.max(0,d.istighfar+n); vib(); touch(); render(); if(d.istighfar>=100&&d.istighfar-n<100){ if(true) celebrer('أَسْتَغْفِرُ اللّٰهَ','100 istighfar','Qu\'Allah te pardonne · +'+PTS_ISTIGHFAR+' points'); else toast('🤲 100 istighfar, qu\'Allah te pardonne'); } }
 /* ---------- Faire un don ---------- */
