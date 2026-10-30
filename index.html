@@ -549,7 +549,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-195109'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-195255'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3252,7 +3252,7 @@ function cartesDhikr(d,dkDabord){ // dkDabord : dhikr puis istighfar (onglet Pri
         <span class="dkn tnum${pulse?' pulse':''}">${ist}<small> / 100</small></span>
         <span class="dkbar"><i style="width:${Math.min(100,ist)}%"></i></span>
       </button>
-      <div class="dkpied"><span class="dkpr" style="cursor:default">${ist>=100?'✓ Objectif du jour atteint':'Objectif : 100 par jour'}</span><span class="sp"></span><button style="${pb}" onclick="dhikr(-1)" aria-label="Retirer 1">−1</button><button style="${pb}" onclick="istTap(10)">+10</button><button style="${pb}" onclick="istTap(33)">+33</button></div>
+      <div class="dkpied"><span class="dkpr" style="cursor:default">${ist>=100?'✓ Objectif du jour atteint':'Objectif : 100 par jour'}</span><span class="sp"></span><button style="${pb}" onclick="dhikr(-1)" aria-label="Retirer 1">−1</button><button style="${pb}" onclick="istTap(10)">+10</button><button style="${pb}" onclick="istTap(33)">+33</button><button style="${pb}" onclick="istTap(34)">+34</button></div>
       <button class="dkpq" onclick="S.istPq=!S.istPq;render()">${S.istPq?'▾':'›'} Pourquoi l'istighfar ?</button>
       ${S.istPq?`<div class="h-sub" style="margin-top:6px;font-size:.85rem;line-height:1.5">« Je demande pardon à Allah cent fois par jour », disait le Prophète ﷺ. — Muslim n° 2702</div>`:''}
     </div>`; };
