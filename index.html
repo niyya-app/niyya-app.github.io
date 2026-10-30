@@ -68,22 +68,22 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .muted{color:var(--muted)}
 
 
-/* ===== 🌙 Thème « Nuit · Émeraude · Or » (TEST compte admin : classe .noble sur <html>) ===== */
+/* ===== 🌙 Thème « Nuit violette · Émeraude · Or » (TEST compte admin : classe .noble sur <html>) ===== */
 :root.noble{ --bg1:#f7f3ea; --bg2:#f1ebdd; --card:#fffdf8; --card2:#f6f1e6; --ink:#16231d; --muted:#5b665f; --line:#e6dcc6;
-  --indigo:#0f1a3a; --violet:#0f1a3a; --emerald:#0b6b4f; --emerald-d:#064e3b; --or:#a8842f; --halo1:transparent; --halo2:transparent; --sh:0 6px 18px rgba(22,35,29,.06); }
-:root.noble[data-theme="dark"]{ --bg1:#0a1024; --bg2:#0c1530; --card:#111b38; --card2:#16224a; --ink:#f3eee2; --muted:#a9b1c4; --line:#22305a; --emerald:#2fa57f; --or:#d4b26a; --sh:0 6px 18px rgba(0,0,0,.35); }
-@media (prefers-color-scheme: dark){ :root.noble:not([data-theme="light"]):not([data-theme="dark"]){ --bg1:#0a1024; --bg2:#0c1530; --card:#111b38; --card2:#16224a; --ink:#f3eee2; --muted:#a9b1c4; --line:#22305a; --emerald:#2fa57f; --or:#d4b26a; --sh:0 6px 18px rgba(0,0,0,.35); } }
+  --indigo:#2a1d63; --violet:#2a1d63; --emerald:#0b6b4f; --emerald-d:#064e3b; --or:#a8842f; --halo1:transparent; --halo2:transparent; --sh:0 6px 18px rgba(22,35,29,.06); }
+:root.noble[data-theme="dark"]{ --bg1:#0e0b22; --bg2:#120e2c; --card:#1a1538; --card2:#221b48; --ink:#f3eee2; --muted:#a9b1c4; --line:#2e2758; --emerald:#2fa57f; --or:#d4b26a; --sh:0 6px 18px rgba(0,0,0,.35); }
+@media (prefers-color-scheme: dark){ :root.noble:not([data-theme="light"]):not([data-theme="dark"]){ --bg1:#0e0b22; --bg2:#120e2c; --card:#1a1538; --card2:#221b48; --ink:#f3eee2; --muted:#aaa6c4; --line:#2e2758; --emerald:#2fa57f; --or:#d4b26a; --sh:0 6px 18px rgba(0,0,0,.35); } }
 .noble body{background:linear-gradient(180deg,var(--bg1),var(--bg2));background-attachment:fixed}
-.noble .k-violet,.noble .k-pink,.noble .k-magenta{--g:linear-gradient(160deg,#16244d,#0f1a3a);background:var(--g)}
-.noble .k-sky{--g:linear-gradient(160deg,#1d3566,#14264d);background:var(--g)}
+.noble .k-violet,.noble .k-pink,.noble .k-magenta{--g:linear-gradient(160deg,#35237a,#21174f);background:var(--g)}
+.noble .k-sky{--g:linear-gradient(160deg,#2c2a72,#1c1a4d);background:var(--g)}
 .noble .k-emerald,.noble .k-teal{--g:linear-gradient(160deg,#0b6b4f,#064e3b);background:var(--g)}
 .noble .k-gold,.noble .k-sunset{--g:linear-gradient(160deg,#b8933d,#8f6d24);background:var(--g)}
-.noble .hero,.noble .quote{box-shadow:0 8px 22px rgba(15,26,58,.14)}
-.noble .logo{background:#0f1a3a;color:#e9c46a;box-shadow:0 4px 12px rgba(15,26,58,.25)}
+.noble .hero,.noble .quote{box-shadow:0 8px 22px rgba(33,23,79,.16)}
+.noble .logo{box-shadow:0 4px 12px rgba(124,58,237,.25)} /* le logo garde le violet-rose de l'icône (ADN NIYYA) */
 .noble .brand h1 span{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--or)}
 .noble .brand p b{color:var(--or)!important}
-.noble .panel h2 .ico{background:#0f1a3a;color:#e9c46a}
-.noble .nav button.on{background:#0f1a3a;color:#e9c46a;box-shadow:0 4px 12px rgba(15,26,58,.25)}
+.noble .panel h2 .ico{background:#2a1d63;color:#e9c46a}
+.noble .nav button.on{background:#2a1d63;color:#f2cf5b;box-shadow:0 4px 12px rgba(42,29,99,.3)}
 .noble .btn.pri{background:#0b6b4f;border-color:transparent}
 .noble .q-tag,.noble .h-lbl{letter-spacing:.04em}
 .noble .ptile.on{background:var(--card);color:var(--ink);border:1.5px solid var(--line);box-shadow:none}
@@ -489,7 +489,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-131705'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-133527'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2504,7 +2504,7 @@ function hadMindCartes(q){ // q : 'h' hadith seul, 'm' phrase seule, sinon les d
       <div class="src" style="flex-wrap:wrap">D'après ${esc(h[2])} · ${esc(h[1])}<button onclick="nextHadith()">Un autre ↻</button></div>
       ${h[3]?`<button class="chip" style="border:none;color:#fff;cursor:pointer;margin-top:8px" onclick="S.hadAr=!S.hadAr;render()">${S.hadAr?'Masquer':'Voir'} le texte arabe</button>`:''}${partBtn(`partager({type:'hadith',tag:'Hadith du jour',ar:HADITHS[${hi}][3]||'',fr:'« '+HADITHS[${hi}][0]+' »',src:HADITHS[${hi}][1]})`)}
       <div style="font-size:.66rem;opacity:.8;margin-top:8px">Sens en français proposé par NIYYA, vérifié sur le texte arabe.${h[4]?' Thème inspiré des chapitres de Riyad as-Salihin (imam An-Nawawi).':''} Référence pour retrouver le hadith : sunnah.com ou ton recueil.</div>
-    </div>`, mc=S.cfg.mindCouleur||b.c, M=`<div class="quote ${mc}" id="cMindset">
+    </div>`, mc=S.cfg.mindCouleur||(document.documentElement.classList.contains('noble')?'k-emerald':b.c), M=`<div class="quote ${mc}" id="cMindset">
       <span class="q-tag">💡 Mindset ${S.sel===today()&&new Date().getHours()>=14?'de l\'après-midi':'du matin'}</span>
       <p>${esc(m[1])}</p>
       <div class="src">D'après ${b.a?esc(b.t):'« '+esc(b.t)+' »'}<button onclick="nextMind()">Une autre ↻</button></div>
