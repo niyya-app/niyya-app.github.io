@@ -549,7 +549,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-195255'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-195705'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2029,7 +2029,7 @@ function rappelSuite(){ const f=S._apresRappel; S._apresRappel=null; if(f) setTi
 async function proposerRappels(force,apres){
   const C=S.cfg; S._apresRappel=apres||null; const e=await pushMajEtat(); if(e==='actif'||e==='non'){ rappelSuite(); return; }
   const onb=!!apres, plusTard=onb?`<button onclick="closeSheet();rappelSuite()" style="all:unset;display:block;width:100%;text-align:center;margin-top:14px;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer">Plus tard</button>`:`<button class="btn mt" onclick="closeSheet();rappelSuite()">Plus tard</button>`;
-  if(!force){ const p=C.rappelPropose||{n:0,d:''}; if(p.n>=3 || (p.d && addDays(p.d,3)>today())) return; C.rappelPropose={n:p.n+1,d:today()}; cfgTouch(); }
+  if(!force){ const p=C.rappelPropose||{n:0,d:''}; if(p.n>=5 || (p.d && addDays(p.d,p.n<2?1:3)>today())) return; /* 1re relance dès le lendemain, puis tous les 3 jours, 5 fois au plus */ C.rappelPropose={n:p.n+1,d:today()}; cfgTouch(); }
   const iphoneAInstaller = e==='ios';
   openSheet(iphoneAInstaller?`${onb?'<div class="muted" style="font-size:.74rem;font-weight:800;letter-spacing:.06em">DERNIÈRE ÉTAPE</div>':''}<h2 style="margin:0 0 4px">📱 Installe NIYYA sur ton iPhone</h2>
       <div class="sub">C'est indispensable pour recevoir l'adhan et les rappels. 20 secondes :</div>
@@ -2043,7 +2043,7 @@ async function proposerRappels(force,apres){
       <p class="muted" style="font-size:.75rem;margin-top:10px">Tu es dans WhatsApp ou un autre appli ? Ouvre d'abord le lien dans <b>Safari</b> (bouton ⋯ → « Ouvrir dans Safari »).</p>
       <button class="btn pri mt" onclick="closeSheet();rappelSuite()">Compris</button>`
     : e==='refus'?`<h2 style="margin:0 0 4px">🔕 Notifications bloquées</h2><div class="sub">Pour recevoir l'adhan : Réglages de ton téléphone → Notifications → NIYYA → Autoriser.</div><button class="btn mt" onclick="closeSheet();rappelSuite()">OK</button>`
-    :`${onb?'<div class="muted" style="font-size:.74rem;font-weight:800;letter-spacing:.06em">DERNIÈRE ÉTAPE</div>':''}<h2 style="margin:0 0 4px">🔔 Active tes rappels</h2>
+    :`${onb?'<div class="muted" style="font-size:.74rem;font-weight:800;letter-spacing:.06em">DERNIÈRE ÉTAPE</div>':''}<h2 style="margin:0 0 4px">🔔 Active tes rappels</h2><div style="background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;margin:10px 0"><img src="niyya-logo-180.png" alt="" style="width:32px;height:32px;border-radius:8px"><div style="font-size:.86rem;line-height:1.4"><b>🕌 C'est l'heure de la prière</b><br>📖 « Certes, c'est par l'évocation d'Allah que les cœurs se tranquillisent. » — Le Tonnerre 13:28</div></div>
       <div class="sub">Chaque jour, à l'heure exacte :</div>
       <div class="checks" style="margin-top:10px;gap:6px;font-weight:600">
         <div>🕌 L'adhan de chaque prière, avec un verset du Coran</div>
@@ -2519,6 +2519,8 @@ function bonnesActionsCarte(){
         <div class="sub" style="margin-bottom:8px">${nb>=1?`✓ Score max atteint${nb>1?` · ${nb} actions, chacune en plus est un bonus 🌟`:' · chaque action en plus est un bonus'}`:'Une seule bonne action suffit pour le score max. Touche pour ouvrir la liste.'}</div>
         <div class="wbar"><div style="width:${nb>=1?100:0}%;background:linear-gradient(90deg,#10b981,#14b8a6)"></div></div>
       </button>
+      ${S.baOpen&&S.email===ADMIN_EMAIL?(()=>{ const di=dayOfYear(S.sel); return `<div class="coach" style="margin-top:12px;background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0"><b>☀️ Sunnah du jour</b><br>${esc(SUNNAH[di%SUNNAH.length])}${sunnahPreuve(di%SUNNAH.length)}
+        <button class="ck ${d.sunnahOk?'on':''}" style="margin-top:8px" onclick="toggle('sunnahOk')"><span class="box"></span>J'ai fait cette Sunnah</button></div>`; })():''}
       ${S.baOpen?`<div class="checks" style="margin-top:12px">${baJour(S.sel).map((id,i)=>{ const a=BA_POOL[id], h=a[1]>=0?[HADITHS[a[1]][0],HADITHS[a[1]][1]]:a[1]===-2?[a[3],a[4]]:null, src=h?baSource(h[0],h[1]):`📖 « ${esc(a[3])} » — Coran, ${esc(SURATES[parseInt(a[4])-1][2])} ${esc(a[4])}`; return `<button class="ck ${d.ba[i]?'on':''}" onclick="ba(${i})" style="align-items:flex-start"><span class="box" style="margin-top:2px"></span><span>${esc(a[0])}<small style="display:block;font-weight:600;color:var(--muted);font-size:.72rem;margin-top:3px;line-height:1.35">${src}</small></span></button>`; }).join('')}
         <p class="muted" style="font-size:.7rem;font-weight:600;margin-top:4px">${BA_PAR_JOUR()} nouvelles actions chaque jour, chacune appuyée par un verset du Coran (trad. Hamidullah) ou un hadith authentique vérifié (Bukhari / Muslim).</p>
         <div style="margin-top:14px;font-weight:800;font-size:.9rem">✍️ Mes bonnes actions</div>
@@ -2538,7 +2540,7 @@ function aimeSunnahCartes(){
   const aimeCorps=`<div class="sub">Un verset ou un hadith par jour, et une façon concrète de l'appliquer.</div>
     <div class="coach" style="background:color-mix(in srgb,var(--violet) 10%,var(--card));border-color:#c4b5fd"><b>Allah aime ${esc(ALLAH_AIME[aimeIdx()][0])}</b><br>🎯 ${esc(ALLAH_AIME[aimeIdx()][3])}${versetAime(aimeIdx())}
       <button class="ck ${d.aime?'on':''}" style="margin-top:8px" onclick="toggle('aime')"><span class="box"></span>Je l'ai appliqué</button></div>`;
-  const deuxDeroul=`<div class="grid g2 mt">${deroulCarte('aime','🤍','Ce qu\'Allah aime',d.aime,d.aime?'✓ Appliqué · touche pour relire':'Allah aime '+esc(ALLAH_AIME[aimeIdx()][0])+' · touche pour ouvrir',aimeCorps)}${deroulCarte('sun','✨','Sunnah du jour',d.sunnahOk,d.sunnahOk?'✓ Faite · touche pour relire':'Une petite action, beaucoup de récompense · touche pour ouvrir',`
+  const deuxDeroul=`<div class="grid g2 mt">${deroulCarte('aime','🤍','Ce qu\'Allah aime',d.aime,d.aime?'✓ Appliqué · touche pour relire':'Allah aime '+esc(ALLAH_AIME[aimeIdx()][0])+' · touche pour ouvrir',aimeCorps)}${S._sansSun?'':deroulCarte('sun','✨','Sunnah du jour',d.sunnahOk,d.sunnahOk?'✓ Faite · touche pour relire':'Une petite action, beaucoup de récompense · touche pour ouvrir',`
       <div class="coach" style="background:color-mix(in srgb,var(--emerald) 10%,var(--card));border-color:#a7f3d0">${esc(SUNNAH[di%SUNNAH.length])}${sunnahPreuve(di%SUNNAH.length)}
         <button class="ck ${d.sunnahOk?'on':''}" style="margin-top:8px" onclick="toggle('sunnahOk')"><span class="box"></span>J'ai fait cette Sunnah <small class="muted" style="font-weight:600">· compte comme une bonne action</small></button></div>
       ${(()=>{ const j=jeunesDuJour(S.sel), dm=jeunesDuJour(addDays(S.sel,1)); return j.liste.length?`<div class="coach mt">🍽️ <b>Jeûne recommandé aujourd'hui</b> : ${esc(j.liste.map(x=>x[0]).join(', '))}</div>`:dm.liste.length?`<div class="coach mt">🌙 <b>Demain</b>, jeûne recommandé : ${esc(dm.liste.map(x=>x[0]).join(', '))}. Pense au suhur.</div>`:''; })()}`)}</div>`;
@@ -2749,7 +2751,7 @@ const distOk=()=>S.email===ADMIN_EMAIL;
 function vDin(){ return vDin2(); } // Dîn resserré ouvert à tous le 30/10 (vDin1 = ancienne version)
 function vDin2(){
   const d=J(), fri=dateOf(S.sel).getDay()===5, o=!!S.ouv.pdin, n=naflN(d), sad=d.sadaqa.reduce((s,x)=>s+(+x.m||0),0);
-  const resume=[`✨ Ce qu'Allah aime`,`☀️ Sunnah du jour`,`🌙 Surérogatoires ${n}/${NAFL.length}`,`🍽️ Jeûne${d.jeune==='fait'?' ✓':''}`,`💚 Sadaqa${sad?' '+sad+' €':''}`,`📈 Régularité`];
+  const resume=[`✨ Ce qu'Allah aime`,...(S.email===ADMIN_EMAIL?[]:[`☀️ Sunnah du jour`]),`🌙 Surérogatoires ${n}/${NAFL.length}`,`🍽️ Jeûne${d.jeune==='fait'?' ✓':''}`,`💚 Sadaqa${sad?' '+sad+' €':''}`,`📈 Régularité`];
   return `<div style="margin-bottom:14px">${hadMindCartes('h').replace('<div class="mt">','<div>')}</div>
     <div style="margin-bottom:14px">${bonnesActionsCarte()}</div>
     ${nomJourCarte().replace('nomjour mt','nomjour')}
@@ -2759,7 +2761,7 @@ function vDin2(){
         <h2><span class="ico">🕌</span>Plus de pratiques<span class="cnt"><span style="display:inline-block;transition:.2s;transform:rotate(${o?180:0}deg)">▾</span></span></h2>
         ${o?'':`<div class="sub" style="line-height:1.7">${resume.join(' · ')}</div>`}
       </button>
-      ${o?`<div style="margin-top:6px">${aimeSunnahCartes()}${naflPanel(true)}${jeunePanel()}${sadaqaPanel()}<div class="mt">${regPanel()}</div></div>`:''}
+      ${o?`<div style="margin-top:6px">${(()=>{ S._sansSun=S.email===ADMIN_EMAIL; const h=aimeSunnahCartes(); S._sansSun=false; return h; })()}${naflPanel(true)}${jeunePanel()}${sadaqaPanel()}<div class="mt">${regPanel()}</div></div>`:''}
     </div>`;
 }
 function vDin1(){
@@ -3037,6 +3039,7 @@ function vReglages(){
   <div class="panel mt" id="rPriere"><h2><span class="ico">🕌</span>Horaires de prière</h2>
     <div class="sub">${isHsc()?`Calendrier annuel de la ${mosq().nom.replace('Mosquée','mosquée')} (${mosq().ville}), relevé sur Mawaqit. Iqama : ${PRAYERS.map(p=>p.n+' +'+mosq().iq[p.k]).join(', ')} min. Joumouʿa ${mosq().jumua.join(' et ')}.`:`Calculés pour <b>${esc(C.lieu.nom||'—')}</b>, à l'heure locale (${esc(lieuTz())}).`}</div>
     ${lieuForm()}
+    <button class="btn sm mt" onclick="demanderMosquee()">🕌 Ma mosquée n'est pas dans la liste</button>${S.cfg.demandeMosquee?`<span class="muted" style="font-size:.82rem;margin-left:8px">Demande envoyée : ${esc(S.cfg.demandeMosquee.nom)}</span>`:''}
     ${ajustForm()}
     ${hijriReglage()}
   </div>`;
@@ -3202,6 +3205,14 @@ function dkTap(n){ const d=J(), o=d.dk||{}, m=S.dhikrMode||'tasbih', libre=m==='
   const o2=J().dk||{}, ap=libre?(o2.libre||0):(o2[m]||0), ib=m==='tasbih'?dhikrEtape('tasbih',ap)[0]:0;
   if(ib!==ia||ap<av||ap===100) vibFort(); }
 function istTap(n){ const av=J().istighfar||0; S._istPulse=1; dhikr(n); if(av<100&&(J().istighfar||0)>=100) vibFort(); }
+// 🕌 demande d'ajout d'une mosquée (visible dans le back-office)
+function demanderMosquee(){ const D=S.cfg.demandeMosquee||{}, L=S.cfg.lieu||{};
+  openSheet(`<h2 style="margin:0 0 4px">🕌 Ajouter ma mosquée</h2><div class="sub">Donne-nous son nom et sa ville : on récupère son calendrier officiel et on l'ajoute, in châ' Allâh. En attendant, « Ajuster à ma mosquée » te permet de décaler chaque prière.</div>
+    <label class="f">Nom de la mosquée</label><input class="inp" id="mqNom" maxlength="80" value="${esc(D.nom||'')}" placeholder="Ex. Mosquée Al-Fath">
+    <label class="f">Ville</label><input class="inp" id="mqVille" maxlength="60" value="${esc(D.ville||(L.nom||'').replace(/\s*\(\d+\)$/,'').split(',')[0])}">
+    <button class="btn pri mt" style="width:100%" onclick="envoyerMosquee()">Envoyer la demande</button><button class="btn mt" style="width:100%" onclick="closeSheet()">Annuler</button>`); }
+function envoyerMosquee(){ const n=(document.getElementById('mqNom').value||'').trim(), v=(document.getElementById('mqVille').value||'').trim();
+  if(!n) return toast('Indique le nom de la mosquée'); S.cfg.demandeMosquee={nom:n,ville:v,d:today()}; cfgTouch(); closeSheet(); render(); toast('🕌 Merci ! Ta demande est bien reçue'); }
 function vibFort(){ try{ if(NATIF){ const r=Capacitor.registerPlugin?(S._hap=S._hap||Capacitor.registerPlugin('Haptics')).notification({type:'SUCCESS'}):Capacitor.nativePromise('Haptics','notification',{type:'SUCCESS'}); if(r&&r.catch) r.catch(()=>{}); return; } }catch(e){} try{ navigator.vibrate&&navigator.vibrate([35,45,35]); }catch(e){} }
 function dkChoixPriere(){ const d=J(), o=d.dk||{}, A=o.apres||{}, cib=dhikrCible(d);
   openSheet(`<h2 style="margin:0 0 4px">📿 Dhikr d'après quelle prière ?</h2><div class="sub">Le dhikr compte pour la prière choisie.</div>
@@ -3568,6 +3579,8 @@ function onbFin(){ if(!document.getElementById('onbOk').checked) return toast('C
   toast(`Bienvenue ${esc(nom)} 🌙 Quand tu as prié, touche « À l'heure » ✓`,5000);
   setTimeout(()=>{ if(S.cfg.notifOn||S.pushEtat==='actif') essChoisir(null,true); else proposerRappels(true,()=>essChoisir(null,true)); },1800);
 }
+function fajrAvec(k){ try{ const L=S.cfg.lieu, M=METHODES[k], p=new adhan.CalculationParameters('Other',M.f,M.i); p.madhab=adhan.Madhab.Shafi; p.highLatitudeRule=adhan.HighLatitudeRule.recommended(new adhan.Coordinates(L.lat,L.lon)); const t=new adhan.PrayerTimes(new adhan.Coordinates(L.lat,L.lon),dateOf(today()),p); return Math.ceil(minIn(t.fajr,lieuTz())-1e-6)%1440; }catch(e){ return 0; } }
+function onbMethode(k){ S.cfg.priere.methode=k; for(const x in _tcache) delete _tcache[x]; vib(); render(); }
 function vOnb2(){
   const C=S.cfg, st=ONB.step||1, pts=[1,2,3,4].map(i=>`<span style="width:${i===st?22:8}px;height:8px;border-radius:9px;background:${i<=st?'var(--violet)':'var(--line)'};display:inline-block;transition:.3s"></span>`).join(''),
     tete=(t,sub)=>`<div style="display:flex;gap:6px;justify-content:center;margin-bottom:18px">${pts}</div><h1 style="text-align:center">${t}</h1><p class="tag-l" style="text-align:center">${sub}</p>`,
@@ -3591,6 +3604,9 @@ function vOnb2(){
       <div id="villeSugg"></div>
       <button class="btn sm mt" onclick="localiserMoi()">📍 Utiliser ma position actuelle</button>
       ${ok?`<div class="quote k-emerald" style="margin-top:14px;padding:16px"><span class="q-tag">🕌 Prochaine prière</span><div style="font-size:1.9rem;font-weight:800;margin-top:4px">${np.p.n} à ${hm(np.at%1440)}</div><div class="src">📍 ${esc(C.lieu.nom.replace(/ \(\d+\)$/,'').split(',')[0])}${isHsc()?' · '+esc(METHODES[C.priere.methode].l.split(',')[0]):''}</div></div>`:''}
+      ${ok&&!isHsc()&&enFrance(C.lieu)?`<label class="f" style="margin-top:14px">Ta mosquée annonce Fajr plutôt vers…</label>
+        <div class="checks" style="margin-top:6px">${[['uoif','UOIF · 12°','la plus courante en France'],['isna','15°','un peu plus tôt'],['mwl','Ligue islamique mondiale · 18°','le plus tôt']].map(([k,l,sub])=>`<button class="ck ${C.priere.methode===k?'on':''}" onclick="onbMethode('${k}')"><span class="box"></span><span style="flex:1">${l} <small class="muted" style="font-weight:600">· ${sub}</small></span><b class="tnum">${hm(fajrAvec(k))}</b></button>`).join('')}</div>
+        <div class="sub" style="margin-top:6px">Pas sûr ? Garde UOIF : tu pourras ajuster à ta mosquée dans les réglages.</div>`:''}
       <details style="margin-top:12px"><summary class="muted" style="font-size:.8rem;font-weight:700;cursor:pointer">Méthode de calcul / ma mosquée</summary>${lieuForm().split('<label class="f">Ma ville</label>')[0]}</details>
       <button class="btn pri" style="width:100%;margin-top:16px;padding:13px" onclick="onbEtape(3)">${ok?'C\'est bien ça, continuer':'Continuer'}</button>
       <div style="text-align:center;margin-top:10px">${retour}</div></div>`; }
@@ -3960,8 +3976,9 @@ function sportValider(){
 
 /* ---------- Statistiques ANONYMES d'ouverture des onglets (aucun identifiant stocké) ---------- */
 const ADMIN_EMAIL='hestia14000@gmail.com';
+const STATS_EXCLUS=[ADMIN_EMAIL,'contact.nyya@gmail.com','contact.nyya+apple@gmail.com','luis.p24g38b.bh3e8@icloud.com']; // Mehdi, compte démo, vérificateur Apple
 function compter(onglet){
-  if(!S.uid || !sb || location.hash==='#autotest' || S.email===ADMIN_EMAIL) return; // le compte de Mehdi ne compte pas dans les statistiques
+  if(!S.uid || !sb || location.hash==='#autotest' || STATS_EXCLUS.includes(S.email)) return; // le compte de Mehdi ne compte pas dans les statistiques
   try{
     const k='nya_vu_'+onglet, t=Number(sessionStorage.getItem(k)||0);
     if(Date.now()-t < 10*60e3) return;              // une ouverture comptée au plus toutes les 10 min par onglet
@@ -3970,7 +3987,7 @@ function compter(onglet){
   sb.rpc('niyya_compter',{p_onglet:onglet}).then(()=>{},()=>{});
 }
 function compterJournee(){ // 1 « actif » par appareil et par jour + mode d'ouverture (icône / navigateur)
-  if(!S.uid || !sb || location.hash==='#autotest' || S.email===ADMIN_EMAIL) return; // le compte de Mehdi ne compte pas dans les statistiques
+  if(!S.uid || !sb || location.hash==='#autotest' || STATS_EXCLUS.includes(S.email)) return; // le compte de Mehdi ne compte pas dans les statistiques
   try{
     const icone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
     if(icone && !S.cfg.vuIcone){ S.cfg.vuIcone=true; cfgTouch(); } // noté à chaque ouverture depuis l'icône (pas seulement la 1re du jour)
@@ -4843,7 +4860,7 @@ function pushParams(){
   const L=(S.cfg&&S.cfg.lieu)||{};
   return { tz:lieuTz(), lat:L.lat??null, lon:L.lon??null, methode:(S.cfg.priere||{}).methode||'uoif', hsc:typeof isHsc==='function'?isHsc():true, mosquee:(S.cfg.priere||{}).methode==='maryam'?'maryam':undefined,
            prieres:NOTIF_PRIERES.map(x=>x[0]).filter(k=>(S.cfg.notifOff||[]).indexOf(k)<0), ajust:(S.cfg.priere||{}).ajust||null, pause:dispEnCours()&&S.cfg.dispPauseAdhan!==false,
-           hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, recap:(S.cfg.notifOff||[]).indexOf('recap')<0, soir:(S.cfg.notifOff||[]).indexOf('soir')<0, calendrier:(S.cfg.notifOff||[]).indexOf('calendrier')<0, hdec:+S.cfg.hijriDecal||0, url:'./' };
+           hadith:(S.cfg.notifOff||[]).indexOf('hadith')<0, mindset:(S.cfg.notifOff||[]).indexOf('mindset')<0, recap:(S.cfg.notifOff||[]).indexOf('recap')<0, soir:(S.cfg.notifOff||[]).indexOf('soir')<0, calendrier:(S.cfg.notifOff||[]).indexOf('calendrier')<0, hdec:+S.cfg.hijriDecal||0, url:'./', exclu:STATS_EXCLUS.includes(S.email)||undefined };
 }
 async function pushRpc(fn,args){ let jwt=null; try{ const {data}=await sb.auth.getSession(); jwt=data&&data.session&&data.session.access_token; }catch(e){} const r=await fetch(PUSH_BASE+'/rest/v1/rpc/'+fn,{method:'POST',headers:Object.assign({apikey:PUSH_KEY,'Content-Type':'application/json'},jwt?{Authorization:'Bearer '+jwt}:{}),body:JSON.stringify(args)}); if(!r.ok) throw new Error(await r.text()); }
 async function pushEnvoyerAbo(sub){ await pushRpc('niyya_push_abonner',{p_sub:sub.toJSON(),p_params:pushParams()}); }
