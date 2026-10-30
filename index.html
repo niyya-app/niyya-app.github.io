@@ -464,7 +464,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-065820'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-073241'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2854,6 +2854,8 @@ function vReglages(){
   <div class="panel mt"><h2><span class="ico">💚</span>Faire un don</h2>
     <div class="sub">À une association, ou pour faire vivre NIYYA (gratuite et sans publicité).</div>
     <button class="btn green" onclick="ouvrirDons()">💚 Faire un don</button></div>
+  ${S.email===ADMIN_EMAIL?`<div class="panel mt"><h2><span class="ico">📳</span>Test vibration (admin)</h2><div class="sub">Appli iPhone : ${NATIF?'oui':'non (web)'} · registerPlugin : ${NATIF&&window.Capacitor&&Capacitor.registerPlugin?'oui':'non'}</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" onclick="testVib('impact')">Tic léger</button><button class="btn sm" onclick="testVib('notification')">Notification</button><button class="btn sm" onclick="testVib('vibrate')">Vibration forte</button></div><div id="vibRes" class="sub mt"></div></div>`:''}
   <div class="panel mt" id="rPriere"><h2><span class="ico">🕌</span>Horaires de prière</h2>
     <div class="sub">${isHsc()?`Calendrier annuel de la ${mosq().nom.replace('Mosquée','mosquée')} (${mosq().ville}), relevé sur Mawaqit. Iqama : ${PRAYERS.map(p=>p.n+' +'+mosq().iq[p.k]).join(', ')} min. Joumouʿa ${mosq().jumua.join(' et ')}.`:`Calculés pour <b>${esc(C.lieu.nom||'—')}</b>, à l'heure locale (${esc(lieuTz())}).`}</div>
     ${lieuForm()}
@@ -2866,6 +2868,12 @@ function vReglages(){
    Actions
    ===================================================================== */
 function toast(msg,ms){ const t=document.getElementById('toast'); t.innerHTML=msg; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),ms||2200); }
+async function testVib(m){ const out=t=>{ const e=document.getElementById('vibRes'); if(e) e.textContent=t; };
+  if(!NATIF){ vib(); return out('Web : astuce iPhone tentée (iOS 18+).'); }
+  const arg=m==='impact'?{style:'HEAVY'}:m==='notification'?{type:'SUCCESS'}:{duration:400};
+  try{ const r=Capacitor.registerPlugin?(S._hap=S._hap||Capacitor.registerPlugin('Haptics'))[m](arg):Capacitor.nativePromise('Haptics',m,arg); await r; out('✅ '+m+' envoyé sans erreur'); }
+  catch(e){ out('❌ '+m+' : '+(e&&(e.message||e.code)||e)); }
+}
 function vib(){ // petite vibration quand on coche (prière, essentiel…)
   try{ if(NATIF){ const r=Capacitor.registerPlugin?(S._hap=S._hap||Capacitor.registerPlugin('Haptics')).impact({style:'MEDIUM'}):Capacitor.nativePromise('Haptics','impact',{style:'MEDIUM'}); if(r&&r.catch) r.catch(()=>{}); return; } }catch(e){} // appli iPhone : vrai retour haptique (plugin natif)
   try{ if(navigator.vibrate){ navigator.vibrate(15); return; } }catch(e){}
