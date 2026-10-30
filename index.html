@@ -549,7 +549,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261030-193821'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261030-194041'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1724,7 +1724,8 @@ function J(k){ k=k||S.sel; if(!S.jours[k]) S.jours[k]=blank(); else S.jours[k]=O
 function has(k){ const d=S.jours[k]; return !!(d && d.u); }
 function touch(k){ k=k||S.sel; if(LN&&!jourRempli(k)&&k===jourIn(lieuTz())) LN.cancel({notifications:[{id:idNotif(k,8)}]}).catch(()=>{}); J(k).u=Date.now(); S.dirty.add(k); saveLocal(); planPush(); clearTimeout(touch._r); touch._r=setTimeout(()=>{ try{ verifRecompenses(); }catch(e){} },600); }
 function saveLocal(){ if(!S.uid) return; lsSet(LS.jours,S.jours); lsSet(LS.cfg,S.cfg); lsSet(LS.dirty,[...S.dirty]); }
-function cfgTouch(){ S.cfg.u=Date.now(); S.cfgDirty=true; saveLocal(); planPush(); if(S.cfg.notifOn&&typeof pushMajParams==='function') pushMajParams(); }
+function cfgTouch(){ if(S.onbApercu) return; // aperçu de l'inscription : rien n'est enregistré
+  S.cfg.u=Date.now(); S.cfgDirty=true; saveLocal(); planPush(); if(S.cfg.notifOn&&typeof pushMajParams==='function') pushMajParams(); }
 
 /* =====================================================================
    Synchro Supabase (fonctions liées au compte connecté)
@@ -2636,7 +2637,7 @@ function vAccueil(){
     <button class="qbtn" onclick="openQibla()">🧭 Qibla</button>
     <div class="h-lbl" style="padding-right:80px">🕌 Prochaine prière</div>
     <div class="row" style="justify-content:space-between;align-items:center;gap:10px;margin-top:4px"><div class="h-big tnum" style="font-size:3rem;line-height:1.1"><span id="npName">${np.p.n}</span></div>
-      <div style="font-weight:800;font-size:.95rem;opacity:.9;text-align:right;max-width:50%;line-height:1.3">📍 ${esc(isHsc()?mosq().ville:((S.cfg.lieu&&S.cfg.lieu.nom)||'').replace(/\s*\(\d+\)$/,'').split(',')[0])}${isHsc()?`<div style="font-size:.78rem;font-weight:700;opacity:.85">${esc(mosq().nom)}</div>`:''}</div></div>
+      <div style="font-weight:800;font-size:.95rem;opacity:.9;text-align:right;max-width:50%;line-height:1.3">${(()=>{ const v=((S.cfg.lieu&&S.cfg.lieu.nom)||'').replace(/\s*\(\d+\)$/,'').split(',')[0]||(isHsc()?mosq().ville:''); return v?'📍 '+esc(v):`<a href="#" onclick="event.preventDefault();go('reglages');setTimeout(()=>{const e=document.getElementById('rPriere');if(e)e.scrollIntoView({block:'start'})},80)" style="color:inherit">📍 Choisir ma ville ›</a>`; })()}</div></div>
     <div id="npCount" class="tnum" style="font-size:1.35rem;font-weight:800;opacity:.95"></div>
     <div class="h-sub" style="font-size:1rem">Adhan ${hm(at)}${iq!=null?` · Iqama ${hm((at+iq)%1440)}`:''}${isHsc()&&isDhuhrJumua(np)?` · Joumouʿa ${mosq().jumua.join(' / ')}`:''}</div>
     <div class="hpal-bas"><button class="hpal-btn" onclick="S.paletteOuverte=!S.paletteOuverte;render()">🎨 ${S.paletteOuverte?'Fermer':'Couleur'}</button></div>
