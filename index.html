@@ -173,6 +173,9 @@ button,input,textarea,select{font-family:inherit;color:inherit}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
 .pbouge{opacity:.72;transition:transform .15s,opacity .15s,box-shadow .15s}
 .pdrag{z-index:5;position:relative}.pdrag .pbouge{opacity:1;transform:scale(1.08);box-shadow:0 0 0 3px #fff,0 0 0 6px #10b981,0 14px 24px rgba(0,0,0,.3)}
+.pdrag .tile.pbouge{opacity:1!important;transform:scale(1.07)!important;border:2.5px solid #059669!important;box-shadow:0 0 0 4px rgba(16,185,129,.25),0 14px 26px rgba(0,0,0,.22)!important;background:#ecfdf5!important}
+.pdrag::after{content:'✋ Fais glisser';position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#059669;color:#fff;font-size:.68rem;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap;z-index:6;pointer-events:none}
+#plusTiles:has(.pdrag) > :not(.pdrag) .pbouge{opacity:.5}
 .pfl{position:absolute;top:10px;right:10px;display:flex;gap:6px}.pfl button{width:34px;height:34px;border-radius:50%;border:none;background:#fff;color:#111;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}.pfl button:disabled{opacity:.35}
 .quote .preuve summary{color:#fff;text-decoration:underline dotted}.quote .preuve .pv-fr{background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:12px;padding:10px 12px;margin-top:8px;font-size:.92rem;line-height:1.5}.quote.blanc .preuve summary{color:var(--indigo,#4f46e5)}
 .preuve{margin-top:10px;font-weight:600}.preuve summary{cursor:pointer;font-weight:800;font-size:.82rem;color:var(--indigo,#4f46e5);list-style:none}.preuve summary::-webkit-details-marker{display:none}.preuve summary::after{content:' ▾'}.preuve[open] summary::after{content:' ▴'}
@@ -565,7 +568,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261031-110708'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261031-110901'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
