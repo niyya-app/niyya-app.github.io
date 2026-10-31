@@ -565,7 +565,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261031-104539'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261031-110708'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2592,7 +2592,8 @@ function partBloc(ctx,txt,police,taille,min,maxW,maxH,ecart){ // réduit la poli
 const PART_STYLES={
   nuit:{bg:['#120c2e','#21174f','#35237a'],txt:'#ffffff',acc:'#f2cf5b',sub:'rgba(255,255,255,.74)',motif:'rgba(242,207,91,.07)',lune:true}, // violet nuit (ADN de l'icône NIYYA)
   creme:{bg:['#fbf6ec','#f5ecd9','#efe2c6'],txt:'#1f2d24',acc:'#9a7b2f',sub:'rgba(31,45,36,.65)',motif:'rgba(154,123,47,.09)',cadre:true},
-  emeraude:{bg:['#022c22','#064e3b','#065f46'],txt:'#ffffff',acc:'#d4b26a',sub:'rgba(255,255,255,.72)',motif:'rgba(212,178,106,.08)',cadre:true}
+  emeraude:{bg:['#022c22','#064e3b','#065f46'],txt:'#ffffff',acc:'#d4b26a',sub:'rgba(255,255,255,.72)',motif:'rgba(212,178,106,.08)',cadre:true},
+  violet:{bg:['#7c3aed','#a52fb5','#db2777'],txt:'#ffffff',acc:'#fde68a',sub:'rgba(255,255,255,.82)',motif:'rgba(253,230,138,.10)',cadre:true} /* violet-rose de la pastille NIYYA */
 };
 function partMotif(x,W,H,coul){ // étoiles à 8 branches (motif géométrique islamique), très discrètes
   x.save(); x.strokeStyle=coul; x.lineWidth=2; const p=120;
@@ -2634,7 +2635,7 @@ async function partager(o){
   const blob=await new Promise(r=>c.toBlob(r,'image/png')), f=new File([blob],'niyya.png',{type:'image/png'});
   S._partFichier=f;
   const peut=!!(navigator.canShare&&navigator.canShare({files:[f]}));
-  const st=S.cfg.partStyle||'nuit', sty=[['nuit','🌙 Nuit','#21174f','#f2cf5b'],['creme','📜 Crème','#f5ecd9','#9a7b2f'],['emeraude','🕌 Émeraude','#064e3b','#d4b26a']];
+  const st=S.cfg.partStyle||'nuit', sty=[['nuit','🌙 Nuit','#21174f','#f2cf5b'],['creme','📜 Crème','#f5ecd9','#9a7b2f'],['emeraude','🕌 Émeraude','#064e3b','#d4b26a'],['violet','💜 Violet','linear-gradient(135deg,#7c3aed,#db2777)','#fde68a']];
   openSheet(`<h2 style="margin:0 0 4px">📤 Partager</h2><div class="sub">Image prête pour ta story Instagram, WhatsApp ou Snapchat.</div>
     <div class="row" style="justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap">${sty.map(([k,l,b,a])=>`<button class="chip" style="cursor:pointer;background:${b};color:${a};border:2px solid ${k===st?a:'transparent'};padding:6px 12px;font-weight:800" onclick="S.cfg.partStyle='${k}';cfgTouch();partager(S._partO)">${l}</button>`).join('')}</div>
     <img src="${url}" alt="Aperçu" style="display:block;width:62%;margin:12px auto;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.25)">
@@ -2975,7 +2976,7 @@ async function moisImage(c,i,n,o){ try{ await Promise.all(['700 60px Amiri','800
 async function ouvrirMois(ym){ toast('Création de ton récap…'); const o=moisStats(ym), C=moisCartes(o), urls=[], files=[];
   for(let i=0;i<C.length;i++){ const cv=await partImage({type:C[i].ar?'nom':'stat',tag:C[i].tag,ar:C[i].ar,fr:C[i].fr,src:C[i].src}); urls.push(cv.toDataURL('image/jpeg',.9)); const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',.9)); files.push(new File([b],`niyya-${ym}-${i+1}.jpg`,{type:'image/jpeg'})); }
   S._moisFiles=files; const peut=!!(navigator.canShare&&navigator.canShare({files}));
-  const st=S.cfg.partStyle||'nuit', sty=[['nuit','🌙 Nuit','#21174f','#f2cf5b'],['creme','📜 Crème','#f5ecd9','#9a7b2f'],['emeraude','🕌 Émeraude','#064e3b','#d4b26a']];
+  const st=S.cfg.partStyle||'nuit', sty=[['nuit','🌙 Nuit','#21174f','#f2cf5b'],['creme','📜 Crème','#f5ecd9','#9a7b2f'],['emeraude','🕌 Émeraude','#064e3b','#d4b26a'],['violet','💜 Violet','linear-gradient(135deg,#7c3aed,#db2777)','#fde68a']];
   openSheet(`<h2 style="margin:0 0 4px">🌙 Mon mois de ${esc(o.nom)}</h2><div class="sub">${C.length} cartes à faire défiler, prêtes pour ta story.</div>
     <div class="row" style="justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap">${sty.map(([k,l,b,c])=>`<button class="chip" style="cursor:pointer;background:${b};color:${c};border:2px solid ${k===st?c:'transparent'};padding:6px 12px;font-weight:800" onclick="S.cfg.partStyle='${k}';cfgTouch();ouvrirMois('${ym}')">${l}</button>`).join('')}</div>
     <div style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:12px 2px">${urls.map(u=>`<img src="${u}" alt="" style="flex:none;width:62%;scroll-snap-align:center;border-radius:14px">`).join('')}</div>
