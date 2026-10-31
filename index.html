@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="NIYYA">
-<meta name="theme-color" content="#6366f1">
+<meta name="theme-color" content="#7c3aed">
 <meta name="description" content="Prières, Coran, bonnes actions et habitudes, chaque jour. Gratuit, sans pub, sources vérifiées.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="NIYYA">
@@ -565,7 +565,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261031-103535'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261031-104539'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1974,7 +1974,7 @@ function fluTextes(){ if(icoStyle()!=='C'||!document.documentElement.classList.c
   const base=render; let vueAvant=null;
   const barres=()=>[...app.querySelectorAll('[style*="width:"]')].filter(e=>/width:\s*[\d.]+%/.test(e.getAttribute('style')||''));
   render=function(){
-    document.documentElement.classList.toggle('noble',true); if(S.pret&&S.cfg&&S.cfg.onb&&!S.cfg.vuTheme1){ S.cfg.vuTheme1=true; cfgTouch(); setTimeout(()=>toast('✨ NIYYA fait peau neuve : des couleurs plus douces, inspirées de son icône. Bonne découverte 🌙',6000),900); } document.documentElement.classList.toggle('bleuNuit',S.email===ADMIN_EMAIL&&THEME_VAR==='bleuNuit'); document.documentElement.classList.toggle('adn',S.email===ADMIN_EMAIL); // TEST thème Nuit · Émeraude · Or
+    document.documentElement.classList.toggle('noble',true); if(S.pret&&S.cfg&&S.cfg.onb&&!S.cfg.vuTheme1){ S.cfg.vuTheme1=true; cfgTouch(); setTimeout(()=>toast('✨ NIYYA fait peau neuve : des couleurs plus douces, inspirées de son icône. Bonne découverte 🌙',6000),900); } document.documentElement.classList.toggle('bleuNuit',S.email===ADMIN_EMAIL&&THEME_VAR==='bleuNuit'); document.documentElement.classList.toggle('adn',true); // TEST thème Nuit · Émeraude · Or
     if(!S.pret) return base.apply(this,arguments);
     const memeVue=vueAvant===S.view+'|'+S.sel, avant=memeVue?barres().map(e=>e.style.width):null;
     try{ base.apply(this,arguments); }catch(e){ console.error(e); try{ diagNotif&&diagNotif('render : '+e.message); }catch(_){} app.innerHTML=`<div class="panel" style="text-align:center;margin-top:20px"><h2 style="justify-content:center">Un petit souci d'affichage</h2><div class="sub" style="margin:8px 0 14px">Tes données sont en sécurité. Reviens à l'écran Prière ou recharge l'appli.</div><button class="btn pri" onclick="S.view='accueil';render()">Revenir à Prière</button> <button class="btn" onclick="location.reload()">Recharger</button></div>`; return; }

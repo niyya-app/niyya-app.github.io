@@ -3,8 +3,8 @@
   "short_name": "NIYYA",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#eef2ff",
-  "theme_color": "#6366f1",
+  "background_color": "#f5f2ea",
+  "theme_color": "#7c3aed",
   "icons": [
     {
       "src": "niyya-logo-180.png",
