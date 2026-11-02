@@ -420,6 +420,12 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .plan{display:flex;flex-direction:column;gap:6px}
 .plan .wk{display:grid;grid-template-columns:88px 1fr auto;gap:8px;align-items:center;font-size:.8rem;font-weight:700;padding:8px 10px;border-radius:12px;background:var(--card2)}
 .plan .wk.now{background:linear-gradient(135deg,#f59e0b,#fb7185);color:#fff}
+.aideBul{position:absolute;z-index:40;background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;border-radius:14px;padding:12px 14px;font-size:.88rem;font-weight:700;line-height:1.4;box-shadow:0 10px 26px rgba(124,58,237,.35);display:flex;gap:10px;align-items:center;animation:aideIn .3s}
+.aideBul::before{content:'';position:absolute;top:-6px;left:var(--ax,50%);width:14px;height:14px;background:#7c3aed;transform:rotate(45deg);border-radius:3px}
+.aideBul button{flex:none;border:none;background:#fff;color:#7c3aed;border-radius:99px;padding:7px 12px;font-weight:800;cursor:pointer}
+.aideCible{outline:3px solid #fde68a;outline-offset:2px}
+@keyframes aideIn{from{opacity:0;transform:translateY(-6px)}}
+.citChips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.citChips button{border:none;background:rgba(255,255,255,.22);color:#fff;border-radius:99px;padding:6px 11px;font-weight:800;font-size:.76rem;cursor:pointer}
 .coach{border-radius:16px;padding:14px;background:color-mix(in srgb,var(--amber) 12%,var(--card));border:1px solid color-mix(in srgb,var(--amber) 35%,transparent);font-size:.88rem;font-weight:700;line-height:1.45}
 
 /* Fenêtre / toast */
@@ -568,7 +574,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261031-110901'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261102-080938'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1981,7 +1987,7 @@ function fluTextes(){ if(icoStyle()!=='C'||!document.documentElement.classList.c
     if(!S.pret) return base.apply(this,arguments);
     const memeVue=vueAvant===S.view+'|'+S.sel, avant=memeVue?barres().map(e=>e.style.width):null;
     try{ base.apply(this,arguments); }catch(e){ console.error(e); try{ diagNotif&&diagNotif('render : '+e.message); }catch(_){} app.innerHTML=`<div class="panel" style="text-align:center;margin-top:20px"><h2 style="justify-content:center">Un petit souci d'affichage</h2><div class="sub" style="margin:8px 0 14px">Tes données sont en sécurité. Reviens à l'écran Prière ou recharge l'appli.</div><button class="btn pri" onclick="S.view='accueil';render()">Revenir à Prière</button> <button class="btn" onclick="location.reload()">Recharger</button></div>`; return; }
-    try{ icones(); fluTextes(); }catch(e){} try{ clarifier(); }catch(e){} try{ a11y(); }catch(e){}
+    try{ icones(); fluTextes(); }catch(e){} try{ clarifier(); }catch(e){} try{ a11y(); }catch(e){} try{ aides(); }catch(e){}
     const cle=S.view+'|'+S.sel;
     if(!memeVue&&vueAvant!==null&&vueAvant.split('|')[0]!==S.view){ app.classList.remove('vEntre'); void app.offsetWidth; app.classList.add('vEntre'); }
     vueAvant=cle;
@@ -4605,12 +4611,43 @@ function vCitadelle(){
       <div class="h-lbl">🛡️ La Citadelle</div>
       <div class="h-big" style="font-size:1.6rem">Invocations du quotidien</div>
       <div class="h-sub">Choisis un moment : arabe, phonétique, français et source vérifiée.</div>
-      <select class="inp" style="margin-top:12px;font-weight:800;color:var(--ink)" onchange="setCit(this.value)">
+      <select class="inp" style="margin-top:12px;font-weight:800;color:var(--ink)" onchange="S.citQ='';setCit(this.value)">
         ${T.map((x,k)=>`<option value="${k}" ${k===i?'selected':''}>${esc(x.label)} (${x.items.length})</option>`).join('')}
       </select>
+      ${S.email===ADMIN_EMAIL?`<input id="citQ" class="inp" type="search" placeholder="🔎 Ma situation : moment difficile, voyage…" value="${esc(S.citQ||'')}" oninput="citChercher(this.value)" style="margin-top:8px;color:var(--ink)">
+      <div class="citChips">${CIT_CHIPS.map(([l,q])=>`<button onclick="const e=document.getElementById('citQ');e.value='${q}';citChercher('${q}')">${l}</button>`).join('')}</div>`:''}
     </div>`;
-  if(th.voyage) return head+`<div class="mt">${vVoyage()}</div>`;
-  return head+th.items.map(duaCard).join('')+`<p class="muted" style="font-size:.72rem;font-weight:600;margin-top:12px">Thèmes inspirés du livre « La Citadelle du musulman » (Sa'id al-Qahtani). Les textes arabes sont copiés des recueils de hadiths et du Coran ; le sens en français est proposé par NIYYA (Coran : trad. Hamidullah).</p>`;
+  if(S.citQ) return head+`<div id="citRes">${citRes(S.citQ)}</div>`;
+  if(th.voyage) return head+`<div id="citRes"><div class="mt">${vVoyage()}</div></div>`;
+  return head+`<div id="citRes">${th.items.map(duaCard).join('')}</div>`+`<p class="muted" style="font-size:.72rem;font-weight:600;margin-top:12px">Thèmes inspirés du livre « La Citadelle du musulman » (Sa'id al-Qahtani). Les textes arabes sont copiés des recueils de hadiths et du Coran ; le sens en français est proposé par NIYYA (Coran : trad. Hamidullah).</p>`;
+}
+/* 🔎 Recherche d'invocation par situation (TEST compte admin) */
+const CIT_CHIPS=[['😔 Moment difficile','difficile'],['🌙 Avant de dormir','dormir'],['✈️ Voyage','voyage'],['😠 Colère','colère'],['🤒 Malade','malade'],['🌅 Matin et soir','matin']];
+const CIT_SYN={difficile:['tristesse','angoisse','soucis','chagrin'],dur:['tristesse','angoisse'],peur:['angoisse','crainte','peur'],stress:['angoisse','soucis'],triste:['tristesse','chagrin'],deprime:['tristesse','angoisse'],enerve:['colere'],colere:['colere'],sommeil:['dormir','coucher'],nuit:['dormir','soir'],repas:['manger','repas','nourriture'],manger:['manger','repas'],voiture:['voyage','monture'],avion:['voyage'],train:['voyage'],maison:['maison','domicile'],ablution:['ablutions'],wudu:['ablutions'],enfant:['famille','enfant'],bebe:['famille','enfant','naissance'],mariage:['famille','mari'],eternue:['eternuement','eternue'],malade:['malade','maladie','visite']};
+const citNorm=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function citRes(q){
+  const mots=citNorm(q).split(/[^a-z]+/).filter(w=>w.length>=3); if(!mots.length) return '';
+  const R=[]; themesCit().forEach(t=>t.items.forEach(d=>{ if(!d||!(d.ar||d.fr)) return; const h=citNorm([t.label,d.titre,d.quand,d.fr,d.phon].join(' '));
+    if(mots.every(w=>[w,...(CIT_SYN[w]||[])].some(x=>h.includes(x)))) R.push([t.label,d]); }));
+  if(!R.length) return `<div class="panel mt" style="text-align:center"><div style="font-size:2rem">🤲</div><b>Rien trouvé pour « ${esc(q)} »</b><div class="sub" style="margin:6px 0 0">Essaie un autre mot : tristesse, voyage, dormir, colère, malade…</div></div>`;
+  return `<div class="muted" style="font-size:.78rem;font-weight:800;margin:12px 4px 0">${R.length} invocation${R.length>1?'s':''} pour « ${esc(q)} »</div>`+R.slice(0,40).map(([l,d])=>`<div class="muted" style="font-size:.72rem;font-weight:800;margin:12px 4px -4px">${esc(l)}</div>`+duaCard(d)).join('');
+}
+function citChercher(q){ S.citQ=q; const el=document.getElementById('citRes'); if(!el) return; if(q.trim()) el.innerHTML=citRes(q); else { const th=themesCit()[citIdx()]; el.innerHTML=th.voyage?`<div class="mt">${vVoyage()}</div>`:th.items.map(duaCard).join(''); } }
+/* 💬 Bulles d'aide à la première visite (TEST compte admin) : une seule à la fois, vue une fois */
+const AIDES=[{id:'prieres',sel:'.seg button.s-heure',txt:'👆 Quand tu as prié, touche « À l\'heure » (ou « Mosquée »). C\'est tout !'},
+  {id:'ess',sel:'button.tile[onclick^="toggle("]',txt:'✅ Touche une case quand c\'est fait. Une seule touche suffit.'},
+  {id:'citq',sel:'#citQ',txt:'🔎 Cherche une invocation selon ta situation : « moment difficile », « voyage »…'}];
+function aideVue(id){ const v=S.cfg.aidesVues=S.cfg.aidesVues||[]; if(!v.includes(id)){ v.push(id); cfgTouch(); } aides(); }
+function aides(){
+  document.querySelectorAll('.aideBul').forEach(x=>x.remove()); document.querySelectorAll('.aideCible').forEach(x=>x.classList.remove('aideCible'));
+  if(S.email!==ADMIN_EMAIL||!S.pret||!S.cfg||!S.cfg.onb||S.onbApercu) return;
+  const vu=S.cfg.aidesVues||[];
+  for(const a of AIDES){ if(vu.includes(a.id)) continue; const el=document.querySelector(a.sel); if(!el||!el.offsetParent) continue;
+    const R=el.getBoundingClientRect(), w=Math.min(340,innerWidth-32), left=Math.min(Math.max(16,R.left+R.width/2-w/2),innerWidth-16-w);
+    const b=document.createElement('div'); b.className='aideBul'; b.style.cssText=`top:${R.bottom+scrollY+12}px;left:${left+scrollX}px;width:${w}px;--ax:${Math.round(R.left+R.width/2-left-7)}px`;
+    b.innerHTML=`<span style="flex:1">${a.txt}</span><button onclick="aideVue('${a.id}')">Compris</button>`; document.body.appendChild(b);
+    el.classList.add('aideCible'); el.addEventListener('click',()=>{ const v=S.cfg.aidesVues=S.cfg.aidesVues||[]; if(!v.includes(a.id)){ v.push(a.id); cfgTouch(); } },{capture:true,once:true});
+    return; }
 }
 function vCitadelleVoyage(){ const k=themesCit().findIndex(x=>x.voyage); S.citI=k; S.view='citadelle'; return vCitadelle(); }
 
