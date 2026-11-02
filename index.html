@@ -574,7 +574,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261102-081839'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261102-082334'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2992,6 +2992,28 @@ async function ouvrirMois(ym){ toast('Création de ton récap…'); const o=mois
     ${peut?'<button class="btn pri" style="width:100%" onclick="moisPartager()">📤 Partager les cartes</button>':'<div class="sub" style="text-align:center">Appuie longtemps sur une carte pour l\'enregistrer.</div>'}
     <button class="btn mt" style="width:100%" onclick="closeSheet()">Fermer</button>`); }
 async function moisPartager(){ try{ await navigator.share({files:S._moisFiles,text:'Mon mois avec NIYYA 🌙 https://niyya-app.github.io'}); compter('partage_mois'); }catch(e){ if(e&&e.name!=='AbortError') toast('Partage impossible ici : appuie longtemps sur une carte pour l\'enregistrer'); } }
+/* 🌙 Humeur du soir ↔ prières à l'heure et essentiels, sur 30 jours (TEST compte admin) */
+function humeurCarte(){ if(S.email!==ADMIN_EMAIL) return '';
+  const L=[]; for(let i=30;i>=1;i--){ const k=addDays(today(),-i), d=S.jours[k]; if(!d||!d.humeur) continue;
+    const disp=dispOf(k), h=disp?null:PRAYERS.filter(p=>d.p&&(d.p[p.k]==='heure'||d.p[p.k]==='mosquee')).length;
+    let e=null; try{ e=Math.round(100*essFaits(d)/essNb()); }catch(x){} L.push({k,m:d.humeur,h,e}); }
+  const tete=`<div class="panel mt"><h2><span class="ico">🌙</span>Mon humeur et mes prières<span class="cnt">30 j</span></h2>`;
+  if(L.length<3) return tete+`<div class="sub" style="margin:0">Note ton humeur le soir dans la 🌙 Mouhâsaba pendant quelques jours : tu verras ici le lien avec tes prières à l'heure et tes essentiels.</div></div>`;
+  const moy=(T,c)=>{ const v=T.map(x=>x[c]).filter(x=>x!=null); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; }, f1=x=>x==null?'—':x.toFixed(1).replace('.',',');
+  const lignes=HUMEURS.map(([e,l],i)=>{ const T=L.filter(x=>x.m===i+1); if(!T.length) return ''; const h=moy(T,'h'), es=moy(T,'e');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)"><span style="font-size:1.5rem">${e}</span>
+      <div style="flex:1;min-width:0"><b>${l}</b> <span class="muted" style="font-size:.74rem;font-weight:700">· ${T.length} jour${T.length>1?'s':''}</span>
+      <div style="height:8px;border-radius:99px;background:var(--line);margin-top:5px;overflow:hidden"><div style="height:100%;width:${h==null?0:h/5*100}%;background:linear-gradient(90deg,#10b981,#059669);border-radius:99px"></div></div></div>
+      <div style="text-align:right;min-width:74px"><b class="tnum">${f1(h)}/5</b><div class="muted" style="font-size:.7rem;font-weight:700">à l'heure${es==null?'':' · '+Math.round(es)+' % ess.'}</div></div></div>`; }).join('');
+  const bon=moy(L.filter(x=>x.m>=3),'h'), dur=moy(L.filter(x=>x.m<=2),'h');
+  const nB=L.filter(x=>x.m>=3).length, nD=L.filter(x=>x.m<=2).length;
+  const lecon=nB>=2&&nD>=2&&bon!=null&&dur!=null?(bon-dur>=0.8?`💡 Les jours où tu te sens bien, tu pries en moyenne <b>${f1(bon)}</b> prières à l'heure, contre <b>${f1(dur)}</b> les jours difficiles.`
+    :dur-bon>=0.8?`💡 Même les jours difficiles, tu tiens tes prières (${f1(dur)}/5 à l'heure). Mâ châ' Allah.`:`💡 Ce mois-ci, ton humeur ne semble pas liée à tes prières à l'heure.`):'';
+  const durs=L.filter(x=>x.m===1).slice(-5).reverse();
+  const jd=durs.length?`<div class="muted" style="font-size:.74rem;font-weight:800;margin-top:12px">😔 MES JOURNÉES DIFFICILES</div>`+durs.map(x=>`<div style="display:flex;justify-content:space-between;font-size:.84rem;font-weight:700;padding:4px 0"><span>${new Date(x.k+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</span><span class="tnum">${x.h==null?'🌸':x.h+'/5 à l\'heure'}</span></div>`).join(''):'';
+  return tete+`<div class="sub" style="margin:0 0 4px">Ton humeur du soir comparée à tes prières à l'heure (et mosquée) le même jour.</div>${lignes}${lecon?`<div class="coach" style="margin-top:10px;font-size:.84rem">${lecon}</div>`:''}${jd}
+    <div class="muted" style="font-size:.7rem;font-weight:600;margin-top:10px">Un lien n'est pas une cause : c'est juste un miroir pour mieux te connaître.</div></div>`;
+}
 function moisCarteBilan(){ if(S.email!==ADMIN_EMAIL) return ''; const ym=today().slice(0,7), d=new Date(); d.setDate(0); const prev=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
   const op=[[ym,MOIS_FR[+ym.slice(5)-1]+' (en cours)'],[prev,MOIS_FR[+prev.slice(5)-1]]].filter(([k])=>moisStats(k).jours>0);
   return op.length?`<div class="panel" style="margin-bottom:14px"><h2><span class="ico">🌙</span>Mon mois avec NIYYA</h2><div class="sub">Ton récap en cartes, à garder ou à partager en story.</div><div class="row mt" style="gap:8px;flex-wrap:wrap">${op.map(([k,l])=>`<button class="btn pri sm" onclick="ouvrirMois('${k}')">${esc(l.charAt(0).toUpperCase()+l.slice(1))}</button>`).join('')}</div></div>`:''; }
@@ -3024,7 +3046,7 @@ function vBilan(){
     cal+=`<div class="d ${k===S.sel?'sel':''} ${fut?'fut':''}" style="background:${has(k)?scoreColor(s):''};color:${has(k)&&s>0?'#fff':''}" ${fut?'':`onclick="openDay('${k}')"`} title="${s}">${i}</div>`; }
   const sel=S.sel, dsel=J(sel), ssel=scoreOf(sel);
   const delta=(a,b)=>a===null||b===null?'':(a-b>=.05?`<span class="up">▲${(a-b).toFixed(1)}</span>`:a-b<=-.05?`<span class="down">▼${(b-a).toFixed(1)}</span>`:'<span class="muted">=</span>');
-  return `${moisCarteBilan()}${progCarte(false)}<div class="mt"></div>
+  return `${moisCarteBilan()}${humeurCarte()}${progCarte(false)}<div class="mt"></div>
   <div class="nav" style="position:static;margin-bottom:14px;border-radius:14px;border:1px solid var(--line);padding:5px">
     ${[[7,'7 jours'],[30,'30 jours'],[90,'90 jours'],[365,'1 an']].map(([n,l])=>`<button class="${P===n?'on':''}" style="flex-direction:row;justify-content:center;font-size:.82rem;padding:10px" onclick="setPer(${n})">${l}</button>`).join('')}
   </div>
