@@ -574,7 +574,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261102-093403'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261104-201211'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1762,9 +1762,9 @@ async function rpc(fn,args){
   return data;
 }
 let pushTimer=null, pulling=false;
-function planPush(){ if(!S.uid) return; setSync('wait'); clearTimeout(pushTimer); pushTimer=setTimeout(push,700); }
+function planPush(){ if(!S.uid) return; if(S.invite){ setSync('local'); return; } setSync('wait'); clearTimeout(pushTimer); pushTimer=setTimeout(push,700); }
 async function push(){
-  if(!S.uid) return;
+  if(!S.uid||S.invite) return;
   const ks=[...S.dirty]; const body={}; ks.forEach(k=>body[k]=S.jours[k]);
   try{
     if(ks.length){ await rpc('niyya_ecrire',{p_jours:body}); ks.forEach(k=>S.dirty.delete(k)); }
@@ -1778,8 +1778,9 @@ async function pull(){
     // Synchro incrémentale : on ne télécharge que ce qui a changé (complète au plus une fois par jour)
     const kD='nya_der_'+S.uid, kC='nya_full_'+S.uid; let der=null, full=null; try{ der=localStorage.getItem(kD); full=+localStorage.getItem(kC)||0; }catch(e){}
     let complet=!der || Date.now()-full>864e5, r;
-    if(!complet){ try{ r=await rpc('niyya_lire_depuis',{p_depuis:new Date(new Date(der).getTime()-12e4).toISOString()}); }catch(e){ if(e.invalid) throw e; complet=true; } }
-    if(complet){ try{ r=await rpc('niyya_lire_depuis',{p_depuis:null}); }catch(e){ if(e.invalid) throw e; r=await rpc('niyya_lire'); } }
+    if(S.invite){ r={jours:{}}; complet=false; } /* sans compte : tout reste sur l'appareil */
+    else if(!complet){ try{ r=await rpc('niyya_lire_depuis',{p_depuis:new Date(new Date(der).getTime()-12e4).toISOString()}); }catch(e){ if(e.invalid) throw e; complet=true; } }
+    if(complet&&!S.invite){ try{ r=await rpc('niyya_lire_depuis',{p_depuis:null}); }catch(e){ if(e.invalid) throw e; r=await rpc('niyya_lire'); } }
     let changed=false;
     for(const [k,d] of Object.entries(r.jours||{})){
       const loc=S.jours[k];
@@ -1790,7 +1791,7 @@ async function pull(){
     if(r.config && (r.config.u||0)>(S.cfg.u||0)){ S.cfg=merge(DEF_CFG,r.config); changed=true; applyTheme(); }
     else if((complet||r.config) && (S.cfg.u||0)>((r.config&&r.config.u)||0)) S.cfgDirty=true;
     if(r.maintenant){ try{ localStorage.setItem(kD,r.maintenant); if(complet) localStorage.setItem(kC,String(Date.now())); }catch(e){} }
-    saveLocal(); setSync('ok');
+    saveLocal(); setSync(S.invite?'local':'ok');
     if(S.dirty.size||S.cfgDirty) planPush();
     if(!S.pret){ S.pret=true; try{ verifMosq(); }catch(e){} render(); compter(S.view||'jour'); if(NATIF){ natifBrancher(); planifierLocal(); } }
     if(S.cfg.onb && !S.cfg.methodeAutoFaite && METHODE_PAYS[(S.cfg.lieu||{}).tz] && ['uoif',METHODE_PAYS[(S.cfg.lieu||{}).tz]].includes(S.cfg.priere.methode)){ S.cfg.methodeAutoFaite=true; if(methodeAuto()){ cfgTouch(); pushMajParams(); render(); toast('🕌 Horaires : '+((S.cfg.lieu||{}).tz==='Africa/Algiers'?'méthode officielle algérienne (18° / 17°)':'méthode Umm al-Qura (Arabie saoudite)'),4000); } else cfgTouch(); }
@@ -2110,7 +2111,7 @@ function nousContacter(){
     <button class="btn mt" onclick="closeSheet()">Fermer</button>`);
 }
 async function inviter(){
-  const url='https://niyya-app.github.io/'+(S.uid?'?p='+S.uid.slice(0,8):''), texte=`Salam ! J'utilise NIYYA pour mes prières, le Coran et mes bonnes habitudes. C'est gratuit, sans pub, et chacun garde ses données pour lui. Essaie : ${url}`;
+  const url='https://niyya-app.github.io/'+(S.uid&&!S.invite?'?p='+S.uid.slice(0,8):''), texte=`Salam ! J'utilise NIYYA pour mes prières, le Coran et mes bonnes habitudes. C'est gratuit, sans pub, et chacun garde ses données pour lui. Essaie : ${url}`;
   try{ if(navigator.share){ await navigator.share({title:'NIYYA',text:texte}); compter('inviter'); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
   try{ await navigator.clipboard.writeText(texte); toast('📋 Message copié : colle-le dans WhatsApp ou par SMS',4000); compter('inviter'); }
   catch(e){ openSheet(`<h2 style="margin:0 0 6px">💌 Inviter un proche</h2><div class="sub">Copie ce message :</div><textarea class="inp" rows="4" readonly>${esc(texte)}</textarea><button class="btn mt" onclick="closeSheet()">Fermer</button>`); }
@@ -3141,13 +3142,14 @@ function vReglages(){
     </div>
     <div class="panel">
       <h2><span class="ico">🔐</span>Mon compte</h2>
-      <div class="sub">Connecté avec <b>${esc(S.email)}</b>. Tes données sont synchronisées sur tous tes appareils connectés à ce compte.</div>
+      <div class="sub">${S.invite?`Tu utilises NIYYA <b>sans compte</b> : tes données restent sur cet appareil. Crée un compte (facultatif) pour les sauvegarder et les retrouver sur tes autres appareils : elles y seront transférées.`:`Connecté avec <b>${esc(S.email)}</b>. Tes données sont synchronisées sur tous tes appareils connectés à ce compte.`}</div>
+      ${S.invite?`<button class="btn pri" onclick="S.uid=null;S.pret=false;S.invite=false;S.authStep='signup';render()">Créer un compte ou me connecter</button>`:''}
       <button class="btn" onclick="exportJSON()">💾 Exporter (JSON)</button>
       <label class="btn" style="display:inline-block">📂 Importer<input type="file" accept=".json" class="hide" onchange="importJSON(this)"></label>
       <div class="coach mt" style="font-size:.8rem">📱 <b>iPhone</b> : dans Safari → bouton Partager → « Sur l'écran d'accueil ». NIYYA s'ouvre alors comme une vraie appli.</div>
       ${S.email===ADMIN_EMAIL?`<details class="mt"><summary style="font-weight:800;font-size:.85rem;cursor:pointer">Importer depuis l'ancienne NIYYA (lien secret)</summary>
         <div class="row mt"><input class="inp" id="oldLien" placeholder="https://…niyya.html#k=…"><button class="btn green" onclick="importAncien()">Importer</button></div></details>`:''}
-      <div class="row mt" style="flex-wrap:wrap"><button class="btn sm" onclick="deconnexion()">Se déconnecter</button><button class="btn sm" style="color:#be123c" onclick="supprimerCompte()">Supprimer mon compte et mes données</button></div>
+      ${S.invite?'':`<div class="row mt" style="flex-wrap:wrap"><button class="btn sm" onclick="deconnexion()">Se déconnecter</button><button class="btn sm" style="color:#be123c" onclick="supprimerCompte()">Supprimer mon compte et mes données</button></div>`}
       <p class="muted" style="font-size:.78rem;font-weight:600;margin-top:10px">🔒 <a href="confidentialite.html" target="_blank" rel="noopener" style="color:var(--violet)">Politique de confidentialité</a> · contact : <a href="mailto:contact.nyya@gmail.com" style="color:var(--violet)">contact.nyya@gmail.com</a></p>
     </div>
   </div>
@@ -3529,6 +3531,7 @@ function vAuth(){
       <button class="btn pri" id="authBtn" type="submit">${titre}</button>
       </form>
       ${st==='login'?`<button class="btn" onclick="S.authEmail=document.getElementById('authEmail').value;S.authStep='reset';render()">Mot de passe oublié ?</button>`:''}
+      ${NATIF||lsGet('nya_invite',0)?`<div style="text-align:center;margin:14px 0 4px;font-weight:700;font-size:.8rem" class="muted">— ou —</div><button class="btn" style="width:100%" onclick="demarrerInvite()">${lsGet('nya_invite',0)?'← Revenir sans compte':'Continuer sans compte'}</button><p class="muted" style="font-size:.76rem;font-weight:600;margin-top:6px;text-align:center">Tout fonctionne sans compte : tes données restent sur ce téléphone. Le compte sert seulement à les sauvegarder et à les retrouver sur un autre appareil.</p>`:''}
       ${estIOS()&&!estInstallee()?`<div class="coach" style="font-size:.8rem;font-weight:600;margin-top:12px;line-height:1.5">📱 <b>Sur iPhone, installe d'abord NIYYA</b> pour recevoir l'adhan : bouton Partager ⬆️ → « Sur l'écran d'accueil », puis crée ton compte depuis l'icône.</div>`:''}
       <p class="muted" style="font-size:.78rem;font-weight:600;margin-top:12px">💡 Sur iPhone, accepte d'enregistrer le mot de passe dans le trousseau : tu n'auras plus jamais à le retaper.</p>`
     : st==='reset'?`
@@ -3574,12 +3577,18 @@ async function nouveauPass(){
   const {data,error}=await sb.auth.updateUser({password:pw}); if(error) return toast(authErr(error.message),4000);
   toast('🔐 Mot de passe enregistré'); history.replaceState(null,'',location.pathname); demarrer(data.user);
 }
+function demarrerInvite(){ lsSet('nya_invite',1); demarrer({id:'invite-local',email:'',invite:true}); }
 function demarrer(user){
-  S.uid=user.id; S.email=user.email||'';
+  S.uid=user.id; S.email=user.email||''; S.invite=!!user.invite;
   const p='nya_'+S.uid.slice(0,8)+'_';
   LS={ jours:p+'jours', cfg:p+'cfg', dirty:p+'dirty', ui:'nya_ui' };
   S.jours=lsGet(LS.jours,{}); S.cfg=merge(DEF_CFG,lsGet(LS.cfg,{}));
   S.dirty=new Set(lsGet(LS.dirty,[])||[]); S.cfgDirty=false;
+  if(!S.invite && lsGet('nya_invite',0)){ /* l'utilisateur avait commencé sans compte : on transfère ses données dans son compte */
+    const gj=lsGet('nya_invite-l_jours',{})||{}, gc=lsGet('nya_invite-l_cfg',null);
+    for(const [k,d] of Object.entries(gj)){ if(d&&d.u&&(!S.jours[k]||(d.u||0)>(S.jours[k].u||0))){ S.jours[k]=d; S.dirty.add(k); } }
+    if(gc&&gc.onb&&!S.cfg.onb){ S.cfg=merge(DEF_CFG,gc); S.cfg.u=1; } /* réglages invités gardés seulement si le compte n'en a pas déjà */
+    try{ localStorage.removeItem('nya_invite'); }catch(e){} saveLocal(); }
   S.view='jour'; S.sel=today(); // à chaque ouverture, on arrive sur « Aujourd'hui »
   S.pret=!!S.cfg.onb; S.sync='wait';
   applyTheme(); render(); pull();
@@ -5163,7 +5172,7 @@ async function autotest(){
   }catch(e){}
   render(); // écran de connexion en attendant la session
   const recup=/type=recovery/.test(location.hash);
-  try{ const {data}=await sb.auth.getSession(); if(recup){ S.authStep='newpass'; render(); } else if(data&&data.session) demarrer(data.session.user); }catch(e){}
+  try{ const {data}=await sb.auth.getSession(); if(recup){ S.authStep='newpass'; render(); } else if(data&&data.session) demarrer(data.session.user); else if(lsGet('nya_invite',0)) demarrerInvite(); }catch(e){}
   sb.auth.onAuthStateChange((ev,ses)=>{ if(ev==='SIGNED_OUT' && S.uid){ S.uid=null; S.pret=false; render(); }
     if(ev==='PASSWORD_RECOVERY'){ S.uid=null; S.authStep='newpass'; render(); } });
   document.documentElement.dataset.ok='1'; // utilisé par le test automatique avant publication
