@@ -574,7 +574,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261104-201933'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261105-074949'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3520,6 +3520,7 @@ function vAuth(){
     <div class="logo" style="font-family:'Amiri',serif">نية</div>
     <h1>Bienvenue sur <span>NIYYA</span></h1>
     <p class="tag-l">Ta foi, ta discipline et ta réussite, chaque jour.</p>
+    ${(NATIF||lsGet('nya_invite',0))&&(st==='login'||st==='signup')?`<button class="btn" style="width:100%;margin:0 0 6px;padding:15px;font-size:1.05rem;font-weight:800;color:#7c3aed;background:#fff;border:2.5px solid #7c3aed;border-radius:16px;box-shadow:0 6px 18px rgba(124,58,237,.18)" onclick="demarrerInvite()">${lsGet('nya_invite',0)?'← Revenir sans compte':'👉 Continuer sans compte'}</button><p class="muted" style="font-size:.78rem;font-weight:600;margin:0 0 14px;text-align:center">Tout fonctionne sans compte : tes données restent sur ce téléphone. Le compte sert seulement à les sauvegarder et à les retrouver sur un autre appareil.</p><div style="text-align:center;margin:0 0 10px;font-weight:700;font-size:.8rem" class="muted">— ou, si tu veux sauvegarder tes données —</div>`:''}
     <div class="panel">
     ${st==='login'||st==='signup'?`
       <div class="opt" style="margin-bottom:6px"><button class="${st==='login'?'on':''}" onclick="S.authStep='login';render()">J'ai un compte</button><button class="${st==='signup'?'on':''}" onclick="S.authStep='signup';render()">Je crée mon compte</button></div>
@@ -3531,7 +3532,6 @@ function vAuth(){
       <button class="btn pri" id="authBtn" type="submit">${titre}</button>
       </form>
       ${st==='login'?`<button class="btn" onclick="S.authEmail=document.getElementById('authEmail').value;S.authStep='reset';render()">Mot de passe oublié ?</button>`:''}
-      ${NATIF||lsGet('nya_invite',0)?`<div style="text-align:center;margin:14px 0 4px;font-weight:700;font-size:.8rem" class="muted">— ou —</div><button class="btn" style="width:100%" onclick="demarrerInvite()">${lsGet('nya_invite',0)?'← Revenir sans compte':'Continuer sans compte'}</button><p class="muted" style="font-size:.76rem;font-weight:600;margin-top:6px;text-align:center">Tout fonctionne sans compte : tes données restent sur ce téléphone. Le compte sert seulement à les sauvegarder et à les retrouver sur un autre appareil.</p>`:''}
       ${estIOS()&&!estInstallee()?`<div class="coach" style="font-size:.8rem;font-weight:600;margin-top:12px;line-height:1.5">📱 <b>Sur iPhone, installe d'abord NIYYA</b> pour recevoir l'adhan : bouton Partager ⬆️ → « Sur l'écran d'accueil », puis crée ton compte depuis l'icône.</div>`:''}
       <p class="muted" style="font-size:.78rem;font-weight:600;margin-top:12px">💡 Sur iPhone, accepte d'enregistrer le mot de passe dans le trousseau : tu n'auras plus jamais à le retaper.</p>`
     : st==='reset'?`
