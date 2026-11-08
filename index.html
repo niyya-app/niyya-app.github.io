@@ -375,6 +375,12 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 /* Prières (onglet Dîn) */
 .prayer{display:grid;grid-template-columns:1fr auto;gap:8px 10px;align-items:center;border:1.5px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px}
 .prayer.cur{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+.prTeint .prayer{--pc:#94a3b8;position:relative;overflow:hidden;margin-bottom:14px;padding-left:18px;border-color:color-mix(in srgb,var(--pc) 35%,var(--line));background:linear-gradient(100deg,color-mix(in srgb,var(--pc) 14%,var(--card)) 0%,var(--card) 70%)}
+.prTeint .prayer::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--pc)}
+.prTeint .prayer .nm b{color:var(--pc)}
+.prTeint .prayer.pc-fajr{--pc:#f472b6}.prTeint .prayer.pc-dhuhr{--pc:#f59e0b}.prTeint .prayer.pc-asr{--pc:#f97316}.prTeint .prayer.pc-maghrib{--pc:#a855f7}.prTeint .prayer.pc-isha{--pc:#3b82f6}
+.prTeint .prayer.cur{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(16,185,129,.22)}
+.prTeint .pc-ico{font-size:1rem;margin-right:6px}
 .prayer .nm b{font-size:1rem;font-weight:800}
 .prayer .nm .arn{font-family:'Amiri',serif;color:var(--muted);margin-left:6px}
 .prayer .nm small{display:block;color:var(--muted);font-weight:600;font-size:.76rem}
@@ -574,7 +580,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261108-181025'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261108-182438'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1984,7 +1990,7 @@ function fluTextes(){ if(icoStyle()!=='C'||!document.documentElement.classList.c
   const base=render; let vueAvant=null;
   const barres=()=>[...app.querySelectorAll('[style*="width:"]')].filter(e=>/width:\s*[\d.]+%/.test(e.getAttribute('style')||''));
   render=function(){
-    document.documentElement.classList.toggle('noble',true); if(S.pret&&S.cfg&&S.cfg.onb&&!S.cfg.vuTheme1){ S.cfg.vuTheme1=true; cfgTouch(); setTimeout(()=>toast('✨ NIYYA fait peau neuve : des couleurs plus douces, inspirées de son icône. Bonne découverte 🌙',6000),900); } document.documentElement.classList.toggle('bleuNuit',S.email===ADMIN_EMAIL&&THEME_VAR==='bleuNuit'); document.documentElement.classList.toggle('adn',true); // TEST thème Nuit · Émeraude · Or
+    document.documentElement.classList.toggle('noble',true); if(S.pret&&S.cfg&&S.cfg.onb&&!S.cfg.vuTheme1){ S.cfg.vuTheme1=true; cfgTouch(); setTimeout(()=>toast('✨ NIYYA fait peau neuve : des couleurs plus douces, inspirées de son icône. Bonne découverte 🌙',6000),900); } document.documentElement.classList.toggle('bleuNuit',S.email===ADMIN_EMAIL&&THEME_VAR==='bleuNuit'); document.documentElement.classList.toggle('adn',true); document.documentElement.classList.toggle('prTeint',S.email===ADMIN_EMAIL); // TEST thème Nuit · Émeraude · Or
     if(!S.pret) return base.apply(this,arguments);
     const memeVue=vueAvant===S.view+'|'+S.sel, avant=memeVue?barres().map(e=>e.style.width):null;
     try{ base.apply(this,arguments); }catch(e){ console.error(e); try{ diagNotif&&diagNotif('render : '+e.message); }catch(_){} app.innerHTML=`<div class="panel" style="text-align:center;margin-top:20px"><h2 style="justify-content:center">Un petit souci d'affichage</h2><div class="sub" style="margin:8px 0 14px">Tes données sont en sécurité. Reviens à l'écran Prière ou recharge l'appli.</div><button class="btn pri" onclick="S.view='accueil';render()">Revenir à Prière</button> <button class="btn" onclick="location.reload()">Recharger</button></div>`; return; }
@@ -2753,8 +2759,8 @@ function prieresDetail(){
       ${isHsc()?(true?`<div class="sub">📍 ${esc(((S.cfg.lieu&&S.cfg.lieu.nom)||'Caen').replace(/\s*\(\d+\)$/,'').split(',')[0])} · horaires de la ${esc(METHODES[S.cfg.priere.methode].l.split(',')[0].replace(/^Mosquée/,'mosquée'))}</div>`:''):`<div class="sub">📍 Horaires calculés pour ${esc(((S.cfg.lieu&&S.cfg.lieu.nom)||'ta ville').replace(/\s*\(\d+\)$/,'').split(',')[0])} · <a href="#" onclick="event.preventDefault();go('reglages');setTimeout(()=>{const e=document.getElementById('rPriere');if(e)e.scrollIntoView({block:'start'})},80)" style="font-weight:800;color:var(--indigo,#4f46e5)">Ajuster ›</a></div>`}
       ${accOk()?'':'<button class="btn green" style="width:100%;margin-bottom:12px" onclick="openQibla()">🧭 Trouver la direction de la Qibla</button>'}
       ${PRAYERS.map(p=>`
-      <div class="prayer ${cur&&cur.k===p.k?'cur':''}">
-        <div class="nm"><b>${p.k==='dhuhr'&&fri?'Joumouʿa':p.n}</b><span class="arn">${p.ar}</span>${isT&&t[p.i]>nowMin()?'':`<button onclick="versetPriere('${p.k}','',S.sel)" aria-label="Verset de ${p.n}" style="border:none;background:color-mix(in srgb,var(--emerald) 12%,transparent);border-radius:99px;padding:2px 8px;margin-left:6px;cursor:pointer;font-size:.72rem;font-weight:800;color:var(--emerald)">📖 Verset</button>`}
+      <div class="prayer pc-${p.k} ${cur&&cur.k===p.k?'cur':''}">
+        <div class="nm">${S.email===ADMIN_EMAIL?`<span class="pc-ico">${{fajr:'🌅',dhuhr:'☀️',asr:'🌤️',maghrib:'🌇',isha:'🌙'}[p.k]}</span>`:''}<b>${p.k==='dhuhr'&&fri?'Joumouʿa':p.n}</b><span class="arn">${p.ar}</span>${isT&&t[p.i]>nowMin()?'':`<button onclick="versetPriere('${p.k}','',S.sel)" aria-label="Verset de ${p.n}" style="border:none;background:color-mix(in srgb,var(--emerald) 12%,transparent);border-radius:99px;padding:2px 8px;margin-left:6px;cursor:pointer;font-size:.72rem;font-weight:800;color:var(--emerald)">📖 Verset</button>`}
           <small>${isHsc()&&p.k==='dhuhr'&&fri?`Khotba ${mosq().jumua.join(' / ')} · Dhuhr ${hm(t[p.i])}`:iqamaDe(p.k)!=null?`Iqama ${hm((t[p.i]+iqamaDe(p.k))%1440)}`:'Adhan'}</small></div>
         <div class="hr tnum">${hm(t[p.i])}</div>
         <div class="seg">${PSTAT.map(s=>`<button class="s-${s.k} ${d.p[p.k]===s.k?'on':''}" onclick="setPrayer('${p.k}','${s.k}')">${s.l}</button>`).join('')}</div>
@@ -3115,7 +3121,7 @@ function vReglages(){
       ${true?`<label class="f">Je suis</label><div class="opt">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${C.genre===g?'on':''}" onclick="setCfg('genre','${g}');render()">${l}</button>`).join('')}</div>
       ${C.genre==='f'?`<label class="f">🌸 Pendant la période de dispense</label><div class="opt">${[[true,'🔕 Mettre l\'adhan en pause'],[false,'🔔 Garder l\'adhan']].map(([v,l])=>`<button class="${(C.dispPauseAdhan!==false)===v?'on':''}" onclick="S.cfg.dispPauseAdhan=${v};cfgTouch();render()">${l}</button>`).join('')}</div>`:''}`:''}
       <label class="f">Apparence</label>
-      ${S.email===ADMIN_EMAIL?themeChoix(C.theme,'themeReglage'):`<select class="inp" onchange="setCfg('theme',this.value);applyTheme()">${[['auto','Automatique (comme le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${C.theme===v?'selected':''}>${l}</option>`).join('')}</select>`}
+      ${S.email===ADMIN_EMAIL?themeChoix(C.theme,'themeReglage')+`<div class="sub" style="margin-top:6px">🌗 Auto : clair pendant la journée, sombre du Maghrib jusqu'au lever du soleil.</div>`:`<select class="inp" onchange="setCfg('theme',this.value);applyTheme()">${[['auto','Automatique (comme le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${C.theme===v?'selected':''}>${l}</option>`).join('')}</select>`}
       <label class="f">Séances de sport visées par semaine</label>${num('sportSemaine',C.sportSemaine)}
       <label class="f">Mon objectif de poids</label>
       <div class="opt">${[['perdre','⬇️ Perdre'],['prendre','⬆️ Prendre'],['garder','⚖️ Garder']].map(([b,l])=>`<button class="${poidsBut()===b?'on':''}" onclick="choixPoidsBut('${b}')">${l}</button>`).join('')}</div>
@@ -3499,7 +3505,11 @@ function themeMini(v){ const D={f:'#1a1538',l1:'#f3eee2',l2:'#6f6a92',b:'#2e2758
 function themeChoix(sel,fn){ return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px">${[['dark','Sombre'],['light','Clair'],['auto','Auto']].map(([v,l])=>{ const on=(sel||'auto')===v; return `<button onclick="${fn}('${v}')" style="all:unset;cursor:pointer;border-radius:16px;overflow:hidden;border:2.5px solid ${on?'#7c3aed':'var(--line)'};background:var(--card);box-shadow:${on?'0 4px 14px rgba(124,58,237,.22)':'none'}">${themeMini(v)}<div style="text-align:center;padding:9px 4px;font-weight:800;font-size:.9rem;color:${on?'#7c3aed':'var(--ink)'}">${on?'✓ ':''}${l}</div></button>`; }).join('')}</div>`; }
 function themeReglage(v){ setCfg('theme',v); applyTheme(); render(); }
 function themeOnb(v){ ONB.theme=v; if(v==='auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=v; const el=document.getElementById('onbTheme'); if(el) el.innerHTML=themeChoix(v,'themeOnb'); }
-function applyTheme(){ const t=S.cfg.theme; if(t==='light'||t==='dark') document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
+function autoSoleil(){ /* Auto : clair du lever du soleil au Maghrib, sombre ensuite (TEST admin) */
+  if(S.email!==ADMIN_EMAIL||!S.cfg||!S.cfg.lieu||S.cfg.lieu.lat==null) return null;
+  try{ const t=timesOf(jourIn(lieuTz())), m=nowMin(); return (m>=t[4]||m<t[1])?'dark':'light'; }catch(e){ return null; } }
+function applyTheme(){ let t=S.cfg.theme; if(t!=='light'&&t!=='dark') t=autoSoleil(); if(t==='light'||t==='dark') document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
+setInterval(()=>{ try{ if(S.cfg&&S.cfg.theme!=='light'&&S.cfg.theme!=='dark') applyTheme(); }catch(e){} },60000);
 function openSheet(h){ document.getElementById('sheet').innerHTML=h; document.getElementById('sheetBg').classList.add('on'); }
 function closeSheet(){ document.getElementById('sheetBg').classList.remove('on'); stopCompass(); if(S.majEnAttente){ S.majEnAttente=false; setTimeout(checkUpdate,400); } }
 document.getElementById('sheetBg').addEventListener('click',e=>{ if(e.target.id==='sheetBg') closeSheet(); });
