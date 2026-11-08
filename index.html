@@ -574,7 +574,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261105-074949'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261108-181025'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3115,7 +3115,7 @@ function vReglages(){
       ${true?`<label class="f">Je suis</label><div class="opt">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${C.genre===g?'on':''}" onclick="setCfg('genre','${g}');render()">${l}</button>`).join('')}</div>
       ${C.genre==='f'?`<label class="f">🌸 Pendant la période de dispense</label><div class="opt">${[[true,'🔕 Mettre l\'adhan en pause'],[false,'🔔 Garder l\'adhan']].map(([v,l])=>`<button class="${(C.dispPauseAdhan!==false)===v?'on':''}" onclick="S.cfg.dispPauseAdhan=${v};cfgTouch();render()">${l}</button>`).join('')}</div>`:''}`:''}
       <label class="f">Apparence</label>
-      <select class="inp" onchange="setCfg('theme',this.value);applyTheme()">${[['auto','Automatique (comme le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${C.theme===v?'selected':''}>${l}</option>`).join('')}</select>
+      ${S.email===ADMIN_EMAIL?themeChoix(C.theme,'themeReglage'):`<select class="inp" onchange="setCfg('theme',this.value);applyTheme()">${[['auto','Automatique (comme le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${C.theme===v?'selected':''}>${l}</option>`).join('')}</select>`}
       <label class="f">Séances de sport visées par semaine</label>${num('sportSemaine',C.sportSemaine)}
       <label class="f">Mon objectif de poids</label>
       <div class="opt">${[['perdre','⬇️ Perdre'],['prendre','⬆️ Prendre'],['garder','⚖️ Garder']].map(([b,l])=>`<button class="${poidsBut()===b?'on':''}" onclick="choixPoidsBut('${b}')">${l}</button>`).join('')}</div>
@@ -3492,6 +3492,13 @@ function setCfg(path,v,isNum){
   const ks=path.split('.'); let o=S.cfg; while(ks.length>1) o=o[ks.shift()];
   o[ks[0]]=isNum?(parseFloat(String(v).replace(',','.'))||0):v; cfgTouch(); if(path!=='theme') render(); toast('Réglage enregistré');
 }
+function themeMini(v){ const D={f:'#1a1538',l1:'#f3eee2',l2:'#6f6a92',b:'#2e2758'}, L={f:'#f5f2ea',l1:'#2a2350',l2:'#a8a3bd',b:'#e4dfd2'};
+  const z=(c,w)=>`<div style="position:absolute;inset:0;${w}background:${c.f}"></div>`, lig=c=>`<div style="height:7px;width:62%;border-radius:9px;background:${c.l1}"></div><div style="height:5px;width:88%;border-radius:9px;background:${c.l2};margin-top:7px"></div><div style="height:5px;width:70%;border-radius:9px;background:${c.l2};margin-top:5px"></div><div style="height:16px;border-radius:9px;background:${c.b};margin-top:10px"></div>`;
+  if(v==='auto') return `<div style="position:relative;height:84px;overflow:hidden">${z(L,'')}${z(D,'right:50%;')}<div style="position:absolute;inset:12px 10px;clip-path:inset(0 50% 0 0)">${lig(D)}</div><div style="position:absolute;inset:12px 10px;clip-path:inset(0 0 0 50%)">${lig(L)}</div></div>`;
+  const c=v==='dark'?D:L; return `<div style="height:84px;background:${c.f};padding:12px 10px">${lig(c)}</div>`; }
+function themeChoix(sel,fn){ return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px">${[['dark','Sombre'],['light','Clair'],['auto','Auto']].map(([v,l])=>{ const on=(sel||'auto')===v; return `<button onclick="${fn}('${v}')" style="all:unset;cursor:pointer;border-radius:16px;overflow:hidden;border:2.5px solid ${on?'#7c3aed':'var(--line)'};background:var(--card);box-shadow:${on?'0 4px 14px rgba(124,58,237,.22)':'none'}">${themeMini(v)}<div style="text-align:center;padding:9px 4px;font-weight:800;font-size:.9rem;color:${on?'#7c3aed':'var(--ink)'}">${on?'✓ ':''}${l}</div></button>`; }).join('')}</div>`; }
+function themeReglage(v){ setCfg('theme',v); applyTheme(); render(); }
+function themeOnb(v){ ONB.theme=v; if(v==='auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=v; const el=document.getElementById('onbTheme'); if(el) el.innerHTML=themeChoix(v,'themeOnb'); }
 function applyTheme(){ const t=S.cfg.theme; if(t==='light'||t==='dark') document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
 function openSheet(h){ document.getElementById('sheet').innerHTML=h; document.getElementById('sheetBg').classList.add('on'); }
 function closeSheet(){ document.getElementById('sheetBg').classList.remove('on'); stopCompass(); if(S.majEnAttente){ S.majEnAttente=false; setTimeout(checkUpdate,400); } }
@@ -3693,7 +3700,7 @@ const ONB={};
 /* ---------- 🌱 Nouvelle inscription en 4 étapes (TEST : aperçu admin, ne modifie pas le compte) ---------- */
 const ONB_OBJ=[['prieres','🕌','Prier à l\'heure'],['coran','📖','Lire plus le Coran'],['dhikr','🤲','Faire mes invocations'],['sport','💪','Faire du sport'],['poids','⚖️','Gérer mon poids'],['tabac','🚭','Arrêter de fumer']];
 function onbApercuDebut(){ S._cfgSauve=JSON.parse(JSON.stringify(S.cfg)); S.onbApercu=true; S.cfg.lieu={nom:''}; S.cfg.priere=Object.assign({},S.cfg.priere,{methode:'uoif'}); delete S.cfg.priere.mosqAvant; for(const k in _tcache) delete _tcache[k]; Object.keys(ONB).forEach(k=>delete ONB[k]); ONB.step=1; ONB.obj=['prieres']; closeSheet(); render(); window.scrollTo({top:0}); }
-function onbApercuFin(msg){ if(S._cfgSauve){ S.cfg=S._cfgSauve; delete S._cfgSauve; for(const k in _tcache) delete _tcache[k]; cfgTouch(); } S.onbApercu=false; S.view='accueil'; S.sel=today(); render(); window.scrollTo({top:0}); if(msg) toast(msg,5000); }
+function onbApercuFin(msg){ if(S._cfgSauve){ S.cfg=S._cfgSauve; delete S._cfgSauve; for(const k in _tcache) delete _tcache[k]; cfgTouch(); } S.onbApercu=false; applyTheme(); S.view='accueil'; S.sel=today(); render(); window.scrollTo({top:0}); if(msg) toast(msg,5000); }
 function onbEtape(n){
   const v=id=>document.getElementById(id);
   if(n>ONB.step){
@@ -3709,7 +3716,7 @@ async function onbAdhan(){ vib(); if(S.onbApercu){ ONB.adhan=true; toast('🔔 (
 function onbFin(){ if(!document.getElementById('onbOk').checked) return toast('Coche la case d\'accord pour continuer',3000);
   if(S.onbApercu) return onbApercuFin('✅ Aperçu terminé : le nouvel inscrit arriverait ici, sur l\'onglet Prière, avec une bulle « Quand tu as prié, touche À l\'heure ✓ ». Ton compte n\'a pas été modifié.');
   const v=id=>document.getElementById(id), num=id=>{ const e=v(id); const x=e?parseFloat((e.value||'').replace(',','.')):NaN; return isNaN(x)?null:x; };
-  const C=S.cfg, O=ONB.obj||[]; C.nom=ONB.nom||C.nom||''; if(ONB.genre) C.genre=ONB.genre; C.objectifs=O.slice();
+  const C=S.cfg, O=ONB.obj||[]; C.nom=ONB.nom||C.nom||''; if(ONB.genre) C.genre=ONB.genre; if(ONB.theme) C.theme=ONB.theme; C.objectifs=O.slice();
   C.travail=Object.assign({debut:'09:00',fin:'18:00',mode:'fixe'},C.travail); if(!C.sportSemaine&&C.sportSemaine!==0) C.sportSemaine=3;
   if(O.includes('poids')){ const pd=num('onbPoids'), po=num('onbObjKg'); C.poidsObj=po; C.poidsDepart=pd?{k:today(),v:pd}:null; if(pd){ J(today()).poids=pd; touch(today()); } if(pd&&po) C.poidsBut=po>pd?'prendre':po<pd?'perdre':'garder'; }
   C.fumeur=O.includes('tabac'); if(C.fumeur){ C.tabac.base=Math.max(1,Math.round(num('onbCig')??20)); C.tabac.prix=num('onbPrix')??12.5; C.tabac.debut=today(); C.tabac.pas=Math.max(1,Math.round(C.tabac.base/10)); }
@@ -3736,6 +3743,7 @@ function vOnb2(){
       <input class="inp" id="onbNom" value="${esc(ONB.nom||'')}" placeholder="Prénom" autocomplete="given-name">
       <label class="f">Je suis</label>
       <div class="opt" id="onbGenre">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${ONB.genre===g?'on':''}" onclick="ONB.genre='${g}';document.querySelectorAll('#onbGenre button').forEach(x=>x.classList.toggle('on',x===this))">${l}</button>`).join('')}</div>
+      ${S.email===ADMIN_EMAIL?`<label class="f">Apparence</label><div class="sub" style="margin:0">Tu pourras en changer à tout moment dans les Réglages.</div><div id="onbTheme">${themeChoix(ONB.theme||S.cfg.theme,'themeOnb')}</div>`:''}
       <button class="btn pri" style="width:100%;margin-top:16px;padding:13px" onclick="onbEtape(2)">Continuer</button></div>`;
   if(st===2){ const ok=C.lieu.lat!=null, np=ok?nextPrayer():null;
     corps=`${tete('Où es-tu ?','Pour calculer tes horaires de prière, à la minute près.')}
