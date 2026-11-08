@@ -380,7 +380,6 @@ label.f{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin
 .prTeint .prayer .nm b{color:var(--pc)}
 .prTeint .prayer.pc-fajr{--pc:#f472b6}.prTeint .prayer.pc-dhuhr{--pc:#f59e0b}.prTeint .prayer.pc-asr{--pc:#f97316}.prTeint .prayer.pc-maghrib{--pc:#a855f7}.prTeint .prayer.pc-isha{--pc:#3b82f6}
 .prTeint .prayer.cur{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(16,185,129,.22)}
-.prTeint .pc-ico{font-size:1rem;margin-right:6px}
 .prayer .nm b{font-size:1rem;font-weight:800}
 .prayer .nm .arn{font-family:'Amiri',serif;color:var(--muted);margin-left:6px}
 .prayer .nm small{display:block;color:var(--muted);font-weight:600;font-size:.76rem}
@@ -580,7 +579,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261108-182438'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261108-183215'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -2760,7 +2759,7 @@ function prieresDetail(){
       ${accOk()?'':'<button class="btn green" style="width:100%;margin-bottom:12px" onclick="openQibla()">🧭 Trouver la direction de la Qibla</button>'}
       ${PRAYERS.map(p=>`
       <div class="prayer pc-${p.k} ${cur&&cur.k===p.k?'cur':''}">
-        <div class="nm">${S.email===ADMIN_EMAIL?`<span class="pc-ico">${{fajr:'🌅',dhuhr:'☀️',asr:'🌤️',maghrib:'🌇',isha:'🌙'}[p.k]}</span>`:''}<b>${p.k==='dhuhr'&&fri?'Joumouʿa':p.n}</b><span class="arn">${p.ar}</span>${isT&&t[p.i]>nowMin()?'':`<button onclick="versetPriere('${p.k}','',S.sel)" aria-label="Verset de ${p.n}" style="border:none;background:color-mix(in srgb,var(--emerald) 12%,transparent);border-radius:99px;padding:2px 8px;margin-left:6px;cursor:pointer;font-size:.72rem;font-weight:800;color:var(--emerald)">📖 Verset</button>`}
+        <div class="nm"><b>${p.k==='dhuhr'&&fri?'Joumouʿa':p.n}</b><span class="arn">${p.ar}</span>${isT&&t[p.i]>nowMin()?'':`<button onclick="versetPriere('${p.k}','',S.sel)" aria-label="Verset de ${p.n}" style="border:none;background:color-mix(in srgb,var(--emerald) 12%,transparent);border-radius:99px;padding:2px 8px;margin-left:6px;cursor:pointer;font-size:.72rem;font-weight:800;color:var(--emerald)">📖 Verset</button>`}
           <small>${isHsc()&&p.k==='dhuhr'&&fri?`Khotba ${mosq().jumua.join(' / ')} · Dhuhr ${hm(t[p.i])}`:iqamaDe(p.k)!=null?`Iqama ${hm((t[p.i]+iqamaDe(p.k))%1440)}`:'Adhan'}</small></div>
         <div class="hr tnum">${hm(t[p.i])}</div>
         <div class="seg">${PSTAT.map(s=>`<button class="s-${s.k} ${d.p[p.k]===s.k?'on':''}" onclick="setPrayer('${p.k}','${s.k}')">${s.l}</button>`).join('')}</div>
