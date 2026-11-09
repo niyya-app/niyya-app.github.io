@@ -579,7 +579,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261108-183215'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261109-100424'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1989,7 +1989,7 @@ function fluTextes(){ if(icoStyle()!=='C'||!document.documentElement.classList.c
   const base=render; let vueAvant=null;
   const barres=()=>[...app.querySelectorAll('[style*="width:"]')].filter(e=>/width:\s*[\d.]+%/.test(e.getAttribute('style')||''));
   render=function(){
-    document.documentElement.classList.toggle('noble',true); if(S.pret&&S.cfg&&S.cfg.onb&&!S.cfg.vuTheme1){ S.cfg.vuTheme1=true; cfgTouch(); setTimeout(()=>toast('✨ NIYYA fait peau neuve : des couleurs plus douces, inspirées de son icône. Bonne découverte 🌙',6000),900); } document.documentElement.classList.toggle('bleuNuit',S.email===ADMIN_EMAIL&&THEME_VAR==='bleuNuit'); document.documentElement.classList.toggle('adn',true); document.documentElement.classList.toggle('prTeint',S.email===ADMIN_EMAIL); // TEST thème Nuit · Émeraude · Or
+    document.documentElement.classList.toggle('noble',true); if(S.pret&&S.cfg&&S.cfg.onb&&!S.cfg.vuTheme1){ S.cfg.vuTheme1=true; cfgTouch(); setTimeout(()=>toast('✨ NIYYA fait peau neuve : des couleurs plus douces, inspirées de son icône. Bonne découverte 🌙',6000),900); } document.documentElement.classList.toggle('bleuNuit',S.email===ADMIN_EMAIL&&THEME_VAR==='bleuNuit'); document.documentElement.classList.toggle('adn',true); document.documentElement.classList.toggle('prTeint',true); // TEST thème Nuit · Émeraude · Or
     if(!S.pret) return base.apply(this,arguments);
     const memeVue=vueAvant===S.view+'|'+S.sel, avant=memeVue?barres().map(e=>e.style.width):null;
     try{ base.apply(this,arguments); }catch(e){ console.error(e); try{ diagNotif&&diagNotif('render : '+e.message); }catch(_){} app.innerHTML=`<div class="panel" style="text-align:center;margin-top:20px"><h2 style="justify-content:center">Un petit souci d'affichage</h2><div class="sub" style="margin:8px 0 14px">Tes données sont en sécurité. Reviens à l'écran Prière ou recharge l'appli.</div><button class="btn pri" onclick="S.view='accueil';render()">Revenir à Prière</button> <button class="btn" onclick="location.reload()">Recharger</button></div>`; return; }
@@ -3120,7 +3120,7 @@ function vReglages(){
       ${true?`<label class="f">Je suis</label><div class="opt">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${C.genre===g?'on':''}" onclick="setCfg('genre','${g}');render()">${l}</button>`).join('')}</div>
       ${C.genre==='f'?`<label class="f">🌸 Pendant la période de dispense</label><div class="opt">${[[true,'🔕 Mettre l\'adhan en pause'],[false,'🔔 Garder l\'adhan']].map(([v,l])=>`<button class="${(C.dispPauseAdhan!==false)===v?'on':''}" onclick="S.cfg.dispPauseAdhan=${v};cfgTouch();render()">${l}</button>`).join('')}</div>`:''}`:''}
       <label class="f">Apparence</label>
-      ${S.email===ADMIN_EMAIL?themeChoix(C.theme,'themeReglage')+`<div class="sub" style="margin-top:6px">🌗 Auto : clair pendant la journée, sombre du Maghrib jusqu'au lever du soleil.</div>`:`<select class="inp" onchange="setCfg('theme',this.value);applyTheme()">${[['auto','Automatique (comme le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${C.theme===v?'selected':''}>${l}</option>`).join('')}</select>`}
+      ${true?themeChoix(C.theme,'themeReglage')+`<div class="sub" style="margin-top:6px">🌗 Auto : clair pendant la journée, sombre du Maghrib jusqu'au lever du soleil.</div>`:`<select class="inp" onchange="setCfg('theme',this.value);applyTheme()">${[['auto','Automatique (comme le téléphone)'],['light','Clair'],['dark','Sombre']].map(([v,l])=>`<option value="${v}" ${C.theme===v?'selected':''}>${l}</option>`).join('')}</select>`}
       <label class="f">Séances de sport visées par semaine</label>${num('sportSemaine',C.sportSemaine)}
       <label class="f">Mon objectif de poids</label>
       <div class="opt">${[['perdre','⬇️ Perdre'],['prendre','⬆️ Prendre'],['garder','⚖️ Garder']].map(([b,l])=>`<button class="${poidsBut()===b?'on':''}" onclick="choixPoidsBut('${b}')">${l}</button>`).join('')}</div>
@@ -3505,7 +3505,7 @@ function themeChoix(sel,fn){ return `<div style="display:grid;grid-template-colu
 function themeReglage(v){ setCfg('theme',v); applyTheme(); render(); }
 function themeOnb(v){ ONB.theme=v; if(v==='auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=v; const el=document.getElementById('onbTheme'); if(el) el.innerHTML=themeChoix(v,'themeOnb'); }
 function autoSoleil(){ /* Auto : clair du lever du soleil au Maghrib, sombre ensuite (TEST admin) */
-  if(S.email!==ADMIN_EMAIL||!S.cfg||!S.cfg.lieu||S.cfg.lieu.lat==null) return null;
+  if(!S.cfg||!S.cfg.lieu||S.cfg.lieu.lat==null) return null;
   try{ const t=timesOf(jourIn(lieuTz())), m=nowMin(); return (m>=t[4]||m<t[1])?'dark':'light'; }catch(e){ return null; } }
 function applyTheme(){ let t=S.cfg.theme; if(t!=='light'&&t!=='dark') t=autoSoleil(); if(t==='light'||t==='dark') document.documentElement.dataset.theme=t; else delete document.documentElement.dataset.theme; }
 setInterval(()=>{ try{ if(S.cfg&&S.cfg.theme!=='light'&&S.cfg.theme!=='dark') applyTheme(); }catch(e){} },60000);
@@ -3752,7 +3752,7 @@ function vOnb2(){
       <input class="inp" id="onbNom" value="${esc(ONB.nom||'')}" placeholder="Prénom" autocomplete="given-name">
       <label class="f">Je suis</label>
       <div class="opt" id="onbGenre">${[['h','👨 Un homme'],['f','👩 Une femme']].map(([g,l])=>`<button class="${ONB.genre===g?'on':''}" onclick="ONB.genre='${g}';document.querySelectorAll('#onbGenre button').forEach(x=>x.classList.toggle('on',x===this))">${l}</button>`).join('')}</div>
-      ${S.email===ADMIN_EMAIL?`<label class="f">Apparence</label><div class="sub" style="margin:0">Tu pourras en changer à tout moment dans les Réglages.</div><div id="onbTheme">${themeChoix(ONB.theme||S.cfg.theme,'themeOnb')}</div>`:''}
+      ${true?`<label class="f">Apparence</label><div class="sub" style="margin:0">Tu pourras en changer à tout moment dans les Réglages.</div><div id="onbTheme">${themeChoix(ONB.theme||S.cfg.theme,'themeOnb')}</div>`:''}
       <button class="btn pri" style="width:100%;margin-top:16px;padding:13px" onclick="onbEtape(2)">Continuer</button></div>`;
   if(st===2){ const ok=C.lieu.lat!=null, np=ok?nextPrayer():null;
     corps=`${tete('Où es-tu ?','Pour calculer tes horaires de prière, à la minute près.')}
