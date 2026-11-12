@@ -579,7 +579,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261109-100424'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261112-115620'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -1874,7 +1874,6 @@ function scoreOf(k){
   const ne=essFaits(d), nbE=essNb(); parts.push({k:'essentiels',l:'Mes essentiels',f:ne/nbE,txt:`${ne}/${nbE}`}); // 6 cases au choix, même poids chacune
   const nb=baNb(d);
   parts.push({k:'bonnes',l:'Bonnes actions',f:nb>=1?1:0,txt:nb?`${nb} ✓`:'—'}); // une seule bonne action suffit, les autres sont du bonus
-  parts.push({k:'fruits',l:'Fruits',f:Math.min(5,d.fruits||0)/5,txt:`${d.fruits||0}/5`});
   parts.push({k:'eau',l:'Eau',f:Math.min(6,d.eau||0)/6,txt:`${litres(d.eau)} L`});
   const pr=d.prio.filter(p=>p.t.trim()), po=pr.filter(p=>p.ok).length;
   parts.push({k:'business',l:'Business',f:pr.length?po/pr.length:0,txt:`${po}/${pr.length||3}`});
@@ -2518,7 +2517,7 @@ function vJour(){
     <div class="panel" ${S.cfg.fumeur&&!accOk()?'':'style="grid-column:1/-1"'}>
       <button onclick="deroul('ess')" style="all:unset;display:block;width:100%;cursor:pointer">
       <h2><span class="ico">💎</span>Mes essentiels<span class="cnt">${essFaits(d)}/${essNb()} <span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv['ess']?180:0}deg)">▾</span></span></h2>
-      <div class="sub" style="margin-bottom:${S.ouv.ess?0:2}px">${S.ouv.ess?'Un clic = c\'est fait.':accOk()?'Touche pour ouvrir':`🍎 ${d.fruits||0}/5 · 💧 ${litres(d.eau)} L · touche pour ouvrir`}</div></button>
+      <div class="sub" style="margin-bottom:${S.ouv.ess?0:2}px">${S.ouv.ess?'Un clic = c\'est fait.':accOk()?'Touche pour ouvrir':`💧 ${litres(d.eau)} L · touche pour ouvrir`}</div></button>
       ${S.ouv.ess?`<div class="tiles">
         ${essSlots().map(id=>essTile(id)).join('')}
       </div>
@@ -2545,21 +2544,19 @@ function vJour(){
   ${soir?`<div class="mt">${soir}</div>`:''}
   <div style="text-align:center;margin:18px 0 4px"><button class="btn sm" onclick="inviter()">💌 Inviter un proche sur NIYYA</button></div>`;
 }
-// 🍎💧 Santé : 5 fruits & légumes + eau (dans Mes essentiels, ou carte à part)
+// 💧 Santé : eau (5 fruits & légumes retirés le 12/11) (dans Mes essentiels, ou carte à part)
 function santeCorps(d){
-  return `      <div class="fruits ${(d.fruits||0)>=5?'ok':''}"><div><b>🍎 5 fruits & légumes par jour</b><small>${d.fruits||0}/5 aujourd'hui${(d.fruits||0)>=5?' · objectif atteint':''}</small></div>
-        <div class="fr">${['🍎','🍌','🍊','🥕','🍇'].map((f,i)=>`<button class="${i<(d.fruits||0)?'on':''}" onclick="fruit(${i+1})" aria-label="${i+1} fruit${i?'s':''}">${f}</button>`).join('')}</div></div>
-      <div class="fruits eau ${(d.eau||0)>=6?'ok':''}"><div><b>💧 Boire 1,5 L d'eau</b><small>${litres(d.eau)} L sur 1,5 L · 1 verre = 25 cl${(d.eau||0)>=6?' · objectif atteint':''}</small></div>
+  return `      <div class="fruits eau ${(d.eau||0)>=6?'ok':''}"><div><b>💧 Boire 1,5 L d'eau</b><small>${litres(d.eau)} L sur 1,5 L · 1 verre = 25 cl${(d.eau||0)>=6?' · objectif atteint':''}</small></div>
         <div class="wbar"><div style="width:${Math.min(100,(d.eau||0)/6*100)}%"></div></div>
         <div class="fr">${[1,2,3,4,5,6].map(i=>`<button class="${i<=(d.eau||0)?'on':''}" onclick="eau(${i})" aria-label="${i} verre${i>1?'s':''}">💧</button>`).join('')}</div></div>`;
 }
 function santeCarte(){
-  const d=J(), ok=(d.fruits||0)>=5&&(d.eau||0)>=6;
+  const d=J(), ok=(d.eau||0)>=6;
   const P=scoreOf(S.sel).parts.filter(p=>p.k==='fruits'||p.k==='eau'), pts=Math.round(P.reduce((a,p)=>a+p.pts,0)), ptsMax=P.reduce((a,p)=>a+p.max,0);
   return `<div class="panel">
     <button onclick="deroul('sante')" style="all:unset;display:block;width:100%;cursor:pointer">
     <h2><span class="ico">🍎</span>Santé<span class="cnt">${ptsMax?`${pts}/${ptsMax} pts `:''}${ok?'✓ ':''}<span style="display:inline-block;transition:.2s;transform:rotate(${S.ouv.sante?180:0}deg)">▾</span></span></h2>
-    <div class="sub" style="margin-bottom:${S.ouv.sante?0:2}px">${S.ouv.sante?'Fruits, légumes et eau de la journée.':`🍎 ${d.fruits||0}/5 · 💧 ${litres(d.eau)} L${defiDansSante()&&+S.cfg.poidsObj?' · ⚖️ défi forme':''} · touche pour ouvrir`}</div></button>
+    <div class="sub" style="margin-bottom:${S.ouv.sante?0:2}px">${S.ouv.sante?'L\'eau de la journée.':`💧 ${litres(d.eau)} L${defiDansSante()&&+S.cfg.poidsObj?' · ⚖️ défi forme':''} · touche pour ouvrir`}</div></button>
     ${S.ouv.sante?santeCorps(d)+(defiDansSante()&&poidsCarte()?poidsCarte().replace('<div class="panel">','<div class="panel" style="box-shadow:none;background:var(--card2);margin-top:12px">'):''):''}</div>`;
 }
 const defiDansSante=()=>S.email===ADMIN_EMAIL; // TEST : le défi forme rangé dans la carte Santé
@@ -3032,7 +3029,7 @@ function vBilan(){
       o.score+=s.score; o.pr+=prayCount(k); o.sport+=d.sport?1:0; (d.sports||[]).forEach(x=>{ o.disc=o.disc||{}; o.disc[x]=(o.disc[x]||0)+1; }); o.coran+=d.coran?1:0; o.lecture+=d.lecture?1:0; o.famille+=d.famille?1:0;
       o.ba+=baNb(d); o.fruits=(o.fruits||0)+Math.min(5,d.fruits||0); o.eau=(o.eau||0)+Math.min(6,d.eau||0); o.cig+=d.cig.length; o.cigN++; o.sad+=(d.sadaqa||[]).reduce((a,b)=>a+(+b.m||0),0);
       doms.religion.push((sp.prieres*3+sp.coran+(d.adhM?1:0)*.5+(d.adhS?1:0)*.5+Math.min(1,d.istighfar/100)+naflN(d)/NAFL.length+((d.jeune==='fait'||d.jeuneNafl)?1:0))/(estRamadan(k)?8:7));
-      doms.sante.push(S.cfg.fumeur?(sp.tabac+sp.sport+sp.fruits+sp.eau)/4:(sp.sport+sp.fruits+sp.eau)/3);
+      doms.sante.push(S.cfg.fumeur?(sp.tabac+sp.sport+sp.eau)/3:(sp.sport+sp.eau)/2);
       doms.famille.push((sp.famille+baCat(k,'famille'))/2);
       doms.business.push(sp.business);
       doms.devperso.push((sp.lecture+baCat(k,'savoir'))/2);
@@ -3060,7 +3057,7 @@ function vBilan(){
     <div class="hero k-violet"><div class="h-lbl">⭐ Score moyen</div><div class="h-big tnum">${A.n?A.score:'—'}</div><div class="h-sub">${A.n} jour${A.n>1?'s':''} renseigné${A.n>1?'s':''} ${B.n?`· avant : ${B.score}`:''}</div></div>
     <div class="hero k-emerald"><div class="h-lbl">🕌 Prières</div><div class="h-big tnum">${A.n?Math.round(A.pr/(A.n*5)*100):0}%</div><div class="h-sub">${A.pr} prières accomplies</div></div>
     ${!S.cfg.fumeur?'':`<div class="hero k-sunset"><div class="h-lbl">🚭 Tabac</div><div class="h-big tnum">${A.cigN?(A.cig/A.cigN).toFixed(1):'—'}</div><div class="h-sub">cigarettes / jour ${B.cigN?`· avant : ${(B.cig/B.cigN).toFixed(1)}`:''}</div></div>`}
-    <div class="hero k-sky"><div class="h-lbl">💪 Sport</div><div class="h-big tnum">${A.sport}</div><div class="h-sub">${A.disc?Object.entries(A.disc).sort((a,b)=>b[1]-a[1]).map(([k,n])=>esc(sportNom(k))+' '+n).join(' · ')+'<br>':''}séances · objectif ${Math.round(S.cfg.sportSemaine*P/7)} · 🍎 ${A.n?((A.fruits||0)/A.n).toFixed(1):'—'}/5 · 💧 ${A.n?((A.eau||0)/A.n*0.25).toFixed(2).replace('.',','):'—'} L par jour</div></div>
+    <div class="hero k-sky"><div class="h-lbl">💪 Sport</div><div class="h-big tnum">${A.sport}</div><div class="h-sub">${A.disc?Object.entries(A.disc).sort((a,b)=>b[1]-a[1]).map(([k,n])=>esc(sportNom(k))+' '+n).join(' · ')+'<br>':''}séances · objectif ${Math.round(S.cfg.sportSemaine*P/7)} · 💧 ${A.n?((A.eau||0)/A.n*0.25).toFixed(2).replace('.',','):'—'} L par jour</div></div>
     <div class="hero k-teal"><div class="h-lbl">📖 Coran · 📚 Lecture</div><div class="h-big tnum">${A.coran} · ${A.lecture}</div><div class="h-sub">jours sur ${P}</div></div>
     <div class="hero k-pink"><div class="h-lbl">🤲 Bonnes actions</div><div class="h-big tnum">${A.ba}</div><div class="h-sub">${A.sad} € de sadaqa · famille ${A.famille} j</div></div>
   </div>
@@ -3107,7 +3104,7 @@ function setPer(n){ S.statsPer=n; render(); }
 function openDay(k){ S.sel=k; render(); }
 
 /* ---------- Réglages ---------- */
-const POIDS_UI={prieres:'Prières',tabac:'Tabac',essentiels:'Mes essentiels',bonnes:'Bonnes actions',business:'Business',fruits:'Fruits',eau:'Eau'};
+const POIDS_UI={prieres:'Prières',tabac:'Tabac',essentiels:'Mes essentiels',bonnes:'Bonnes actions',business:'Business',eau:'Eau'};
 function vReglages(){
   const C=S.cfg, T=C.tabac, W=C.poids, totW=Object.keys(POIDS_UI).filter(k=>k!=='tabac'||C.fumeur).reduce((a,k)=>a+(+(W[k]??(k==='essentiels'?35:0))||0),0);
   const num=(path,val,step)=>`<input class="inp" type="number" step="${step||1}" value="${val}" onchange="setCfg('${path}',this.value,true)">`;
@@ -3516,7 +3513,7 @@ document.getElementById('sheetBg').addEventListener('click',e=>{ if(e.target.id=
 function bilanTexte(P){
   const lines=[`BILAN NIYYA de ${S.cfg.nom} — ${P} derniers jours (au ${fmtLong(today())})`];
   for(let i=P-1;i>=0;i--){ const k=addDays(today(),-i); if(!has(k)) continue; const d=J(k), s=scoreOf(k);
-    lines.push(`${k} | score ${s.score} | prières ${prayCount(k)}/5 (${PRAYERS.map(p=>p.n[0]+':'+(d.p[p.k]||'-')).join(' ')}) | cig ${d.cig.length}/${targetOf(k)}${d.cig.length?' 1re '+hm(new Date(d.cig[0]).getHours()*60+new Date(d.cig[0]).getMinutes()):''} | sport ${d.sport?((d.sports||[]).length?d.sports.map(sportNom).join('+'):'oui'):d.repos?'repos':'non'} | coran ${d.coran?'oui':'non'} | lecture ${d.lecture?'oui':'non'} | famille ${d.famille?'oui':'non'} | fruits ${d.fruits||0}/5 | eau ${litres(d.eau)} L | Allah aime appliqué ${d.aime?'oui':'non'} | bonnes ${d.ba.filter(Boolean).length}/9 | surérogatoires ${naflN(d)}/${NAFL.length}${d.jeune?' | jeûne Ramadan: '+d.jeune:''}${d.jeuneNafl?' | jeûne surérogatoire':''}${d.tarawih?' | tarawih':''}${d.juz?' | '+d.juz+' juz':''}${d.jumua?' | Joumouʿa à la mosquée':''} | istighfar ${d.istighfar} | prio ${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length}${d.sadaqa.length?' | sadaqa '+d.sadaqa.reduce((a,b)=>a+(+b.m||0),0)+'€':''}${d.poids?' | poids '+d.poids:''}${d.reussite?' | réussite: '+d.reussite:''}${d.ameliorer?' | à améliorer: '+d.ameliorer:''}`); }
+    lines.push(`${k} | score ${s.score} | prières ${prayCount(k)}/5 (${PRAYERS.map(p=>p.n[0]+':'+(d.p[p.k]||'-')).join(' ')}) | cig ${d.cig.length}/${targetOf(k)}${d.cig.length?' 1re '+hm(new Date(d.cig[0]).getHours()*60+new Date(d.cig[0]).getMinutes()):''} | sport ${d.sport?((d.sports||[]).length?d.sports.map(sportNom).join('+'):'oui'):d.repos?'repos':'non'} | coran ${d.coran?'oui':'non'} | lecture ${d.lecture?'oui':'non'} | famille ${d.famille?'oui':'non'} | eau ${litres(d.eau)} L | Allah aime appliqué ${d.aime?'oui':'non'} | bonnes ${d.ba.filter(Boolean).length}/9 | surérogatoires ${naflN(d)}/${NAFL.length}${d.jeune?' | jeûne Ramadan: '+d.jeune:''}${d.jeuneNafl?' | jeûne surérogatoire':''}${d.tarawih?' | tarawih':''}${d.juz?' | '+d.juz+' juz':''}${d.jumua?' | Joumouʿa à la mosquée':''} | istighfar ${d.istighfar} | prio ${d.prio.filter(p=>p.ok).length}/${d.prio.filter(p=>p.t.trim()).length}${d.sadaqa.length?' | sadaqa '+d.sadaqa.reduce((a,b)=>a+(+b.m||0),0)+'€':''}${d.poids?' | poids '+d.poids:''}${d.reussite?' | réussite: '+d.reussite:''}${d.ameliorer?' | à améliorer: '+d.ameliorer:''}`); }
   const st=tabacStats(); if(S.cfg.fumeur) lines.push(`Tabac : ${st.evitees} cigarettes évitées, ${vieGagnee(st.evitees)} de vie gagnées, ${Math.round(st.eco)} € économisés, objectif actuel ${targetOf(today())}/jour.`);
   return lines.join('\n');
 }
