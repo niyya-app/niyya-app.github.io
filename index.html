@@ -579,7 +579,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261123-143300'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261123-143550'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -3970,14 +3970,22 @@ const QAUD=num=>`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${num}.m
 var QA={ n:null, i:0, num:null, joue:false, bism:false, el:null };
 const audioOk=()=>true; // ouvert à tous le 24/10
 function qaEl(){ if(QA.el) return QA.el; const a=new Audio(); a.preload='auto';
-  a.addEventListener('ended',()=>{ if(QA.bism){ QA.bism=false; return qaJouer(); } if(QA.i<QA.num.length-1){ QA.i++; qaJouer(); } else { QA.joue=false; qaMaj(); toast('✅ Fin de la sourate'); } });
+  a.addEventListener('ended',()=>{ if(QA.bism){ QA.bism=false; return qaJouer(); } if(QA.i<QA.num.length-1){ QA.i++; qaJouer(); } else if(QA.n<114) qaSuivante(); else { QA.joue=false; qaMaj(); toast('✅ Fin du Coran, qu\'Allah l\'accepte'); } });
   a.addEventListener('error',()=>{ QA.joue=false; qaMaj(); toast('Récitation indisponible, vérifie ta connexion'); });
   return QA.el=a; }
 function ecouter(i){ const D=QC.data; if(!D||!D.num) return; const a=qaEl();
-  QA.n=QC.n; QA.num=D.num; QA.i=i||0; QA.joue=true;
+  QA.n=QC.n; QA.num=D.num; QA.i=i||0; QA.joue=true; QA.next=null;
   QA.bism=QA.i===0&&QA.n!==1&&QA.n!==9; // la basmala avant le 1er verset (sauf Al-Fâtiha et At-Tawba)
   qaJouer(); }
+/* 🎧 fin de sourate : enchaîne la suivante (chargée d'avance pendant le dernier verset, pour marcher aussi écran verrouillé) */
+function qaSuivante(){ const old=QA.n, p=(QA.next&&QA.next.n===old+1?QA.next.p:null)||chargerSourate(old+1); QA.next=null;
+  p.then(d=>{ if(QA.n!==old) return; if(!d||!d.num){ QA.joue=false; qaMaj(); return toast('Sourate suivante indisponible, vérifie ta connexion'); }
+    QA.n=old+1; QA.num=d.num; QA.i=0; QA.bism=QA.n!==9;
+    if(S.view==='coran'&&QC.n===old){ QC.n=QA.n; QC.data=d; render(); window.scrollTo({top:0}); }
+    qaJouer(); toast(`▶️ Sourate suivante : ${SURATES[QA.n-1][2]}`); })
+   .catch(()=>{ if(QA.n!==old) return; QA.joue=false; qaMaj(); toast('Sourate suivante indisponible, vérifie ta connexion'); }); }
 function qaJouer(){ const a=qaEl(); a.src=QAUD(QA.bism?1:QA.num[QA.i]); a.play().catch(()=>{ QA.joue=false; qaMaj(); }); QA.joue=true; qaMaj(); qaSuivre();
+  if(!QA.bism&&QA.i===QA.num.length-1&&QA.n<114&&!(QA.next&&QA.next.n===QA.n+1)) QA.next={n:QA.n+1,p:chargerSourate(QA.n+1).catch(()=>null)};
   try{ if('mediaSession' in navigator){ navigator.mediaSession.metadata=new MediaMetadata({title:`${SURATES[QA.n-1][2]} · verset ${QA.i+1}`,artist:'Mishary Al-Afasy',album:'NIYYA · Le Saint Coran',artwork:[{src:'niyya-logo-512.png',sizes:'512x512',type:'image/png'}]});
     navigator.mediaSession.setActionHandler('play',qaPause); navigator.mediaSession.setActionHandler('pause',qaPause);
     navigator.mediaSession.setActionHandler('nexttrack',()=>qaSaut(1)); navigator.mediaSession.setActionHandler('previoustrack',()=>qaSaut(-1)); } }catch(e){} }
