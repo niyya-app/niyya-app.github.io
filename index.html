@@ -579,7 +579,7 @@ const SB_URL = 'https://acalynsfttpchvnomjwb.supabase.co';
 const SB_KEY = 'sb_publishable_T_5D3wn6vD8BwY3qoKUVag_mj6j07BN'; // clé publique : les tables sont fermées, seules des fonctions liées au compte connecté y accèdent
 // Ancienne NIYYA perso (lien secret) : uniquement pour importer ses anciennes données
 const OLD_URL = 'https://hpoobvjzljqgwvthqsup.supabase.co', OLD_KEY = 'sb_publishable_R8-zQ-ChqIXGuSunVlrREw_EsYrROWo';
-const VERSION='20261112-115620'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
+const VERSION='20261123-143300'; // remplacé automatiquement à chaque publication (deploy-niyya.sh)
 let LS = { jours:'nya_jours', cfg:'nya_cfg', dirty:'nya_dirty', ui:'nya_ui' }; // préfixés par l'id utilisateur après connexion
 
 /* ---------- Option « Mosquée An-Nour, Hérouville-Saint-Clair » : calendrier annuel (Mawaqit, 12/10/2026) ----------
@@ -4679,7 +4679,7 @@ function citRes(q){
 }
 function citChercher(q){ S.citQ=q; const el=document.getElementById('citRes'); if(!el) return; if(q.trim()) el.innerHTML=citRes(q); else { const th=themesCit()[citIdx()]; el.innerHTML=th.voyage?`<div class="mt">${vVoyage()}</div>`:th.items.map(duaCard).join(''); } }
 /* 💬 Bulles d'aide à la première visite : une seule à la fois, vue une fois */
-const AIDES=[{id:'prieres',sel:'.seg button.s-heure',txt:'👆 Quand tu as prié, touche « À l\'heure » (ou « Mosquée »). C\'est tout !'},
+const AIDES=[{id:'prieres',sel:'.prayer.cur .seg button.s-heure||.seg button.s-heure',txt:'👆 Quand tu as prié, touche « À l\'heure » (ou « Mosquée »). C\'est tout !'},
   {id:'ess',sel:'button.tile[onclick^="toggle("]',txt:'✅ Touche une case quand c\'est fait. Une seule touche suffit.'},
   {id:'citq',sel:'#citQ',txt:'🔎 Cherche une invocation selon ta situation : « moment difficile », « voyage »…'}];
 function aideVue(id){ const v=S.cfg.aidesVues=S.cfg.aidesVues||[]; if(!v.includes(id)){ v.push(id); cfgTouch(); } aides(); }
@@ -4687,7 +4687,7 @@ function aides(){
   document.querySelectorAll('.aideBul').forEach(x=>x.remove()); document.querySelectorAll('.aideCible').forEach(x=>x.classList.remove('aideCible'));
   if(!S.pret||!S.cfg||!S.cfg.onb||S.onbApercu) return;
   const vu=S.cfg.aidesVues||[];
-  for(const a of AIDES){ if(vu.includes(a.id)) continue; const el=document.querySelector(a.sel); if(!el||!el.offsetParent) continue;
+  for(const a of AIDES){ if(vu.includes(a.id)) continue; const el=a.sel.split('||').map(s=>document.querySelector(s)).find(e=>e&&e.offsetParent); if(!el) continue;
     const R=el.getBoundingClientRect(), w=Math.min(340,innerWidth-32), left=Math.min(Math.max(16,R.left+R.width/2-w/2),innerWidth-16-w);
     const b=document.createElement('div'); b.className='aideBul'; b.style.cssText=`top:${R.bottom+scrollY+12}px;left:${left+scrollX}px;width:${w}px;--ax:${Math.round(R.left+R.width/2-left-7)}px`;
     b.innerHTML=`<span style="flex:1">${a.txt}</span><button onclick="aideVue('${a.id}')">Compris</button>`; document.body.appendChild(b);
